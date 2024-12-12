@@ -1,7 +1,119 @@
 <!DOCTYPE html>
 <html>
+<head>
+	<title></title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="icon" href="images\favicon.ico">
+	<script src="mousetrails\trail.js"></script>
+</head>
 <body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+	<div class="outer">
+	
+		<div class="title">
+			<div class="site-title">catgirllab</div>
+			<div class="site-subtitle">gians own little place on the internet</div>
+		</div>
+		<div class="banner-wrapper">
+			<div class="banner"></div>
+			<div class="scroller">
+				<div class="marquee">
+				
+			<span>&nbsp;&#9825; i hope you're having an amazing day, make sure to eat and drink enough today ily 	</span>
+				
+				</div>
+			</div>
+		</div>
+		<div class="left">
+			<div class="menu">
+				<a href="01home.html" target="content">home</a>
+				<a href="02blog.html" target="content">blog</a>
+				<a href="03about.html" target="content">about</a>
+				<a href="04links.html" target="content">links</a>
+				<a href="05projects.html" target="content">projects</a>
+			</div>
+				<div class="friends" style="height: 240px;">
+ <p> <center> <b> ehh </b> </center>
+ <br>
+ <img src="images/boykissa.gif">
+ <br>
+ <br>
+ 	<center> <b> You are visitor #<span id="hitcount"> </span> </b>  </center> 
+	<script>
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      // DO SOMETHING 
+      var site_data = JSON.parse(this.responseText);
+      document.getElementById("hitcount").innerHTML = site_data.info.hits;
+    }
+  };
+  xhttp.open("GET", "https://weirdscifi.ratiosemper.com/neocities.php?sitename=gianscorner", true);
+  xhttp.send();
+  </script>
+ <br>
+ <br>
+			</div>
+			<div class="friends" style="height: 70px;">
+			<audio id="audio-player" controls autoplay>
+ <source src="https://dl.dropbox.com/scl/fi/mewtam3trne6glcbql3ld/hopelessness.webm?rlkey=lu353zew8jsm2783n5wnr3yup&amp;dl=0"> </audio>
+ <p><center> &#9835; Sewerslvt - Hopelessness </center>
+      </div>
+		</div>
+		<div class="main">
+			<iframe name="content" src="01home.html" class="content"></iframe>
+		</div>
+		<div class="right">
+			<div class="profile">
+				<div class="avatar"></div>
+				<p> <center>&#9825; gian &#9825; 22 &#9825; any pronouns &#9825; &#9825; EU &#9825; </center>
+				<p><center>hi im gian, i love playing vidya games, i do graphic design stuff and i do a little coding :3 <br> mac user :3</center><p>
+			</div>
+			  <iframe src="https://www5.cbox.ws/box/?boxid=945692&boxtag=AnRCNi" width="113%" height="275" allowtransparency="yes" allow="autoplay" frameborder="0" marginheight="0" marginwidth="0" scrolling="auto"> </iframe>
+			</div>
+	<img border="0" alt="W3Schools" src="https://itsyaboypedro.neocities.org/images/got_html.gif" title="">
+	<img border="0" alt="W3Schools" src="https://itsyaboypedro.neocities.org/images/zzz%20(7).gif" title="">
+	<img border="0" alt="W3Schools" src="https://itsyaboypedro.neocities.org/images/kittens_korner.gif" title="">
+	<img border="0" alt="W3Schools" src="https://itsyaboypedro.neocities.org/images/botonbotn%20(3).gif" title="">
+	<img border="0" alt="W3Schools" src="https://itsyaboypedro.neocities.org/images/botonbotn%20(4).gif " title="">
+	<a href="https://nostalgic.neocities.org/"><img src="https://itsyaboypedro.neocities.org/images/button.gif"></a>
+	<img src="images\apple.gif" height="31" width="88" >
+	<img src="images\animegay.gif" alt="animegay" height="31" width="88">
+	<img src="images\anythingbut.gif" alt="anythingbut" height="31" width="88">
+	<img src="images\archlinux.gif" alt="archlinux" height="31" width="88">
+	<img src="images\blink-0.gif" alt="blink-0" height="31" width="88">
+	<img src="images\beyes.gif" alt="beyes" height="31" width="88">
+	<img src="images\bluepantsu.gif" alt="bluepantsu" height="31" width="88">
+	<img src="images\brolove.gif" alt="brolove" height="31" width="88">
+	<img src="images\crazbutton.gif" alt="crazbutton" height="31" width="88">
+	<img src="images\fckingwww.gif" alt="fckingwww" height="31" width="88">
+	<img src="images\transnow2.gif" alt="transnow2" height="31" width="88">
+	<img src="images\web3.gif" alt="web3" height="31" width="88">
+	<img src="images\sucks.gif" alt="sucks" height="31" width="88">
+	<img src="images\gb.gif" alt="gb" height="31" width="88">
+	  </div>
+	<script type="text/javascript">
+		function Marquee(selector, speed) {
+			const parentSelector = document.querySelector(selector);
+			const clone = parentSelector.innerHTML;
+			const firstElement = parentSelector.children[0];
+			let i = 0;
+			console.log(firstElement);
+			parentSelector.insertAdjacentHTML('beforeend', clone);
+			parentSelector.insertAdjacentHTML('beforeend', clone);
+
+			setInterval(function () {
+				firstElement.style.marginLeft = `-${i}px`;
+				if (i > firstElement.clientWidth) {
+					i = 0;
+				}
+				i = i + speed;
+			}, 0);
+		}
+  
+	//after window is completed load
+	//1 class selector for marquee
+	//2 marquee speed 0.2
+	window.addEventListener('load', Marquee('.marquee', 0.4))
+</script>
 </body>
 </html>
