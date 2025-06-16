@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ombra.cc</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@100;200;300;400;500;600;700;800;900&display=swap');
+        html, body {
+            height: 100%;
+        }
+        body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        .bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .bg-gradient {
+            background: radial-gradient(ellipse at center, #1d1d1f 0%, #000 70%);
+            opacity: 1;
+        }
+        .bg-mesh {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 55, 95, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 200, 255, 0.2) 0%, transparent 50%);
+            animation: meshMove 20s ease-in-out infinite;
+        }
+        @keyframes meshMove {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background: rgba(29, 29, 31, 0.82);
+            backdrop-filter: blur(18px) saturate(180%);
+            border-right: 1.5px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0 24px 0;
+            position: relative;
+            z-index: 2;
+        }
+        .sidebar .logo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 40px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sidebar nav a {
+            color: #f5f5f7;
+            text-decoration: none;
+            font-size: 1.08rem;
+            padding: 12px 32px;
+            border-radius: 12px 0 0 12px;
+            transition: background 0.2s, color 0.2s;
+            opacity: 0.85;
+        }
+        .sidebar nav a.active, .sidebar nav a:hover {
+            background: rgba(120,119,198,0.13);
+            color: #fff;
+            opacity: 1;
+        }
+        .sidebar .sidebar-footer {
+            margin-top: auto;
+            text-align: center;
+            color: #a1a1a6;
+            font-size: 0.98rem;
+            opacity: 0.7;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .topbar {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 36px;
+            background: rgba(29, 29, 31, 0.72);
+            border-bottom: 1.5px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px) saturate(180%);
+            z-index: 1;
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            margin-right: 16px;
+        }
+        .hamburger span {
+            height: 4px;
+            width: 100%;
+            background: #f5f5f7;
+            margin: 4px 0;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        .topbar .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+        }
+        .topbar .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .topbar .user-name {
+            color: #f5f5f7;
+            font-size: 1.05rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 48px;
+            right: 0;
+            background: rgba(29, 29, 31, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            min-width: 140px;
+            z-index: 10;
+            padding: 10px 0;
+        }
+        .user-dropdown.open {
+            display: block;
+        }
+        .user-dropdown button {
+            width: 100%;
+            background: none;
+            border: none;
+            color: #f5f5f7;
+            font-size: 1rem;
+            padding: 10px 20px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .user-dropdown button:hover {
+            background: rgba(120,119,198,0.13);
+        }
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 36px 0 24px 0;
+            background: linear-gradient(135deg, #f5f5f7 0%, #8e8e93 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: left;
+            padding-left: 12px;
+        }
+        .device-table-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            background: rgba(29, 29, 31, 0.55);
+            border-radius: 20px;
+            border: 1.5px solid rgba(255,255,255,0.13);
+            box-shadow: 0 10px 32px rgba(0,0,0,0.18);
+            padding: 32px 0 24px 0;
+            margin-bottom: 48px;
+            overflow-x: auto;
+        }
+        table.device-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .device-table th, .device-table td {
+            padding: 14px 18px;
+            text-align: left;
+        }
+        .device-table th {
+            color: #a1a1a6;
+            font-weight: 600;
+            font-size: 1.01rem;
+            letter-spacing: 0.01em;
+        }
+        .device-table tbody tr {
+            background: rgba(29, 29, 31, 0.55);
+            border-radius: 16px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+            transition: box-shadow 0.2s;
+        }
+        .device-table tbody tr:not(:last-child) {
+            margin-bottom: 16px;
+        }
+        .device-table tbody tr:hover {
+            box-shadow: 0 8px 32px rgba(102,126,234,0.13);
+        }
+        .device-table td {
+            background: none;
+            border-radius: 0;
+            font-size: 1.04rem;
+            color: #f5f5f7;
+            vertical-align: middle;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online {
+            background: #4ade80;
+        }
+        .status-offline {
+            background: #f87171;
+        }
+        .device-actions button {
+            background: rgba(120,119,198,0.13);
+            color: #f5f5f7;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 16px;
+            margin-right: 8px;
+            font-size: 0.98rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .device-actions button:last-child {
+            margin-right: 0;
+        }
+        .device-actions button:hover {
+            background: #667eea;
+            color: #fff;
+        }
+        @media (max-width: 900px) {
+            .hamburger {
+                display: flex;
+            }
+            .sidebar {
+                position: fixed;
+                left: -240px;
+                top: 0;
+                height: 100vh;
+                width: 220px;
+                transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+                z-index: 1002;
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .sidebar-backdrop {
+                display: block;
+            }
+            .dashboard-layout {
+                flex-direction: column;
+            }
+            .sidebar nav {
+                flex-direction: row;
+                gap: 16px;
+            }
+            .main-content {
+                padding: 0 8px;
+            }
+        }
+        @media (max-width: 700px) {
+            .device-table-container {
+                padding: 16px 0 12px 0;
+            }
+            .dashboard-title {
+                font-size: 1.3rem;
+                margin: 18px 0 12px 0;
+            }
+        }
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.25);
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-mesh"></div>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">ombra</div>
+            <nav>
+                <a href="#" class="active">Overview</a>
+                <a href="#">PCs</a>
+                <a href="#">Phones</a>
+                <a href="#">Settings</a>
+            </nav>
+            <div class="sidebar-footer">© 2025 ombra.cc</div>
+        </aside>
+        <div class="main-content">
+            <div class="topbar">
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="user-menu" id="user-menu">
+                    <span class="user-name">Admin</span>
+                    <span class="user-avatar">A</span>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <button id="logout-btn">Log out</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-title">Device Management</div>
+            <div class="device-table-container">
+                <table class="device-table">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>OS</th>
+                            <th>Last Seen</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Workstation-PC</td>
+                            <td>💻 PC</td>
+                            <td><span class="status-dot status-online"></span>Online</td>
+                            <td>Windows 11</td>
+                            <td>Just now</td>
+                            <td class="device-actions">
+                                <button>Restart</button>
+                                <button>Details</button>
+                                <button>Remove</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Home-Desktop</td>
+                            <td>🖥️ PC</td>
+                            <td><span class="status-dot status-offline"></span>Offline</td>
+                            <td>Windows 10</td>
+                            <td>2 hours ago</td>
+                            <td class="device-actions">
+                                <button>Wake</button>
+                                <button>Details</button>
+                                <button>Remove</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>iPhone 15 Pro</td>
+                            <td>📱 Phone</td>
+                            <td><span class="status-dot status-online"></span>Online</td>
+                            <td>iOS 17</td>
+                            <td>5 min ago</td>
+                            <td class="device-actions">
+                                <button>Ping</button>
+                                <button>Details</button>
+                                <button>Remove</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Pixel 8</td>
+                            <td>📱 Phone</td>
+                            <td><span class="status-dot status-offline"></span>Offline</td>
+                            <td>Android 14</td>
+                            <td>Yesterday</td>
+                            <td class="device-actions">
+                                <button>Ping</button>
+                                <button>Details</button>
+                                <button>Remove</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Parallax mesh effect
+        document.addEventListener('mousemove', (e) => {
+            const meshLayer = document.querySelector('.bg-mesh');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            const xOffset = (x - 0.5) * 20;
+            const yOffset = (y - 0.5) * 20;
+            meshLayer.style.transform = `translate(${xOffset}px, ${yOffset}px) scale(1.1)`;
+        });
+
+        // Hamburger menu for sidebar
+        const hamburger = document.getElementById('hamburger');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+        hamburger && hamburger.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarBackdrop.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        });
+        sidebarBackdrop && sidebarBackdrop.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarBackdrop.style.display = 'none';
+        });
+
+        // User dropdown menu
+        const userMenu = document.getElementById('user-menu');
+        const userDropdown = document.getElementById('user-dropdown');
+        let dropdownOpen = false;
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            dropdownOpen = !dropdownOpen;
+            userDropdown.classList.toggle('open', dropdownOpen);
+        }
+        userMenu && userMenu.addEventListener('click', toggleDropdown);
+        document.addEventListener('click', function(e) {
+            if (dropdownOpen && !userMenu.contains(e.target)) {
+                userDropdown.classList.remove('open');
+                dropdownOpen = false;
+            }
+        });
+        // Logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        logoutBtn && logoutBtn.addEventListener('click', function() {
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html> 

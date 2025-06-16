@@ -1,9 +1,663 @@
-<!doctype html>
-<html>
-  <head>
-    <title>This is the title of the webpage!</title>
-  </head>
-  <body>
-    <p>This is an example paragraph. Anything in the <strong>body</strong> tag will appear on the page, just like this <strong>p</strong> tag and its contents.</p>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ombra.cc</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@100;200;300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+            background: #000;
+            color: #f5f5f7;
+            overflow-x: hidden;
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+        }
+        
+        /* Background layers */
+        .bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .bg-gradient {
+            background: radial-gradient(ellipse at center, #1d1d1f 0%, #000 70%);
+            opacity: 1;
+        }
+        
+        .bg-mesh {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 55, 95, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 200, 255, 0.2) 0%, transparent 50%);
+            animation: meshMove 20s ease-in-out infinite;
+        }
+        
+        @keyframes meshMove {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+        
+        /* Glass navigation */
+        .nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(29, 29, 31, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .nav:hover {
+            background: rgba(29, 29, 31, 0.8);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .nav ul {
+            display: flex;
+            list-style: none;
+            gap: 32px;
+            align-items: center;
+        }
+        
+        .nav a {
+            color: #f5f5f7;
+            text-decoration: none;
+            font-size: 17px;
+            font-weight: 400;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 8px 16px;
+            border-radius: 12px;
+        }
+        
+        .nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .nav .logo {
+            font-weight: 600;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Main content */
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 20px;
+            position: relative;
+        }
+        
+        .hero {
+            text-align: center;
+            max-width: 980px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 0 20px;
+        }
+        
+        .hero h1 {
+            font-size: clamp(48px, 8vw, 96px);
+            font-weight: 700;
+            letter-spacing: -0.05em;
+            line-height: 1.05;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #f5f5f7 0%, #8e8e93 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 28px;
+            font-weight: 400;
+            color: #a1a1a6;
+            margin-bottom: 48px;
+            line-height: 1.14286;
+            letter-spacing: 0.007em;
+        }
+        
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            animation: bounce 2s infinite;
+        }
+        
+        .scroll-indicator span {
+            font-size: 14px;
+            color: #a1a1a6;
+        }
+        
+        .scroll-indicator::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border-right: 2px solid #a1a1a6;
+            border-bottom: 2px solid #a1a1a6;
+            transform: rotate(45deg);
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) translateX(-50%);
+            }
+            40% {
+                transform: translateY(-10px) translateX(-50%);
+            }
+            60% {
+                transform: translateY(-5px) translateX(-50%);
+            }
+        }
+        
+        .content-section {
+            position: relative;
+            padding: 120px 0;
+            /* No background or blur for seamless transition */
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin: 0 auto;
+            padding: 0 20px;
+            max-width: 1200px;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .cards-grid.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .glass-card {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .glass-card {
+            background: rgba(29, 29, 31, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 32px;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                transparent 100%
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-8px) rotateX(5deg) rotateY(5deg);
+            background: rgba(29, 29, 31, 0.8);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-card:hover::before,
+        .glass-card:hover::after {
+            opacity: 1;
+        }
+        
+        .card-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: transform 0.6s ease;
+        }
+        
+        .glass-card:hover .card-icon::before {
+            transform: rotate(45deg) translate(100%, 100%);
+        }
+        
+        .card-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #f5f5f7;
+        }
+        
+        .card-description {
+            font-size: 17px;
+            color: #a1a1a6;
+            line-height: 1.47059;
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 80px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cta-title {
+            font-size: 40px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #f5f5f7;
+        }
+        
+        .cta-description {
+            font-size: 21px;
+            color: #a1a1a6;
+            margin-bottom: 40px;
+            line-height: 1.381;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: #0071e3;
+            color: #ffffff;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 400;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #0077ed;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 113, 227, 0.3);
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #0071e3;
+            border: 1px solid rgba(0, 113, 227, 0.5);
+            padding: 16px 32px;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 400;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 113, 227, 0.1);
+            border-color: #0071e3;
+            transform: translateY(-2px);
+        }
+        
+        /* Footer */
+        .footer {
+            background: rgba(29, 29, 31, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: 120px;
+        }
+        
+        .footer p {
+            color: #a1a1a6;
+            font-size: 17px;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .nav ul {
+                gap: 20px;
+            }
+            
+            .nav a {
+                font-size: 16px;
+                padding: 6px 12px;
+            }
+            
+            .hero {
+                padding: 100px 0 60px;
+            }
+            
+            .hero p {
+                font-size: 21px;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                margin: 60px 0;
+            }
+            
+            .glass-card {
+                padding: 32px 24px;
+            }
+            
+            .cta-section {
+                padding: 60px 20px;
+            }
+            
+            .cta-title {
+                font-size: 32px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-primary,
+            .btn-secondary {
+                width: 200px;
+                text-align: center;
+            }
+        }
+        
+        /* Subtle animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .hero,
+        .glass-card,
+        .cta-section {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .glass-card:nth-child(2) { animation-delay: 0.1s; }
+        .glass-card:nth-child(3) { animation-delay: 0.2s; }
+        .glass-card:nth-child(4) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-mesh"></div>
+    
+    <nav class="nav">
+        <ul>
+            <li><a href="#" class="logo">ombra</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+    
+    <div class="container">
+        <section class="hero">
+            <h1>Think different.<br>Build different.</h1>
+            <p>Crafting digital experiences with precision, elegance, and innovation at their core.</p>
+            <div class="scroll-indicator">
+                <span>Scroll to explore</span>
+            </div>
+        </section>
+        
+        <div class="content-section">
+            <div class="cards-grid" id="features">
+                <div class="glass-card">
+                    <div class="card-icon">⚡</div>
+                    <h3 class="card-title">Lightning Fast</h3>
+                    <p class="card-description">Optimized performance that delivers exceptional speed and responsiveness across all devices and platforms.</p>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="card-icon">🎨</div>
+                    <h3 class="card-title">Beautiful Design</h3>
+                    <p class="card-description">Meticulously crafted interfaces that combine aesthetic excellence with functional simplicity.</p>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="card-icon">🔒</div>
+                    <h3 class="card-title">Privacy First</h3>
+                    <p class="card-description">Built with privacy as a fundamental principle, ensuring your data remains secure and protected.</p>
+                </div>
+            </div>
+            
+            <section class="cta-section">
+                <h2 class="cta-title">Ready to get started?</h2>
+                <p class="cta-description">Join thousands of users who have already discovered the future of digital experiences.</p>
+                <div class="button-group">
+                    <a href="#" class="btn-primary">Get Started</a>
+                    <a href="#" class="btn-secondary">Learn More</a>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>© 2025 ombra.cc. Designed with precision and care.</p>
+    </footer>
+    
+    <script>
+        // Smooth parallax effect for background
+        document.addEventListener('mousemove', (e) => {
+            const meshLayer = document.querySelector('.bg-mesh');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            const xOffset = (x - 0.5) * 20;
+            const yOffset = (y - 0.5) * 20;
+            
+            meshLayer.style.transform = `translate(${xOffset}px, ${yOffset}px) scale(1.1)`;
+        });
+        
+        // Tilt effect for glass cards
+        const cards = document.querySelectorAll('.glass-card');
+        
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                card.style.transform = `
+                    perspective(1000px)
+                    rotateX(${rotateX}deg)
+                    rotateY(${rotateY}deg)
+                    translateZ(10px)
+                `;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
+            });
+        });
+        
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+        
+        // Observe elements for scroll animations
+        document.querySelectorAll('.cards-grid, .glass-card').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll with easing
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const targetPosition = target.getBoundingClientRect().top + window.pageYOffset;
+                    const startPosition = window.pageYOffset;
+                    const distance = targetPosition - startPosition;
+                    const duration = 1000;
+                    let start = null;
+
+                    function animation(currentTime) {
+                        if (start === null) start = currentTime;
+                        const timeElapsed = currentTime - start;
+                        const progress = Math.min(timeElapsed / duration, 1);
+                        const ease = easeInOutCubic(progress);
+                        window.scrollTo(0, startPosition + (distance * ease));
+                        if (timeElapsed < duration) {
+                            requestAnimationFrame(animation);
+                        }
+                    }
+
+                    function easeInOutCubic(t) {
+                        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                    }
+
+                    requestAnimationFrame(animation);
+                }
+            });
+        });
+        
+        // Add scroll effect to navigation
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.nav');
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(29, 29, 31, 0.8)';
+                nav.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            } else {
+                nav.style.background = 'rgba(29, 29, 31, 0.72)';
+                nav.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            }
+        });
+    </script>
+</body>
 </html>
