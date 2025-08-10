@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markdown Editor — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <style>
+    .editor-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .editor-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    .markdown-editor {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'Inter', monospace;
+      font-size: 14px;
+      color: #ffffff;
+      min-height: 400px;
+      resize: vertical;
+      outline: none;
+      line-height: 1.5;
+    }
+    .markdown-editor:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    .preview-panel {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 400px;
+      overflow-y: auto;
+    }
+    .preview-content {
+      color: #ffffff;
+      line-height: 1.6;
+    }
+    .preview-content h1, .preview-content h2, .preview-content h3, .preview-content h4, .preview-content h5, .preview-content h6 {
+      color: #ffffff;
+      margin-top: 24px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .preview-content h1 { font-size: 2em; }
+    .preview-content h2 { font-size: 1.5em; }
+    .preview-content h3 { font-size: 1.25em; }
+    .preview-content p { margin-bottom: 16px; }
+    .preview-content code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    .preview-content pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .preview-content pre code {
+      background: none;
+      padding: 0;
+    }
+    .preview-content blockquote {
+      border-left: 4px solid #6366f1;
+      padding-left: 16px;
+      margin: 16px 0;
+      color: #cbd5e1;
+    }
+    .preview-content ul, .preview-content ol {
+      margin: 16px 0;
+      padding-left: 24px;
+    }
+    .preview-content li {
+      margin-bottom: 8px;
+    }
+    .preview-content a {
+      color: #6366f1;
+      text-decoration: none;
+    }
+    .preview-content a:hover {
+      text-decoration: underline;
+    }
+    .preview-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+    }
+    .preview-content th, .preview-content td {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .preview-content th {
+      background: rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+    }
+    @media (max-width: 768px) {
+      .editor-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📖</div>
+        <h1>Markdown Editor</h1>
+      </div>
+      <div class="tool-body">
+        <div class="actions">
+          <button class="btn-primary" id="exportMd">Export Markdown</button>
+          <button class="btn-secondary" id="exportHtml">Export HTML</button>
+          <button class="btn-secondary" id="clear">Clear</button>
+        </div>
+        <div class="editor-container">
+          <div class="editor-panel">
+            <div class="panel-header">
+              <div class="panel-title">Editor</div>
+              <div style="font-size:12px; color:#cbd5e1;">Live preview on the right</div>
+            </div>
+            <textarea id="markdownEditor" class="markdown-editor" placeholder="# Welcome to Markdown Editor
+
+## Features
+- **Bold text**
+- *Italic text*
+- `Inline code`
+- [Links](https://example.com)
+
+### Code Block
+```javascript
+function hello() {
+  console.log('Hello, World!');
+}
+```
+
+### Lists
+1. First item
+2. Second item
+3. Third item
+
+- Unordered list
+- Another item
+
+### Table
+| Name | Age | City |
+|------|-----|------|
+| John | 25  | NYC  |
+| Jane | 30  | LA   |
+
+> This is a blockquote
+
+---
+
+Happy writing!"># Welcome to Markdown Editor
+
+## Features
+- **Bold text**
+- *Italic text*
+- `Inline code`
+- [Links](https://example.com)
+
+### Code Block
+```javascript
+function hello() {
+  console.log('Hello, World!');
+}
+```
+
+### Lists
+1. First item
+2. Second item
+3. Third item
+
+- Unordered list
+- Another item
+
+### Table
+| Name | Age | City |
+|------|-----|------|
+| John | 25  | NYC  |
+| Jane | 30  | LA   |
+
+> This is a blockquote
+
+---
+
+Happy writing!</textarea>
+          </div>
+          <div class="editor-panel">
+            <div class="panel-header">
+              <div class="panel-title">Preview</div>
+            </div>
+            <div class="preview-panel">
+              <div id="previewContent" class="preview-content"></div>
+            </div>
+          </div>
+        </div>
+        <p class="note">Write and preview Markdown with live rendering. Export as Markdown or HTML. All processing happens locally.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const markdownEditor = document.getElementById('markdownEditor');
+    const previewContent = document.getElementById('previewContent');
+    const exportMdBtn = document.getElementById('exportMd');
+    const exportHtmlBtn = document.getElementById('exportHtml');
+    const clearBtn = document.getElementById('clear');
+
+    function markdownToHtml(markdown) {
+      return markdown
+        // Headers
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        
+        // Bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        
+        // Italic
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        
+        // Inline code
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        
+        // Code blocks
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+        
+        // Links
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+        
+        // Blockquotes
+        .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+        
+        // Horizontal rules
+        .replace(/^---$/gim, '<hr>')
+        
+        // Tables
+        .replace(/\|(.+)\|/g, function(match) {
+          const cells = match.split('|').slice(1, -1);
+          return '<tr>' + cells.map(cell => `<td>${cell.trim()}</td>`).join('') + '</tr>';
+        })
+        .replace(/(<tr>.*<\/tr>)/s, '<table>$1</table>')
+        
+        // Lists
+        .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+        .replace(/^- (.*$)/gim, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        
+        // Paragraphs
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(.+)$/gm, '<p>$1</p>')
+        
+        // Clean up
+        .replace(/<p><\/p>/g, '')
+        .replace(/<p>(<h[1-6]>.*<\/h[1-6]>)<\/p>/g, '$1')
+        .replace(/<p>(<blockquote>.*<\/blockquote>)<\/p>/g, '$1')
+        .replace(/<p>(<hr>)<\/p>/g, '$1')
+        .replace(/<p>(<table>.*<\/table>)<\/p>/g, '$1')
+        .replace(/<p>(<ul>.*<\/ul>)<\/p>/g, '$1')
+        .replace(/<p>(<ol>.*<\/ol>)<\/p>/g, '$1')
+        .replace(/<p>(<pre>.*<\/pre>)<\/p>/g, '$1');
+    }
+
+    function updatePreview() {
+      const markdown = markdownEditor.value;
+      const html = markdownToHtml(markdown);
+      previewContent.innerHTML = html;
+    }
+
+    function exportMarkdown() {
+      const markdown = markdownEditor.value;
+      if (!markdown.trim()) {
+        alert('No content to export');
+        return;
+      }
+
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'document.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportHtml() {
+      const markdown = markdownEditor.value;
+      if (!markdown.trim()) {
+        alert('No content to export');
+        return;
+      }
+
+      const html = markdownToHtml(markdown);
+      const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Markdown Document</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+        pre { background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 16px; margin: 16px 0; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px 12px; }
+        th { background: #f4f4f4; }
+    </style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
+
+      const blob = new Blob([fullHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'document.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearEditor() {
+      markdownEditor.value = '';
+      updatePreview();
+    }
+
+    markdownEditor.addEventListener('input', updatePreview);
+    exportMdBtn.addEventListener('click', exportMarkdown);
+    exportHtmlBtn.addEventListener('click', exportHtml);
+    clearBtn.addEventListener('click', clearEditor);
+
+    // Initial preview
+    updatePreview();
+  </script>
+</body>
+</html>

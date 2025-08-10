@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Compressor — ombra tools</title>
+  <meta name="description" content="Compress images, documents, and files to reduce size while maintaining quality. Free, private, and runs entirely in your browser.">
+  <link rel="stylesheet" href="/assets/styles/base.css">
+  <style>
+    .compressor {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .upload-area {
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .upload-area:hover {
+      border-color: rgba(147, 51, 234, 0.5);
+      background: rgba(147, 51, 234, 0.1);
+    }
+    
+    .upload-area.dragover {
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.7;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .file-list {
+      margin-top: 24px;
+    }
+    
+    .file-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .file-icon {
+      font-size: 24px;
+      opacity: 0.8;
+    }
+    
+    .file-info {
+      flex: 1;
+    }
+    
+    .file-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .file-size {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
+    .compression-options {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .option-group {
+      margin-bottom: 16px;
+    }
+    
+    .option-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .quality-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    .quality-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #9333ea;
+      cursor: pointer;
+    }
+    
+    .quality-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #9333ea;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .quality-value {
+      text-align: center;
+      font-weight: 600;
+      color: #9333ea;
+      margin-top: 8px;
+    }
+    
+    .compress-btn {
+      background: linear-gradient(135deg, #9333ea, #7c3aed);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-top: 16px;
+    }
+    
+    .compress-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(147, 51, 234, 0.3);
+    }
+    
+    .compress-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .results {
+      margin-top: 24px;
+    }
+    
+    .result-item {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .compression-ratio {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .download-btn {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 8px;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    .download-btn:hover {
+      background: rgba(34, 197, 94, 0.3);
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #9333ea, #7c3aed);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/">← Back to tools</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <div class="content-section">
+      <div class="hero">
+        <h1>File Compressor</h1>
+        <p>Compress images, documents, and files to reduce size while maintaining quality. All processing happens locally in your browser.</p>
+      </div>
+
+      <div class="compressor reveal">
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-icon">📁</div>
+          <h3>Drop files here or click to browse</h3>
+          <p>Supports images (JPG, PNG, WEBP), documents, and other files</p>
+          <input type="file" id="fileInput" class="file-input" multiple accept="image/*,.pdf,.doc,.docx,.txt">
+        </div>
+
+        <div class="compression-options">
+          <div class="option-group">
+            <label class="option-label">Image Quality (for images)</label>
+            <input type="range" id="qualitySlider" class="quality-slider" min="1" max="100" value="80">
+            <div class="quality-value" id="qualityValue">80%</div>
+          </div>
+          
+          <div class="option-group">
+            <label class="option-label">Output Format</label>
+            <select id="formatSelect" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+              <option value="auto">Auto (keep original)</option>
+              <option value="jpeg">JPEG</option>
+              <option value="png">PNG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+          
+          <button class="compress-btn" id="compressBtn" disabled>Compress Files</button>
+        </div>
+
+        <div class="file-list" id="fileList"></div>
+        <div class="results" id="results"></div>
+      </div>
+
+      <div class="note">
+        <strong>Features:</strong> Compress images with quality control, convert between formats, and reduce file sizes. All processing happens locally - your files never leave your device.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let files = [];
+    let compressedFiles = [];
+
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const results = document.getElementById('results');
+    const compressBtn = document.getElementById('compressBtn');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const qualityValue = document.getElementById('qualityValue');
+    const formatSelect = document.getElementById('formatSelect');
+
+    // Quality slider update
+    qualitySlider.addEventListener('input', (e) => {
+      qualityValue.textContent = e.target.value + '%';
+    });
+
+    // Upload area click
+    uploadArea.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    function handleFiles(fileList) {
+      files = Array.from(fileList);
+      displayFiles();
+      updateCompressButton();
+    }
+
+    function displayFiles() {
+      fileList.innerHTML = '';
+      files.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        
+        const icon = getFileIcon(file.type);
+        const size = formatFileSize(file.size);
+        
+        fileItem.innerHTML = `
+          <div class="file-icon">${icon}</div>
+          <div class="file-info">
+            <div class="file-name">${file.name}</div>
+            <div class="file-size">${size}</div>
+          </div>
+          <button onclick="removeFile(${index})" style="background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 8px 12px; cursor: pointer;">Remove</button>
+        `;
+        
+        fileList.appendChild(fileItem);
+      });
+    }
+
+    function getFileIcon(type) {
+      if (type.startsWith('image/')) return '🖼️';
+      if (type.includes('pdf')) return '📄';
+      if (type.includes('document') || type.includes('word')) return '📝';
+      if (type.includes('text')) return '📄';
+      return '📁';
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function removeFile(index) {
+      files.splice(index, 1);
+      displayFiles();
+      updateCompressButton();
+    }
+
+    function updateCompressButton() {
+      compressBtn.disabled = files.length === 0;
+    }
+
+    // Compression
+    compressBtn.addEventListener('click', async () => {
+      if (files.length === 0) return;
+      
+      compressBtn.disabled = true;
+      compressBtn.textContent = 'Compressing...';
+      results.innerHTML = '';
+      
+      const quality = parseInt(qualitySlider.value) / 100;
+      const format = formatSelect.value;
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        await compressFile(file, quality, format, i);
+      }
+      
+      compressBtn.disabled = false;
+      compressBtn.textContent = 'Compress Files';
+    });
+
+    async function compressFile(file, quality, format) {
+      return new Promise((resolve) => {
+        if (file.type.startsWith('image/')) {
+          compressImage(file, quality, format);
+        } else {
+          // For non-images, just show the file (no compression possible in browser)
+          showResult(file, file, 'No compression possible for this file type');
+        }
+        resolve();
+      });
+    }
+
+    function compressImage(file, quality, format) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        let outputFormat = format;
+        if (format === 'auto') {
+          outputFormat = file.type.split('/')[1];
+        }
+        
+        let mimeType;
+        switch (outputFormat) {
+          case 'jpeg': mimeType = 'image/jpeg'; break;
+          case 'png': mimeType = 'image/png'; break;
+          case 'webp': mimeType = 'image/webp'; break;
+          default: mimeType = file.type;
+        }
+        
+        canvas.toBlob((blob) => {
+          const compressedFile = new File([blob], `compressed_${file.name}`, { type: mimeType });
+          const compressionRatio = ((1 - blob.size / file.size) * 100).toFixed(1);
+          showResult(file, compressedFile, `Compressed by ${compressionRatio}%`);
+        }, mimeType, quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    }
+
+    function showResult(originalFile, compressedFile, message) {
+      const resultItem = document.createElement('div');
+      resultItem.className = 'result-item';
+      
+      const compressionRatio = ((1 - compressedFile.size / originalFile.size) * 100).toFixed(1);
+      const isCompressed = compressedFile.size < originalFile.size;
+      
+      resultItem.innerHTML = `
+        <div class="result-header">
+          <div>
+            <strong>${compressedFile.name}</strong>
+            <div style="font-size: 14px; opacity: 0.7; margin-top: 4px;">
+              ${formatFileSize(originalFile.size)} → ${formatFileSize(compressedFile.size)}
+            </div>
+          </div>
+          <div class="compression-ratio">${isCompressed ? `-${compressionRatio}%` : 'No change'}</div>
+        </div>
+        <div style="margin-bottom: 12px; font-size: 14px; opacity: 0.8;">${message}</div>
+        <a href="${URL.createObjectURL(compressedFile)}" download="${compressedFile.name}" class="download-btn">Download</a>
+      `;
+      
+      results.appendChild(resultItem);
+    }
+  </script>
+  <script src="/assets/scripts/effects.js"></script>
+</body>
+</html>

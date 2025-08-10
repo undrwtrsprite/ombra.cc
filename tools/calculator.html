@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Calculator — ombra tools</title>
+  <meta name="description" content="Advanced scientific calculator with history, memory functions, and unit conversions. Free, private, and runs entirely in your browser.">
+  <link rel="stylesheet" href="/assets/styles/base.css">
+  <style>
+    .calculator {
+      max-width: 400px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .display {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: right;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    
+    .history {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 8px;
+      min-height: 20px;
+    }
+    
+    .current {
+      font-size: 32px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    
+    .btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px 8px;
+      color: white;
+      font-size: 18px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn.operator {
+      background: rgba(147, 51, 234, 0.3);
+      border-color: rgba(147, 51, 234, 0.5);
+    }
+    
+    .btn.operator:hover {
+      background: rgba(147, 51, 234, 0.4);
+    }
+    
+    .btn.equals {
+      background: rgba(34, 197, 94, 0.3);
+      border-color: rgba(34, 197, 94, 0.5);
+      grid-column: span 2;
+    }
+    
+    .btn.equals:hover {
+      background: rgba(34, 197, 94, 0.4);
+    }
+    
+    .btn.clear {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+    
+    .btn.clear:hover {
+      background: rgba(239, 68, 68, 0.4);
+    }
+    
+    .btn.function {
+      background: rgba(59, 130, 246, 0.3);
+      border-color: rgba(59, 130, 246, 0.5);
+      font-size: 14px;
+    }
+    
+    .btn.function:hover {
+      background: rgba(59, 130, 246, 0.4);
+    }
+    
+    .memory-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .memory-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .memory-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .memory-indicator {
+      background: rgba(34, 197, 94, 0.3);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 12px;
+      display: none;
+    }
+    
+    .memory-indicator.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/">← Back to tools</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <div class="content-section">
+      <div class="hero">
+        <h1>Advanced Calculator</h1>
+        <p>Scientific calculator with history, memory functions, and advanced operations. All calculations happen locally in your browser.</p>
+      </div>
+
+      <div class="calculator reveal">
+        <div class="display">
+          <div class="history" id="history"></div>
+          <div class="current" id="current">0</div>
+        </div>
+        
+        <div class="memory-controls">
+          <button class="memory-btn" onclick="memoryStore()">MS</button>
+          <button class="memory-btn" onclick="memoryRecall()">MR</button>
+          <button class="memory-btn" onclick="memoryAdd()">M+</button>
+          <button class="memory-btn" onclick="memorySubtract()">M-</button>
+          <button class="memory-btn" onclick="memoryClear()">MC</button>
+          <div class="memory-indicator" id="memoryIndicator">M</div>
+        </div>
+
+        <div class="buttons-grid">
+          <button class="btn function" onclick="calculate('sin')">sin</button>
+          <button class="btn function" onclick="calculate('cos')">cos</button>
+          <button class="btn function" onclick="calculate('tan')">tan</button>
+          <button class="btn clear" onclick="clearAll()">C</button>
+          
+          <button class="btn function" onclick="calculate('log')">log</button>
+          <button class="btn function" onclick="calculate('ln')">ln</button>
+          <button class="btn function" onclick="calculate('sqrt')">√</button>
+          <button class="btn operator" onclick="setOperator('/')">÷</button>
+          
+          <button class="btn" onclick="appendNumber('7')">7</button>
+          <button class="btn" onclick="appendNumber('8')">8</button>
+          <button class="btn" onclick="appendNumber('9')">9</button>
+          <button class="btn operator" onclick="setOperator('*')">×</button>
+          
+          <button class="btn" onclick="appendNumber('4')">4</button>
+          <button class="btn" onclick="appendNumber('5')">5</button>
+          <button class="btn" onclick="appendNumber('6')">6</button>
+          <button class="btn operator" onclick="setOperator('-')">−</button>
+          
+          <button class="btn" onclick="appendNumber('1')">1</button>
+          <button class="btn" onclick="appendNumber('2')">2</button>
+          <button class="btn" onclick="appendNumber('3')">3</button>
+          <button class="btn operator" onclick="setOperator('+')">+</button>
+          
+          <button class="btn" onclick="appendNumber('0')">0</button>
+          <button class="btn" onclick="appendDecimal()">.</button>
+          <button class="btn" onclick="calculate('pow')">x²</button>
+          <button class="btn equals" onclick="calculateResult()">=</button>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Features:</strong> Scientific functions, memory storage, calculation history, and keyboard support. All data stays on your device.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentValue = '0';
+    let previousValue = null;
+    let operator = null;
+    let waitingForOperand = false;
+    let memory = 0;
+    let history = [];
+
+    function updateDisplay() {
+      document.getElementById('current').textContent = currentValue;
+      document.getElementById('history').textContent = history.length > 0 ? history[history.length - 1] : '';
+      document.getElementById('memoryIndicator').classList.toggle('active', memory !== 0);
+    }
+
+    function appendNumber(num) {
+      if (waitingForOperand) {
+        currentValue = num;
+        waitingForOperand = false;
+      } else {
+        currentValue = currentValue === '0' ? num : currentValue + num;
+      }
+      updateDisplay();
+    }
+
+    function appendDecimal() {
+      if (waitingForOperand) {
+        currentValue = '0.';
+        waitingForOperand = false;
+      } else if (currentValue.indexOf('.') === -1) {
+        currentValue += '.';
+      }
+      updateDisplay();
+    }
+
+    function setOperator(op) {
+      if (previousValue !== null && !waitingForOperand) {
+        calculateResult();
+      }
+      previousValue = parseFloat(currentValue);
+      operator = op;
+      waitingForOperand = true;
+      history.push(`${previousValue} ${operator}`);
+      updateDisplay();
+    }
+
+    function calculateResult() {
+      if (previousValue === null || waitingForOperand) return;
+      
+      const current = parseFloat(currentValue);
+      let result;
+      
+      switch (operator) {
+        case '+': result = previousValue + current; break;
+        case '-': result = previousValue - current; break;
+        case '*': result = previousValue * current; break;
+        case '/': result = previousValue / current; break;
+        default: return;
+      }
+      
+      history.push(`${previousValue} ${operator} ${current} = ${result}`);
+      currentValue = result.toString();
+      previousValue = null;
+      operator = null;
+      waitingForOperand = true;
+      updateDisplay();
+    }
+
+    function calculate(func) {
+      const current = parseFloat(currentValue);
+      let result;
+      
+      switch (func) {
+        case 'sin': result = Math.sin(current * Math.PI / 180); break;
+        case 'cos': result = Math.cos(current * Math.PI / 180); break;
+        case 'tan': result = Math.tan(current * Math.PI / 180); break;
+        case 'log': result = Math.log10(current); break;
+        case 'ln': result = Math.log(current); break;
+        case 'sqrt': result = Math.sqrt(current); break;
+        case 'pow': result = current * current; break;
+        default: return;
+      }
+      
+      history.push(`${func}(${current}) = ${result}`);
+      currentValue = result.toString();
+      updateDisplay();
+    }
+
+    function clearAll() {
+      currentValue = '0';
+      previousValue = null;
+      operator = null;
+      waitingForOperand = false;
+      history = [];
+      updateDisplay();
+    }
+
+    function memoryStore() {
+      memory = parseFloat(currentValue);
+      updateDisplay();
+    }
+
+    function memoryRecall() {
+      currentValue = memory.toString();
+      updateDisplay();
+    }
+
+    function memoryAdd() {
+      memory += parseFloat(currentValue);
+      updateDisplay();
+    }
+
+    function memorySubtract() {
+      memory -= parseFloat(currentValue);
+      updateDisplay();
+    }
+
+    function memoryClear() {
+      memory = 0;
+      updateDisplay();
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key >= '0' && e.key <= '9') appendNumber(e.key);
+      else if (e.key === '.') appendDecimal();
+      else if (e.key === '+') setOperator('+');
+      else if (e.key === '-') setOperator('-');
+      else if (e.key === '*') setOperator('*');
+      else if (e.key === '/') setOperator('/');
+      else if (e.key === 'Enter' || e.key === '=') calculateResult();
+      else if (e.key === 'Escape') clearAll();
+      else if (e.key === 'Backspace') {
+        if (currentValue.length > 1) {
+          currentValue = currentValue.slice(0, -1);
+          updateDisplay();
+        } else {
+          currentValue = '0';
+          updateDisplay();
+        }
+      }
+    });
+
+    updateDisplay();
+  </script>
+  <script src="/assets/scripts/effects.js"></script>
+</body>
+</html>

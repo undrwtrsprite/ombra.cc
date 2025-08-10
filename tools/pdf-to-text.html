@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF to Text — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📄</div>
+        <h1>PDF to Text</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <label>PDF</label>
+          <input type="file" id="file" accept="application/pdf" />
+        </div>
+        <div class="actions">
+          <button class="btn-primary" id="extract">Extract text</button>
+          <button class="btn-secondary" id="copy">Copy</button>
+          <button class="btn-secondary" id="download">Download .txt</button>
+        </div>
+        <textarea id="output" placeholder="Extracted text will appear here"></textarea>
+        <p class="note">Extraction runs locally using PDF.js. Your file never leaves your device.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const fileInput = document.getElementById('file');
+    const extractBtn = document.getElementById('extract');
+    const copyBtn = document.getElementById('copy');
+    const downloadBtn = document.getElementById('download');
+    const output = document.getElementById('output');
+
+    async function readAsArrayBuffer(file) {
+      return await file.arrayBuffer();
+    }
+
+    extractBtn.addEventListener('click', async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) { alert('Choose a PDF'); return; }
+      const data = await readAsArrayBuffer(file);
+      const pdf = await pdfjsLib.getDocument({ data }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const strings = content.items.map(it => it.str);
+        text += strings.join(' ') + "\n\n";
+      }
+      output.value = text.trim();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(output.value || '');
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([output.value || ''], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'extracted.txt'; a.click(); URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
+

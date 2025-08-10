@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit Converter — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📊</div>
+        <h1>Unit Converter</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <label>Category</label>
+          <select id="category">
+            <option value="length">Length</option>
+            <option value="weight">Weight</option>
+            <option value="temperature">Temperature</option>
+            <option value="area">Area</option>
+            <option value="volume">Volume</option>
+            <option value="speed">Speed</option>
+            <option value="time">Time</option>
+            <option value="data">Data Storage</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label>From</label>
+          <input type="number" id="fromValue" value="1" step="any" />
+          <select id="fromUnit"></select>
+          <label>To</label>
+          <select id="toUnit"></select>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" id="convert">Convert</button>
+          <button class="btn-secondary" id="swap">Swap Units</button>
+        </div>
+        <div id="result" style="margin-top:24px; text-align:center; display:none;">
+          <div style="font-size:24px; font-weight:700; color:#ffffff; margin-bottom:8px;" id="resultValue"></div>
+          <div style="font-size:16px; color:#cbd5e1;" id="resultText"></div>
+        </div>
+        <p class="note">Convert between different units instantly. All calculations happen locally.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const category = document.getElementById('category');
+    const fromValue = document.getElementById('fromValue');
+    const fromUnit = document.getElementById('fromUnit');
+    const toUnit = document.getElementById('toUnit');
+    const convertBtn = document.getElementById('convert');
+    const swapBtn = document.getElementById('swap');
+    const result = document.getElementById('result');
+    const resultValue = document.getElementById('resultValue');
+    const resultText = document.getElementById('resultText');
+
+    const units = {
+      length: {
+        meter: 1,
+        kilometer: 1000,
+        centimeter: 0.01,
+        millimeter: 0.001,
+        mile: 1609.344,
+        yard: 0.9144,
+        foot: 0.3048,
+        inch: 0.0254,
+        nautical_mile: 1852
+      },
+      weight: {
+        kilogram: 1,
+        gram: 0.001,
+        milligram: 0.000001,
+        pound: 0.45359237,
+        ounce: 0.028349523125,
+        ton: 1000,
+        stone: 6.35029318
+      },
+      temperature: {
+        celsius: 'celsius',
+        fahrenheit: 'fahrenheit',
+        kelvin: 'kelvin'
+      },
+      area: {
+        square_meter: 1,
+        square_kilometer: 1000000,
+        square_centimeter: 0.0001,
+        square_mile: 2589988.110336,
+        acre: 4046.8564224,
+        hectare: 10000,
+        square_foot: 0.09290304,
+        square_inch: 0.00064516
+      },
+      volume: {
+        liter: 1,
+        milliliter: 0.001,
+        cubic_meter: 1000,
+        gallon: 3.785411784,
+        quart: 0.946352946,
+        pint: 0.473176473,
+        cup: 0.236588236,
+        fluid_ounce: 0.0295735295625
+      },
+      speed: {
+        meter_per_second: 1,
+        kilometer_per_hour: 0.277778,
+        mile_per_hour: 0.44704,
+        knot: 0.514444,
+        foot_per_second: 0.3048
+      },
+      time: {
+        second: 1,
+        minute: 60,
+        hour: 3600,
+        day: 86400,
+        week: 604800,
+        month: 2592000,
+        year: 31536000
+      },
+      data: {
+        byte: 1,
+        kilobyte: 1024,
+        megabyte: 1048576,
+        gigabyte: 1073741824,
+        terabyte: 1099511627776,
+        petabyte: 1125899906842624
+      }
+    };
+
+    const unitNames = {
+      length: {
+        meter: 'Meter',
+        kilometer: 'Kilometer',
+        centimeter: 'Centimeter',
+        millimeter: 'Millimeter',
+        mile: 'Mile',
+        yard: 'Yard',
+        foot: 'Foot',
+        inch: 'Inch',
+        nautical_mile: 'Nautical Mile'
+      },
+      weight: {
+        kilogram: 'Kilogram',
+        gram: 'Gram',
+        milligram: 'Milligram',
+        pound: 'Pound',
+        ounce: 'Ounce',
+        ton: 'Ton',
+        stone: 'Stone'
+      },
+      temperature: {
+        celsius: 'Celsius',
+        fahrenheit: 'Fahrenheit',
+        kelvin: 'Kelvin'
+      },
+      area: {
+        square_meter: 'Square Meter',
+        square_kilometer: 'Square Kilometer',
+        square_centimeter: 'Square Centimeter',
+        square_mile: 'Square Mile',
+        acre: 'Acre',
+        hectare: 'Hectare',
+        square_foot: 'Square Foot',
+        square_inch: 'Square Inch'
+      },
+      volume: {
+        liter: 'Liter',
+        milliliter: 'Milliliter',
+        cubic_meter: 'Cubic Meter',
+        gallon: 'Gallon',
+        quart: 'Quart',
+        pint: 'Pint',
+        cup: 'Cup',
+        fluid_ounce: 'Fluid Ounce'
+      },
+      speed: {
+        meter_per_second: 'Meter/Second',
+        kilometer_per_hour: 'Kilometer/Hour',
+        mile_per_hour: 'Mile/Hour',
+        knot: 'Knot',
+        foot_per_second: 'Foot/Second'
+      },
+      time: {
+        second: 'Second',
+        minute: 'Minute',
+        hour: 'Hour',
+        day: 'Day',
+        week: 'Week',
+        month: 'Month',
+        year: 'Year'
+      },
+      data: {
+        byte: 'Byte',
+        kilobyte: 'Kilobyte',
+        megabyte: 'Megabyte',
+        gigabyte: 'Gigabyte',
+        terabyte: 'Terabyte',
+        petabyte: 'Petabyte'
+      }
+    };
+
+    function populateUnits() {
+      const currentCategory = category.value;
+      const currentUnits = units[currentCategory];
+      const currentNames = unitNames[currentCategory];
+      
+      fromUnit.innerHTML = '';
+      toUnit.innerHTML = '';
+      
+      Object.keys(currentUnits).forEach(unit => {
+        const option1 = document.createElement('option');
+        option1.value = unit;
+        option1.textContent = currentNames[unit];
+        fromUnit.appendChild(option1);
+        
+        const option2 = document.createElement('option');
+        option2.value = unit;
+        option2.textContent = currentNames[unit];
+        toUnit.appendChild(option2);
+      });
+      
+      // Set different default units
+      const unitKeys = Object.keys(currentUnits);
+      if (unitKeys.length > 1) {
+        toUnit.value = unitKeys[1];
+      }
+    }
+
+    function convertTemperature(from, to, value) {
+      let celsius;
+      
+      // Convert to Celsius first
+      switch(from) {
+        case 'celsius':
+          celsius = value;
+          break;
+        case 'fahrenheit':
+          celsius = (value - 32) * 5/9;
+          break;
+        case 'kelvin':
+          celsius = value - 273.15;
+          break;
+      }
+      
+      // Convert from Celsius to target unit
+      switch(to) {
+        case 'celsius':
+          return celsius;
+        case 'fahrenheit':
+          return celsius * 9/5 + 32;
+        case 'kelvin':
+          return celsius + 273.15;
+      }
+    }
+
+    function performConversion() {
+      const value = parseFloat(fromValue.value);
+      const from = fromUnit.value;
+      const to = toUnit.value;
+      const currentCategory = category.value;
+      
+      if (isNaN(value)) {
+        result.style.display = 'none';
+        return;
+      }
+      
+      let convertedValue;
+      
+      if (currentCategory === 'temperature') {
+        convertedValue = convertTemperature(from, to, value);
+      } else {
+        const fromFactor = units[currentCategory][from];
+        const toFactor = units[currentCategory][to];
+        convertedValue = (value * fromFactor) / toFactor;
+      }
+      
+      const fromName = unitNames[currentCategory][from];
+      const toName = unitNames[currentCategory][to];
+      
+      resultValue.textContent = convertedValue.toFixed(6).replace(/\.?0+$/, '');
+      resultText.textContent = `${value} ${fromName} = ${convertedValue.toFixed(6).replace(/\.?0+$/, '')} ${toName}`;
+      result.style.display = 'block';
+    }
+
+    function swapUnits() {
+      const tempUnit = fromUnit.value;
+      fromUnit.value = toUnit.value;
+      toUnit.value = tempUnit;
+      performConversion();
+    }
+
+    category.addEventListener('change', () => {
+      populateUnits();
+      performConversion();
+    });
+
+    fromValue.addEventListener('input', performConversion);
+    fromUnit.addEventListener('change', performConversion);
+    toUnit.addEventListener('change', performConversion);
+    convertBtn.addEventListener('click', performConversion);
+    swapBtn.addEventListener('click', swapUnits);
+
+    // Initialize
+    populateUnits();
+    performConversion();
+  </script>
+</body>
+</html>

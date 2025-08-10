@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Resizer — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📐</div>
+        <h1>Image Resizer</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <label>Input</label>
+          <input type="file" id="file" accept="image/*" />
+        </div>
+        <div class="control-row">
+          <label>Width</label>
+          <input type="number" id="width" min="1" placeholder="Auto" />
+          <label>Height</label>
+          <input type="number" id="height" min="1" placeholder="Auto" />
+          <label><input type="checkbox" id="keepAspect" checked /> Keep aspect</label>
+          <label>Quality</label>
+          <input id="quality" type="range" min="0.1" max="1" step="0.05" value="0.9" />
+          <span id="qval" class="note">0.90</span>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" id="resize">Resize</button>
+          <a id="download" class="btn-secondary" download style="display:none;">Download</a>
+        </div>
+        <div class="preview" id="preview"><span class="note">Preview will appear here</span></div>
+        <p class="note">Processed locally in your browser.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const fileInput = document.getElementById('file');
+    const wInput = document.getElementById('width');
+    const hInput = document.getElementById('height');
+    const keepAspect = document.getElementById('keepAspect');
+    const qInput = document.getElementById('quality');
+    const qval = document.getElementById('qval');
+    const resizeBtn = document.getElementById('resize');
+    const downloadLink = document.getElementById('download');
+    const preview = document.getElementById('preview');
+
+    qInput.addEventListener('input', () => qval.textContent = Number(qInput.value).toFixed(2));
+
+    async function readImage(file) {
+      const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await img.decode(); URL.revokeObjectURL(url); return img;
+    }
+
+    resizeBtn.addEventListener('click', async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) { alert('Choose an image'); return; }
+      const img = await readImage(file);
+      let w = parseInt(wInput.value, 10); let h = parseInt(hInput.value, 10);
+      if (keepAspect.checked) {
+        if (w && !h) { h = Math.round((w / img.naturalWidth) * img.naturalHeight); }
+        else if (!w && h) { w = Math.round((h / img.naturalHeight) * img.naturalWidth); }
+      }
+      if (!w) w = img.naturalWidth; if (!h) h = img.naturalHeight;
+      const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', Number(qInput.value)));
+      const outUrl = URL.createObjectURL(blob);
+      preview.innerHTML = ''; const outImg = document.createElement('img'); outImg.src = outUrl; preview.appendChild(outImg);
+      downloadLink.href = outUrl; downloadLink.download = 'resized.jpg'; downloadLink.style.display = 'inline-block';
+    });
+  </script>
+</body>
+</html>
+

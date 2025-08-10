@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Encoder/Decoder — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🔗</div>
+        <h1>URL Encoder/Decoder</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <label>Input Text</label>
+        </div>
+        <textarea id="inputText" placeholder="Enter text to encode or decode...">https://example.com/path?name=John Doe&city=New York</textarea>
+        <div class="actions">
+          <button class="btn-primary" id="encode">Encode URL</button>
+          <button class="btn-secondary" id="decode">Decode URL</button>
+          <button class="btn-secondary" id="copy">Copy Result</button>
+          <button class="btn-secondary" id="clear">Clear</button>
+        </div>
+        <div id="result" style="margin-top:24px; display:none;">
+          <h3 style="margin-bottom:16px; color:#ffffff;">Result</h3>
+          <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px;">
+            <div id="resultText" style="font-family:'Inter', monospace; font-size:16px; color:#ffffff; word-break:break-all; line-height:1.4;"></div>
+          </div>
+        </div>
+        <div id="info" style="margin-top:16px;">
+          <h4 style="margin-bottom:12px; color:#ffffff;">Common Characters</h4>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; font-size:14px;">
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px;">
+              <div style="color:#cbd5e1; margin-bottom:4px;">Space</div>
+              <div style="color:#ffffff; font-family:monospace;">%20</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px;">
+              <div style="color:#cbd5e1; margin-bottom:4px;">& (Ampersand)</div>
+              <div style="color:#ffffff; font-family:monospace;">%26</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px;">
+              <div style="color:#cbd5e1; margin-bottom:4px;">= (Equals)</div>
+              <div style="color:#ffffff; font-family:monospace;">%3D</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px;">
+              <div style="color:#cbd5e1; margin-bottom:4px;">? (Question)</div>
+              <div style="color:#ffffff; font-family:monospace;">%3F</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px;">
+              <div style="color:#cbd5e1; margin-bottom:4px;"># (Hash)</div>
+              <div style="color:#ffffff; font-family:monospace;">%23</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px;">
+              <div style="color:#cbd5e1; margin-bottom:4px;">+ (Plus)</div>
+              <div style="color:#ffffff; font-family:monospace;">%2B</div>
+            </div>
+          </div>
+        </div>
+        <p class="note">Encode and decode URLs, handle special characters and Unicode. All processing happens locally.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const inputText = document.getElementById('inputText');
+    const encodeBtn = document.getElementById('encode');
+    const decodeBtn = document.getElementById('decode');
+    const copyBtn = document.getElementById('copy');
+    const clearBtn = document.getElementById('clear');
+    const result = document.getElementById('result');
+    const resultText = document.getElementById('resultText');
+
+    function encodeURL() {
+      const text = inputText.value.trim();
+      if (!text) {
+        alert('Please enter some text to encode');
+        return;
+      }
+
+      try {
+        const encoded = encodeURIComponent(text);
+        resultText.textContent = encoded;
+        result.style.display = 'block';
+      } catch (error) {
+        alert('Error encoding text: ' + error.message);
+      }
+    }
+
+    function decodeURL() {
+      const text = inputText.value.trim();
+      if (!text) {
+        alert('Please enter some text to decode');
+        return;
+      }
+
+      try {
+        const decoded = decodeURIComponent(text);
+        resultText.textContent = decoded;
+        result.style.display = 'block';
+      } catch (error) {
+        alert('Error decoding text: ' + error.message);
+      }
+    }
+
+    function copyResult() {
+      const text = resultText.textContent;
+      if (!text) {
+        alert('No result to copy');
+        return;
+      }
+
+      navigator.clipboard.writeText(text);
+    }
+
+    function clearAll() {
+      inputText.value = '';
+      result.style.display = 'none';
+    }
+
+    encodeBtn.addEventListener('click', encodeURL);
+    decodeBtn.addEventListener('click', decodeURL);
+    copyBtn.addEventListener('click', copyResult);
+    clearBtn.addEventListener('click', clearAll);
+
+    // Auto-encode on input for URL-like content
+    let timeout;
+    inputText.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        const text = inputText.value.trim();
+        if (text && (text.includes(' ') || text.includes('&') || text.includes('=') || text.includes('?'))) {
+          try {
+            const encoded = encodeURIComponent(text);
+            if (encoded !== text) {
+              resultText.textContent = encoded;
+              result.style.display = 'block';
+            }
+          } catch (error) {
+            // Ignore encoding errors on input
+          }
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JSON Formatter — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <style>
+    .json-editor {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'Inter', monospace;
+      font-size: 14px;
+      color: #ffffff;
+      min-height: 300px;
+      resize: vertical;
+      outline: none;
+      line-height: 1.5;
+    }
+    .json-editor:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    .error {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .success {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .stat {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">⚡</div>
+        <h1>JSON Formatter</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <label>JSON Input</label>
+        </div>
+        <textarea id="jsonInput" class="json-editor" placeholder='{"example": "Paste your JSON here..."}'>{
+  "name": "John Doe",
+  "age": 30,
+  "email": "john@example.com",
+  "hobbies": ["reading", "coding", "gaming"],
+  "address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "zip": "10001"
+  }
+}</textarea>
+        <div class="actions">
+          <button class="btn-primary" id="format">Format JSON</button>
+          <button class="btn-secondary" id="minify">Minify</button>
+          <button class="btn-secondary" id="validate">Validate</button>
+          <button class="btn-secondary" id="copy">Copy</button>
+        </div>
+        <div id="status"></div>
+        <div id="stats" class="stats"></div>
+        <p class="note">Format, validate, and beautify JSON data with syntax highlighting. All processing happens locally.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const jsonInput = document.getElementById('jsonInput');
+    const formatBtn = document.getElementById('format');
+    const minifyBtn = document.getElementById('minify');
+    const validateBtn = document.getElementById('validate');
+    const copyBtn = document.getElementById('copy');
+    const status = document.getElementById('status');
+    const stats = document.getElementById('stats');
+
+    function showStatus(message, type = 'success') {
+      status.innerHTML = `<div class="${type}">${message}</div>`;
+      setTimeout(() => {
+        status.innerHTML = '';
+      }, 3000);
+    }
+
+    function updateStats(json) {
+      const keys = Object.keys(json).length;
+      const size = JSON.stringify(json).length;
+      const depth = getMaxDepth(json);
+      
+      stats.innerHTML = `
+        <div class="stat">Keys: ${keys}</div>
+        <div class="stat">Size: ${size} chars</div>
+        <div class="stat">Depth: ${depth} levels</div>
+      `;
+    }
+
+    function getMaxDepth(obj, depth = 1) {
+      if (typeof obj !== 'object' || obj === null) return depth;
+      return Math.max(...Object.values(obj).map(val => getMaxDepth(val, depth + 1)));
+    }
+
+    function formatJSON() {
+      try {
+        const input = jsonInput.value.trim();
+        if (!input) {
+          showStatus('Please enter some JSON to format', 'error');
+          return;
+        }
+
+        const parsed = JSON.parse(input);
+        const formatted = JSON.stringify(parsed, null, 2);
+        jsonInput.value = formatted;
+        updateStats(parsed);
+        showStatus('JSON formatted successfully!');
+      } catch (error) {
+        showStatus(`Invalid JSON: ${error.message}`, 'error');
+      }
+    }
+
+    function minifyJSON() {
+      try {
+        const input = jsonInput.value.trim();
+        if (!input) {
+          showStatus('Please enter some JSON to minify', 'error');
+          return;
+        }
+
+        const parsed = JSON.parse(input);
+        const minified = JSON.stringify(parsed);
+        jsonInput.value = minified;
+        updateStats(parsed);
+        showStatus('JSON minified successfully!');
+      } catch (error) {
+        showStatus(`Invalid JSON: ${error.message}`, 'error');
+      }
+    }
+
+    function validateJSON() {
+      try {
+        const input = jsonInput.value.trim();
+        if (!input) {
+          showStatus('Please enter some JSON to validate', 'error');
+          return;
+        }
+
+        const parsed = JSON.parse(input);
+        updateStats(parsed);
+        showStatus('JSON is valid!');
+      } catch (error) {
+        showStatus(`Invalid JSON: ${error.message}`, 'error');
+        stats.innerHTML = '';
+      }
+    }
+
+    function copyJSON() {
+      const text = jsonInput.value.trim();
+      if (!text) {
+        showStatus('No JSON to copy', 'error');
+        return;
+      }
+
+      navigator.clipboard.writeText(text);
+      showStatus('JSON copied to clipboard!');
+    }
+
+    formatBtn.addEventListener('click', formatJSON);
+    minifyBtn.addEventListener('click', minifyJSON);
+    validateBtn.addEventListener('click', validateJSON);
+    copyBtn.addEventListener('click', copyJSON);
+
+    // Auto-format on paste
+    jsonInput.addEventListener('paste', () => {
+      setTimeout(() => {
+        try {
+          const input = jsonInput.value.trim();
+          if (input) {
+            const parsed = JSON.parse(input);
+            const formatted = JSON.stringify(parsed, null, 2);
+            if (formatted !== input) {
+              jsonInput.value = formatted;
+              updateStats(parsed);
+            }
+          }
+        } catch (error) {
+          // Ignore parsing errors on paste
+        }
+      }, 100);
+    });
+
+    // Initial validation
+    validateJSON();
+  </script>
+</body>
+</html>

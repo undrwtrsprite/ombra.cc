@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stopwatch & Timer — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">⏱️</div>
+        <h1>Stopwatch & Timer</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <button class="btn-secondary" id="stopwatchTab" data-tab="stopwatch">Stopwatch</button>
+          <button class="btn-secondary" id="timerTab" data-tab="timer">Timer</button>
+        </div>
+        
+        <div id="stopwatchSection" class="tab-content active">
+          <div class="display" id="stopwatchDisplay">00:00:00.000</div>
+          <div class="control-row">
+            <button class="btn-primary" id="startStopwatch">Start</button>
+            <button class="btn-secondary" id="lapStopwatch">Lap</button>
+            <button class="btn-secondary" id="resetStopwatch">Reset</button>
+          </div>
+          <div class="laps" id="stopwatchLaps"></div>
+        </div>
+
+        <div id="timerSection" class="tab-content">
+          <div class="control-row">
+            <label>Hours</label>
+            <input type="number" id="hours" min="0" max="99" value="0" />
+            <label>Minutes</label>
+            <input type="number" id="minutes" min="0" max="59" value="0" />
+            <label>Seconds</label>
+            <input type="number" id="seconds" min="0" max="59" value="0" />
+          </div>
+          <div class="display" id="timerDisplay">00:00:00</div>
+          <div class="control-row">
+            <button class="btn-primary" id="startTimer">Start</button>
+            <button class="btn-secondary" id="pauseTimer">Pause</button>
+            <button class="btn-secondary" id="resetTimer">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    let stopwatchInterval, timerInterval;
+    let stopwatchRunning = false, timerRunning = false;
+    let stopwatchTime = 0, timerTime = 0;
+    let laps = [];
+
+    // Tab switching
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab + 'Section').classList.add('active');
+      });
+    });
+
+    // Stopwatch functions
+    const startStopwatchBtn = document.getElementById('startStopwatch');
+    const lapStopwatchBtn = document.getElementById('lapStopwatch');
+    const resetStopwatchBtn = document.getElementById('resetStopwatch');
+    const stopwatchDisplay = document.getElementById('stopwatchDisplay');
+    const stopwatchLaps = document.getElementById('stopwatchLaps');
+
+    function formatTime(ms) {
+      const hours = Math.floor(ms / 3600000);
+      const minutes = Math.floor((ms % 3600000) / 60000);
+      const seconds = Math.floor((ms % 60000) / 1000);
+      const milliseconds = ms % 1000;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+    }
+
+    function updateStopwatch() {
+      stopwatchTime += 10;
+      stopwatchDisplay.textContent = formatTime(stopwatchTime);
+    }
+
+    startStopwatchBtn.addEventListener('click', () => {
+      if (!stopwatchRunning) {
+        stopwatchRunning = true;
+        startStopwatchBtn.textContent = 'Stop';
+        stopwatchInterval = setInterval(updateStopwatch, 10);
+      } else {
+        stopwatchRunning = false;
+        startStopwatchBtn.textContent = 'Start';
+        clearInterval(stopwatchInterval);
+      }
+    });
+
+    lapStopwatchBtn.addEventListener('click', () => {
+      if (stopwatchRunning) {
+        laps.push({ time: stopwatchTime, display: formatTime(stopwatchTime) });
+        const lapDiv = document.createElement('div');
+        lapDiv.className = 'lap-item';
+        lapDiv.textContent = `Lap ${laps.length}: ${formatTime(stopwatchTime)}`;
+        stopwatchLaps.appendChild(lapDiv);
+      }
+    });
+
+    resetStopwatchBtn.addEventListener('click', () => {
+      stopwatchRunning = false;
+      startStopwatchBtn.textContent = 'Start';
+      clearInterval(stopwatchInterval);
+      stopwatchTime = 0;
+      stopwatchDisplay.textContent = '00:00:00.000';
+      laps = [];
+      stopwatchLaps.innerHTML = '';
+    });
+
+    // Timer functions
+    const startTimerBtn = document.getElementById('startTimer');
+    const pauseTimerBtn = document.getElementById('pauseTimer');
+    const resetTimerBtn = document.getElementById('resetTimer');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const hoursInput = document.getElementById('hours');
+    const minutesInput = document.getElementById('minutes');
+    const secondsInput = document.getElementById('seconds');
+
+    function formatTimerTime(ms) {
+      const hours = Math.floor(ms / 3600000);
+      const minutes = Math.floor((ms % 3600000) / 60000);
+      const seconds = Math.floor((ms % 60000) / 1000);
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+      if (timerTime > 0) {
+        timerTime -= 1000;
+        timerDisplay.textContent = formatTimerTime(timerTime);
+        if (timerTime <= 0) {
+          timerRunning = false;
+          startTimerBtn.textContent = 'Start';
+          clearInterval(timerInterval);
+          alert('Timer finished!');
+        }
+      }
+    }
+
+    startTimerBtn.addEventListener('click', () => {
+      if (!timerRunning) {
+        if (timerTime === 0) {
+          const hours = parseInt(hoursInput.value) || 0;
+          const minutes = parseInt(minutesInput.value) || 0;
+          const seconds = parseInt(secondsInput.value) || 0;
+          timerTime = (hours * 3600 + minutes * 60 + seconds) * 1000;
+          if (timerTime === 0) return;
+        }
+        timerRunning = true;
+        startTimerBtn.textContent = 'Stop';
+        timerInterval = setInterval(updateTimer, 1000);
+      } else {
+        timerRunning = false;
+        startTimerBtn.textContent = 'Start';
+        clearInterval(timerInterval);
+      }
+    });
+
+    pauseTimerBtn.addEventListener('click', () => {
+      if (timerRunning) {
+        timerRunning = false;
+        startTimerBtn.textContent = 'Start';
+        clearInterval(timerInterval);
+      }
+    });
+
+    resetTimerBtn.addEventListener('click', () => {
+      timerRunning = false;
+      startTimerBtn.textContent = 'Start';
+      clearInterval(timerInterval);
+      timerTime = 0;
+      timerDisplay.textContent = '00:00:00';
+      hoursInput.value = 0;
+      minutesInput.value = 0;
+      secondsInput.value = 0;
+    });
+  </script>
+
+  <style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .display { font-size: 3rem; font-weight: 300; text-align: center; margin: 2rem 0; font-family: monospace; }
+    .laps { margin-top: 1rem; max-height: 200px; overflow-y: auto; }
+    .lap-item { padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    [data-tab].active { background: rgba(120,119,198,0.2); }
+  </style>
+</body>
+</html>

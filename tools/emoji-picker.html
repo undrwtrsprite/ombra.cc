@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emoji Picker — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">😊</div>
+        <h1>Emoji Picker</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <input type="text" id="search" placeholder="Search emojis..." style="flex:1;" />
+          <button class="btn-secondary" id="clearSearch">Clear</button>
+        </div>
+        
+        <div class="categories" id="categories">
+          <button class="category-btn active" data-category="all">All</button>
+          <button class="category-btn" data-category="smileys">😊</button>
+          <button class="category-btn" data-category="animals">🐱</button>
+          <button class="category-btn" data-category="food">🍕</button>
+          <button class="category-btn" data-category="activities">⚽</button>
+          <button class="category-btn" data-category="travel">✈️</button>
+          <button class="category-btn" data-category="objects">💡</button>
+          <button class="category-btn" data-category="symbols">❤️</button>
+          <button class="category-btn" data-category="flags">🏁</button>
+        </div>
+
+        <div class="emoji-grid" id="emojiGrid"></div>
+        
+        <div class="actions">
+          <button class="btn-secondary" id="copySelected">Copy Selected</button>
+          <button class="btn-secondary" id="addToFavorites">Add to Favorites</button>
+          <button class="btn-primary" id="viewFavorites">View Favorites</button>
+        </div>
+
+        <div class="favorites-section" id="favoritesSection" style="display:none;">
+          <h3>Your Favorites</h3>
+          <div class="emoji-grid" id="favoritesGrid"></div>
+        </div>
+
+        <div class="recent-section">
+          <h3>Recently Used</h3>
+          <div class="emoji-grid" id="recentGrid"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const searchInput = document.getElementById('search');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const categories = document.getElementById('categories');
+    const emojiGrid = document.getElementById('emojiGrid');
+    const copySelectedBtn = document.getElementById('copySelected');
+    const addToFavoritesBtn = document.getElementById('addToFavorites');
+    const viewFavoritesBtn = document.getElementById('viewFavorites');
+    const favoritesSection = document.getElementById('favoritesSection');
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    const recentGrid = document.getElementById('recentGrid');
+
+    let selectedEmojis = [];
+    let currentCategory = 'all';
+    let favorites = JSON.parse(localStorage.getItem('emojiFavorites') || '[]');
+    let recent = JSON.parse(localStorage.getItem('emojiRecent') || '[]');
+
+    const emojiData = {
+      smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳'],
+      animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🐣', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋'],
+      food: ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🌽', '🥕', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨'],
+      activities: ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛷', '⛸️', '🥌', '🎿'],
+      travel: ['✈️', '🛩️', '🛫', '🛬', '🪂', '💺', '🛰️', '🚀', '🛸', '🚁', '🛶', '⛵', '🚤', '🛥️', '🛳️', '⛴️', '🚢', '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🛺'],
+      objects: ['💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', '💷', '💰', '💳', '💎', '⚖️', '🪜', '🦯', '🦽', '🦼', '🛴', '🚲', '🛵', '🏍️', '🛺', '🚨', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟'],
+      symbols: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎'],
+      flags: ['🏁', '🚩', '🎌', '🏴', '🏳️', '🏳️‍🌈', '🏴‍☠️', '🇦🇫', '🇦🇽', '🇦🇱', '🇩🇿', '🇦🇸', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩', '🇦🇩']
+    };
+
+    function renderEmojis(category = 'all', searchTerm = '') {
+      let emojis = [];
+      
+      if (category === 'all') {
+        Object.values(emojiData).forEach(cat => emojis.push(...cat));
+      } else if (emojiData[category]) {
+        emojis = emojiData[category];
+      }
+
+      if (searchTerm) {
+        emojis = emojis.filter(emoji => 
+          emoji.includes(searchTerm) || 
+          getEmojiDescription(emoji).toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      emojiGrid.innerHTML = '';
+      emojis.forEach(emoji => {
+        const emojiBtn = document.createElement('button');
+        emojiBtn.className = 'emoji-btn';
+        emojiBtn.textContent = emoji;
+        emojiBtn.title = getEmojiDescription(emoji);
+        emojiBtn.addEventListener('click', () => selectEmoji(emoji));
+        emojiGrid.appendChild(emojiBtn);
+      });
+    }
+
+    function getEmojiDescription(emoji) {
+      // Simple emoji descriptions - in a real app, you'd use a proper emoji database
+      const descriptions = {
+        '😀': 'Grinning Face', '😃': 'Grinning Face with Big Eyes', '😄': 'Grinning Face with Smiling Eyes',
+        '🐶': 'Dog Face', '🐱': 'Cat Face', '🐭': 'Mouse Face',
+        '🍎': 'Red Apple', '🍕': 'Pizza', '🍔': 'Hamburger',
+        '⚽': 'Soccer Ball', '🏀': 'Basketball', '🎾': 'Tennis Ball',
+        '✈️': 'Airplane', '🚗': 'Automobile', '🚲': 'Bicycle',
+        '💡': 'Light Bulb', '🔦': 'Flashlight', '💰': 'Money Bag',
+        '❤️': 'Red Heart', '💙': 'Blue Heart', '💚': 'Green Heart'
+      };
+      return descriptions[emoji] || 'Emoji';
+    }
+
+    function selectEmoji(emoji) {
+      if (selectedEmojis.includes(emoji)) {
+        selectedEmojis = selectedEmojis.filter(e => e !== emoji);
+      } else {
+        selectedEmojis.push(emoji);
+      }
+      updateSelection();
+      addToRecent(emoji);
+    }
+
+    function updateSelection() {
+      document.querySelectorAll('.emoji-btn').forEach(btn => {
+        if (selectedEmojis.includes(btn.textContent)) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+    }
+
+    function addToRecent(emoji) {
+      recent = recent.filter(e => e !== emoji);
+      recent.unshift(emoji);
+      if (recent.length > 20) recent = recent.slice(0, 20);
+      localStorage.setItem('emojiRecent', JSON.stringify(recent));
+      renderRecent();
+    }
+
+    function renderRecent() {
+      recentGrid.innerHTML = '';
+      recent.forEach(emoji => {
+        const emojiBtn = document.createElement('button');
+        emojiBtn.className = 'emoji-btn';
+        emojiBtn.textContent = emoji;
+        emojiBtn.title = getEmojiDescription(emoji);
+        emojiBtn.addEventListener('click', () => selectEmoji(emoji));
+        recentGrid.appendChild(emojiBtn);
+      });
+    }
+
+    function renderFavorites() {
+      favoritesGrid.innerHTML = '';
+      favorites.forEach(emoji => {
+        const emojiBtn = document.createElement('button');
+        emojiBtn.className = 'emoji-btn';
+        emojiBtn.textContent = emoji;
+        emojiBtn.title = getEmojiDescription(emoji);
+        emojiBtn.addEventListener('click', () => selectEmoji(emoji));
+        favoritesGrid.appendChild(emojiBtn);
+      });
+    }
+
+    // Event listeners
+    categories.addEventListener('click', (e) => {
+      if (e.target.classList.contains('category-btn')) {
+        document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentCategory = e.target.dataset.category;
+        renderEmojis(currentCategory, searchInput.value);
+      }
+    });
+
+    searchInput.addEventListener('input', () => {
+      renderEmojis(currentCategory, searchInput.value);
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      renderEmojis(currentCategory);
+    });
+
+    copySelectedBtn.addEventListener('click', async () => {
+      if (selectedEmojis.length > 0) {
+        await navigator.clipboard.writeText(selectedEmojis.join(''));
+        alert('Emojis copied to clipboard!');
+      }
+    });
+
+    addToFavoritesBtn.addEventListener('click', () => {
+      selectedEmojis.forEach(emoji => {
+        if (!favorites.includes(emoji)) {
+          favorites.push(emoji);
+        }
+      });
+      localStorage.setItem('emojiFavorites', JSON.stringify(favorites));
+      alert('Added to favorites!');
+    });
+
+    viewFavoritesBtn.addEventListener('click', () => {
+      if (favoritesSection.style.display === 'none') {
+        favoritesSection.style.display = 'block';
+        renderFavorites();
+        viewFavoritesBtn.textContent = 'Hide Favorites';
+      } else {
+        favoritesSection.style.display = 'none';
+        viewFavoritesBtn.textContent = 'View Favorites';
+      }
+    });
+
+    // Initialize
+    renderEmojis();
+    renderRecent();
+  </script>
+
+  <style>
+    .categories { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+    .category-btn { padding: 0.5rem 1rem; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #f5f5f7; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .category-btn:hover, .category-btn.active { background: rgba(120,119,198,0.2); border-color: #7877c6; }
+    .emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 0.5rem; margin: 1rem 0; max-height: 400px; overflow-y: auto; }
+    .emoji-btn { font-size: 1.5rem; padding: 0.5rem; border: 1px solid transparent; background: transparent; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .emoji-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+    .emoji-btn.selected { background: rgba(120,119,198,0.3); border-color: #7877c6; }
+    .favorites-section, .recent-section { margin-top: 2rem; }
+    .favorites-section h3, .recent-section h3 { margin-bottom: 1rem; }
+  </style>
+</body>
+</html>
