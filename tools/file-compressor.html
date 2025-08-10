@@ -214,6 +214,34 @@
       width: 0%;
       transition: width 0.3s ease;
     }
+    
+    .format-select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    
+    .format-select:hover {
+      border-color: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .format-select:focus {
+      border-color: #9333ea;
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .format-select option {
+      background: #1f2937;
+      color: white;
+      padding: 8px;
+    }
   </style>
 </head>
 <body>
@@ -251,7 +279,7 @@
           
           <div class="option-group">
             <label class="option-label">Output Format</label>
-            <select id="formatSelect" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+            <select id="formatSelect" class="format-select">
               <option value="auto">Auto (keep original)</option>
               <option value="jpeg">JPEG</option>
               <option value="png">PNG</option>
