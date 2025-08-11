@@ -1,7 +1,7 @@
 # ombra 🌙  
 **Fast, private & beautiful browser tools suite**  
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fombra.cc&label=Visit%20ombra.cc&style=flat-square)](https://ombra.cc)
-[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#license)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
 [![Made with Love](https://img.shields.io/badge/made%20with-%E2%9D%A4-red?style=flat-square)](https://ombra.cc)
 
 ---
@@ -59,11 +59,15 @@ Want to improve the design or performance?
 3. Commit your changes  
 4. Submit a pull request
 
+By contributing, you agree that your code will be licensed under the **GNU General Public License v3.0**.
+
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU General Public License v3.0**.  
+You may redistribute and/or modify it under the terms of the GPL v3 as published by the Free Software Foundation.  
+See the [LICENSE](LICENSE) file or visit [https://www.gnu.org/licenses/gpl-3.0](https://www.gnu.org/licenses/gpl-3.0) for details.
 
 ---
 
