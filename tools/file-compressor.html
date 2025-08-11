@@ -223,18 +223,18 @@
   <nav class="nav">
     <ul>
       <li><a href="/" class="logo">ombra</a></li>
-      <li><a href="/">← Back to tools</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
     </ul>
   </nav>
 
-  <div class="container">
-    <div class="content-section">
-      <div class="hero">
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🗜️</div>
         <h1>File Compressor</h1>
-        <p>Compress images, documents, and files to reduce size while maintaining quality. All processing happens locally in your browser.</p>
       </div>
-
-      <div class="compressor reveal">
+      <div class="tool-body">
+        <div class="compressor">
         <div class="upload-area" id="uploadArea">
           <div class="upload-icon">📁</div>
           <h3>Drop files here or click to browse</h3>
@@ -264,13 +264,13 @@
 
         <div class="file-list" id="fileList"></div>
         <div class="results" id="results"></div>
-      </div>
-
-      <div class="note">
-        <strong>Features:</strong> Compress images with quality control, convert between formats, and reduce file sizes. All processing happens locally - your files never leave your device.
+        </div>
+        <div class="note">
+          <strong>Features:</strong> Compress images with quality control, convert between formats, and reduce file sizes. All processing happens locally - your files never leave your device.
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <script>
     let files = [];

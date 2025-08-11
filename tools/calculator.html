@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/assets/styles/base.css">
   <style>
     .calculator {
-      max-width: 400px;
+      max-width: 960px;
       margin: 0 auto;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 20px;
@@ -45,8 +45,8 @@
     
     .buttons-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(4, minmax(110px, 1fr));
+      gap: 16px;
     }
     
     .btn {
@@ -152,18 +152,18 @@
   <nav class="nav">
     <ul>
       <li><a href="/" class="logo">ombra</a></li>
-      <li><a href="/">← Back to tools</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
     </ul>
   </nav>
 
-  <div class="container">
-    <div class="content-section">
-      <div class="hero">
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🧮</div>
         <h1>Advanced Calculator</h1>
-        <p>Scientific calculator with history, memory functions, and advanced operations. All calculations happen locally in your browser.</p>
       </div>
-
-      <div class="calculator reveal">
+      <div class="tool-body">
+        <div class="calculator">
         <div class="display">
           <div class="history" id="history"></div>
           <div class="current" id="current">0</div>
@@ -209,13 +209,13 @@
           <button class="btn" onclick="calculate('pow')">x²</button>
           <button class="btn equals" onclick="calculateResult()">=</button>
         </div>
-      </div>
-
-      <div class="note">
-        <strong>Features:</strong> Scientific functions, memory storage, calculation history, and keyboard support. All data stays on your device.
+        </div>
+        <div class="note">
+          <strong>Features:</strong> Scientific functions, memory storage, calculation history, and keyboard support. All data stays on your device.
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <script>
     let currentValue = '0';

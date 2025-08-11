@@ -195,112 +195,107 @@
   <nav class="nav">
     <ul>
       <li><a href="/" class="logo">ombra</a></li>
-      <li><a href="/">← Back to tools</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
     </ul>
   </nav>
 
-  <div class="container">
-    <div class="content-section">
-      <div class="hero">
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📝</div>
         <h1>Smart Notepad</h1>
-        <p>Rich text editor with auto-save, formatting, and export options. All your notes stay private and local.</p>
       </div>
-
-      <div class="notepad reveal">
-        <div class="file-info">
-          <input type="file" id="fileInput" class="file-input" accept=".txt,.html,.md">
-          <label for="fileInput" class="file-label">📁 Open File</label>
-          <span style="margin-left: 16px; opacity: 0.7;">or start typing below</span>
-        </div>
-
-        <div class="toolbar">
-          <button class="toolbar-btn" onclick="execCommand('bold')" title="Bold (Ctrl+B)">
-            <strong>B</strong>
-          </button>
-          <button class="toolbar-btn" onclick="execCommand('italic')" title="Italic (Ctrl+I)">
-            <em>I</em>
-          </button>
-          <button class="toolbar-btn" onclick="execCommand('underline')" title="Underline (Ctrl+U)">
-            <u>U</u>
-          </button>
-          
-          <div class="toolbar-separator"></div>
-          
-          <button class="toolbar-btn" onclick="execCommand('insertUnorderedList')" title="Bullet List">
-            • List
-          </button>
-          <button class="toolbar-btn" onclick="execCommand('insertOrderedList')" title="Numbered List">
-            1. List
-          </button>
-          
-          <div class="toolbar-separator"></div>
-          
-          <button class="toolbar-btn" onclick="execCommand('justifyLeft')" title="Align Left">
-            ⬅
-          </button>
-          <button class="toolbar-btn" onclick="execCommand('justifyCenter')" title="Align Center">
-            ↔
-          </button>
-          <button class="toolbar-btn" onclick="execCommand('justifyRight')" title="Align Right">
-            ➡
-          </button>
-          
-          <div class="toolbar-separator"></div>
-          
-          <button class="toolbar-btn" onclick="execCommand('formatBlock', 'h1')" title="Heading 1">
-            H1
-          </button>
-          <button class="toolbar-btn" onclick="execCommand('formatBlock', 'h2')" title="Heading 2">
-            H2
-          </button>
-          <button class="toolbar-btn" onclick="execCommand('formatBlock', 'p')" title="Paragraph">
-            P
-          </button>
-          
-          <div class="toolbar-separator"></div>
-          
-          <input type="color" class="color-picker" id="textColor" onchange="execCommand('foreColor', this.value)" title="Text Color">
-          <input type="color" class="color-picker" id="bgColor" onchange="execCommand('hiliteColor', this.value)" title="Background Color">
-        </div>
-
-        <div class="editor-container">
-          <div class="editor" id="editor" contenteditable="true" spellcheck="true">
-            <h1>Welcome to Smart Notepad</h1>
-            <p>Start typing your notes here. This editor supports:</p>
-            <ul>
-              <li><strong>Rich text formatting</strong> - Bold, italic, underline</li>
-              <li><strong>Lists and headings</strong> - Organize your content</li>
-              <li><strong>Auto-save</strong> - Your work is automatically saved</li>
-              <li><strong>Export options</strong> - Save as TXT, HTML, or Markdown</li>
-            </ul>
-            <p>All your data stays on your device - nothing is sent to any server.</p>
+      <div class="tool-body">
+        <div class="notepad">
+          <div class="file-info">
+            <input type="file" id="fileInput" class="file-input" accept=".txt,.html,.md">
+            <label for="fileInput" class="file-label">📁 Open File</label>
+            <span style="margin-left: 16px; opacity: 0.7;">or start typing below</span>
           </div>
-          
-          <div class="status-bar">
-            <div class="auto-save">
-              <div class="auto-save-indicator"></div>
-              <span>Auto-saved</span>
+
+          <div class="toolbar">
+            <button class="toolbar-btn" onclick="execCommand('bold')" title="Bold (Ctrl+B)">
+              <strong>B</strong>
+            </button>
+            <button class="toolbar-btn" onclick="execCommand('italic')" title="Italic (Ctrl+I)">
+              <em>I</em>
+            </button>
+            <button class="toolbar-btn" onclick="execCommand('underline')" title="Underline (Ctrl+U)">
+              <u>U</u>
+            </button>
+
+            <div class="toolbar-separator"></div>
+
+            <button class="toolbar-btn" onclick="execCommand('insertUnorderedList')" title="Bullet List">
+              • List
+            </button>
+            <button class="toolbar-btn" onclick="execCommand('insertOrderedList')" title="Numbered List">
+              1. List
+            </button>
+
+            <div class="toolbar-separator"></div>
+
+            <button class="toolbar-btn" onclick="execCommand('justifyLeft')" title="Align Left">
+              ⬅
+            </button>
+            <button class="toolbar-btn" onclick="execCommand('justifyCenter')" title="Align Center">
+              ↔
+            </button>
+            <button class="toolbar-btn" onclick="execCommand('justifyRight')" title="Align Right">
+              ➡
+            </button>
+
+            <div class="toolbar-separator"></div>
+
+            <button class="toolbar-btn" onclick="execCommand('formatBlock', 'h1')" title="Heading 1">H1</button>
+            <button class="toolbar-btn" onclick="execCommand('formatBlock', 'h2')" title="Heading 2">H2</button>
+            <button class="toolbar-btn" onclick="execCommand('formatBlock', 'p')" title="Paragraph">P</button>
+
+            <div class="toolbar-separator"></div>
+
+            <input type="color" class="color-picker" id="textColor" onchange="execCommand('foreColor', this.value)" title="Text Color">
+            <input type="color" class="color-picker" id="bgColor" onchange="execCommand('hiliteColor', this.value)" title="Background Color">
+          </div>
+
+          <div class="editor-container">
+            <div class="editor" id="editor" contenteditable="true" spellcheck="true">
+              <h1>Welcome to Smart Notepad</h1>
+              <p>Start typing your notes here. This editor supports:</p>
+              <ul>
+                <li><strong>Rich text formatting</strong> - Bold, italic, underline</li>
+                <li><strong>Lists and headings</strong> - Organize your content</li>
+                <li><strong>Auto-save</strong> - Your work is automatically saved</li>
+                <li><strong>Export options</strong> - Save as TXT, HTML, or Markdown</li>
+              </ul>
+              <p>All your data stays on your device - nothing is sent to any server.</p>
             </div>
-            <div class="word-count" id="wordCount">0 words</div>
+
+            <div class="status-bar">
+              <div class="auto-save">
+                <div class="auto-save-indicator"></div>
+                <span>Auto-saved</span>
+              </div>
+              <div class="word-count" id="wordCount">0 words</div>
+            </div>
+          </div>
+
+          <div class="export-options">
+            <h3 style="margin-top: 0; margin-bottom: 16px;">Export Options</h3>
+            <div class="export-buttons">
+              <button class="export-btn" onclick="exportAsTxt()">📄 Export as TXT</button>
+              <button class="export-btn" onclick="exportAsHtml()">🌐 Export as HTML</button>
+              <button class="export-btn" onclick="exportAsMarkdown()">📝 Export as Markdown</button>
+              <button class="export-btn" onclick="saveToLocal()">💾 Save to Local Storage</button>
+            </div>
           </div>
         </div>
 
-        <div class="export-options">
-          <h3 style="margin-top: 0; margin-bottom: 16px;">Export Options</h3>
-          <div class="export-buttons">
-            <button class="export-btn" onclick="exportAsTxt()">📄 Export as TXT</button>
-            <button class="export-btn" onclick="exportAsHtml()">🌐 Export as HTML</button>
-            <button class="export-btn" onclick="exportAsMarkdown()">📝 Export as Markdown</button>
-            <button class="export-btn" onclick="saveToLocal()">💾 Save to Local Storage</button>
-          </div>
+        <div class="note">
+          <strong>Features:</strong> Rich text editing, auto-save, formatting tools, and multiple export formats. Your notes are automatically saved and never leave your device.
         </div>
-      </div>
-
-      <div class="note">
-        <strong>Features:</strong> Rich text editing, auto-save, formatting tools, and multiple export formats. Your notes are automatically saved and never leave your device.
       </div>
     </div>
-  </div>
+  </main>
 
   <script>
     const editor = document.getElementById('editor');
