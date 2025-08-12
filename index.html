@@ -13,10 +13,16 @@
   <div class="bg-layer bg-mesh"></div>
 
   <nav class="nav">
-    <ul>
-      <li><a href="/" class="logo">ombra</a></li>
-      <li><a href="#tools">Tools</a></li>
-    </ul>
+    <div class="nav-inner">
+      <a href="/" class="logo">ombra</a>
+      <div class="nav-links"></div>
+      <div class="nav-actions">
+        <div class="nav-search">
+          <input id="navSearch" type="search" placeholder="Search tools" aria-label="Search tools" autocomplete="off" />
+          <div id="navResults" class="nav-results" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
   </nav>
 
   <div class="container">
@@ -190,6 +196,7 @@
 
   <script src="/assets/scripts/effects.js"></script>
   <script>
+    const toolSearch = document.getElementById('toolSearch');
     // Simple client-side filtering of tool cards
     const filterBar = document.getElementById('toolFilters');
     const sections = Array.from(document.querySelectorAll('#tools .cards-grid'));
@@ -221,6 +228,72 @@
         btn.classList.add('active');
         applyFilter(btn.getAttribute('data-filter'));
       });
+    }
+
+    if (toolSearch) {
+      toolSearch.addEventListener('input', () => {
+        const q = toolSearch.value.trim().toLowerCase();
+        const showAll = !q;
+        sections.forEach((grid, gridIdx) => {
+          const cards = Array.from(grid.querySelectorAll('.glass-card'));
+          let visibleCount = 0;
+          cards.forEach(card => {
+            const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+            const desc = card.querySelector('.card-description')?.textContent.toLowerCase() || '';
+            const tags = (card.getAttribute('data-tags') || '').toLowerCase();
+            const match = showAll || title.includes(q) || desc.includes(q) || tags.includes(q);
+            card.style.display = match ? '' : 'none';
+            if (match) visibleCount++;
+          });
+          const heading = headings[gridIdx];
+          if (heading) heading.style.display = visibleCount > 0 ? '' : 'none';
+          grid.style.display = visibleCount > 0 ? 'grid' : 'none';
+        });
+      });
+    }
+
+    // Wire up nav search to the same filter
+    const navSearch = document.getElementById('navSearch');
+    const navResults = document.getElementById('navResults');
+    // Build an index of tools for suggestions
+    const toolCards = Array.from(document.querySelectorAll('.glass-card'));
+    const toolIndex = toolCards.map(card => ({
+      href: card.getAttribute('href'),
+      title: card.querySelector('.card-title')?.textContent || '',
+      desc: card.querySelector('.card-description')?.textContent || '',
+      icon: card.querySelector('.card-icon')?.textContent || '•'
+    }));
+    if (navSearch) {
+      navSearch.addEventListener('input', () => {
+        const q = navSearch.value.trim();
+        toolSearch && (toolSearch.value = q);
+        const event = new Event('input');
+        toolSearch && toolSearch.dispatchEvent(event);
+        // Suggestions dropdown
+        const query = q.toLowerCase();
+        if (!navResults) return;
+        if (!query) { navResults.style.display = 'none'; navResults.innerHTML=''; return; }
+        const matches = toolIndex.filter(t =>
+          t.title.toLowerCase().includes(query) ||
+          t.desc.toLowerCase().includes(query) ||
+          t.href.toLowerCase().includes(query)
+        ).slice(0, 6);
+        if (matches.length === 0) { navResults.style.display = 'none'; navResults.innerHTML=''; return; }
+        navResults.innerHTML = matches.map(m => `
+          <a class="result-item" href="${m.href}">
+            <span class="icon">${m.icon}</span>
+            <div style="display:flex;flex-direction:column;">
+              <span class="title">${m.title}</span>
+              <span class="desc">${m.desc}</span>
+            </div>
+          </a>
+        `).join('');
+        navResults.style.display = 'block';
+      });
+      // Hide on blur after a short delay to allow click
+      navSearch.addEventListener('blur', () => setTimeout(() => { if (navResults) navResults.style.display = 'none'; }, 200));
+      // Show again on focus if there is a query
+      navSearch.addEventListener('focus', () => { if (navSearch.value.trim() && navResults) navResults.style.display = 'block'; });
     }
   </script>
 </body>

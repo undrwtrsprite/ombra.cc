@@ -79,13 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function onScroll() {
       const y = window.scrollY;
       // Background adjustment
-      if (y > 50) {
-        nav.style.background = 'rgba(29, 29, 31, 0.8)';
-        nav.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-      } else {
-        nav.style.background = 'rgba(255, 255, 255, 0.08)';
-        nav.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-      }
+      nav.style.background = y > 8 ? 'rgba(29, 29, 31, 0.72)' : 'rgba(29, 29, 31, 0.6)';
       // Hide when scrolling down, show when scrolling up
       if (y > lastY && y > 120) {
         nav.classList.add('nav--hidden');
