@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorem Ipsum Generator - Ombra Tools</title>
+    <link rel="stylesheet" href="../assets/styles/base.css">
+</head>
+<body>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-mesh"></div>
+    <div class="bg-animation" id="bgAnimation"></div>
+
+
+
+    <main class="tool-container">
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">📝</div>
+                <h1>Lorem Ipsum Generator</h1>
+            </div>
+            
+            <div class="tool-body">
+                <div class="control-row">
+                    <label for="textType">Text Type:</label>
+                    <select id="textType" onchange="updateOptions()">
+                        <option value="lorem">Lorem Ipsum (Classic)</option>
+                        <option value="hipster">Hipster Ipsum</option>
+                        <option value="bacon">Bacon Ipsum</option>
+                        <option value="cupcake">Cupcake Ipsum</option>
+                        <option value="cat">Cat Ipsum</option>
+                        <option value="custom">Custom Text</option>
+                    </select>
+                </div>
+
+                <div class="control-row">
+                    <label for="outputType">Output Type:</label>
+                    <select id="outputType">
+                        <option value="paragraphs">Paragraphs</option>
+                        <option value="words">Words</option>
+                        <option value="sentences">Sentences</option>
+                        <option value="bytes">Bytes</option>
+                    </select>
+                </div>
+
+                <div class="control-row">
+                    <label for="amount">Amount:</label>
+                    <input type="number" id="amount" min="1" max="1000" value="3">
+                    <span id="amountLabel">paragraphs</span>
+                </div>
+
+                <div class="control-row">
+                    <label>
+                        <input type="checkbox" id="startWithLorem" checked> Start with "Lorem ipsum dolor sit amet"
+                    </label>
+                    <label>
+                        <input type="checkbox" id="includeHTML"> Include HTML tags
+                    </label>
+                </div>
+
+                <div class="control-row">
+                    <button class="btn-primary" onclick="generateText()">Generate Text</button>
+                    <button class="btn-secondary" onclick="clearOutput()">Clear</button>
+                </div>
+
+                <div class="result" id="result" style="display: none;">
+                    <h3>Generated Text</h3>
+                    <div class="control-row">
+                        <button class="btn-primary" onclick="copyText()">Copy to Clipboard</button>
+                        <button class="btn-secondary" onclick="downloadText()">Download as TXT</button>
+                    </div>
+                    <div class="generated-text">
+                        <textarea id="generatedText" readonly rows="15"></textarea>
+                    </div>
+                </div>
+
+                <div class="result">
+                    <h3>Quick Presets</h3>
+                    <div class="preset-buttons">
+                        <button class="btn-secondary" onclick="quickGenerate('short')">Short (1 paragraph)</button>
+                        <button class="btn-secondary" onclick="quickGenerate('medium')">Medium (3 paragraphs)</button>
+                        <button class="btn-secondary" onclick="quickGenerate('long')">Long (5 paragraphs)</button>
+                        <button class="btn-secondary" onclick="quickGenerate('very-long')">Very Long (10 paragraphs)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../assets/scripts/back-button.js"></script>
+    <script>
+        const textTypes = {
+            lorem: {
+                words: ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do', 'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris', 'nisi', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'dolor', 'reprehenderit', 'voluptate', 'velit', 'esse', 'cillum', 'dolore', 'eu', 'fugiat', 'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum'],
+                sentences: [
+                    'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                    'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                    'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+                    'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+                    'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                ]
+            },
+            hipster: {
+                words: ['artisan', 'craft', 'beer', 'coffee', 'vinyl', 'tattooed', 'messenger', 'bag', 'sustainable', 'organic', 'farm-to-table', 'locavore', 'pinterest', 'aesthetic', 'vintage', 'retro', 'minimalist', 'scandinavian', 'mid-century', 'modern', 'industrial', 'rustic', 'chic', 'bohemian', 'eclectic', 'curated', 'bespoke', 'handmade', 'authentic', 'genuine', 'unique', 'one-of-a-kind', 'limited', 'edition', 'exclusive', 'premium', 'luxury', 'sophisticated', 'elegant', 'refined', 'polished', 'distinguished'],
+                sentences: [
+                    'Artisan craft beer coffee vinyl tattooed messenger bag sustainable organic farm-to-table.',
+                    'Locavore pinterest aesthetic vintage retro minimalist scandinavian mid-century modern.',
+                    'Industrial rustic chic bohemian eclectic curated bespoke handmade authentic genuine.',
+                    'Unique one-of-a-kind limited edition exclusive premium luxury sophisticated elegant.',
+                    'Refined polished distinguished artisan craft beer coffee vinyl tattooed messenger bag.'
+                ]
+            },
+            bacon: {
+                words: ['bacon', 'pork', 'belly', 'sausage', 'ham', 'prosciutto', 'pancetta', 'guanciale', 'lard', 'fatback', 'chicharron', 'crackling', 'porkchop', 'tenderloin', 'shoulder', 'butt', 'ribs', 'spare', 'baby', 'back', 'country', 'style', 'smoked', 'cured', 'aged', 'dry', 'wet', 'brined', 'marinated', 'seasoned', 'spiced', 'herbed', 'garlic', 'onion', 'pepper', 'salt', 'sugar', 'maple', 'honey', 'molasses', 'vinegar', 'mustard', 'ketchup', 'bbq', 'sauce'],
+                sentences: [
+                    'Bacon pork belly sausage ham prosciutto pancetta guanciale lard fatback.',
+                    'Chicharron crackling porkchop tenderloin shoulder butt ribs spare baby back.',
+                    'Country style smoked cured aged dry wet brined marinated seasoned spiced.',
+                    'Herbed garlic onion pepper salt sugar maple honey molasses vinegar mustard.',
+                    'Ketchup bbq sauce bacon pork belly sausage ham prosciutto pancetta.'
+                ]
+            },
+            cupcake: {
+                words: ['cupcake', 'frosting', 'sprinkles', 'vanilla', 'chocolate', 'strawberry', 'caramel', 'buttercream', 'cream', 'cheese', 'marshmallow', 'fluff', 'ganache', 'filling', 'batter', 'dough', 'flour', 'sugar', 'eggs', 'milk', 'butter', 'oil', 'baking', 'powder', 'soda', 'salt', 'extract', 'essence', 'flavor', 'taste', 'sweet', 'delicious', 'yummy', 'tasty', 'scrumptious', 'delectable', 'mouthwatering', 'appetizing', 'savory', 'rich', 'creamy', 'smooth', 'fluffy', 'light', 'airy', 'moist', 'tender'],
+                sentences: [
+                    'Cupcake frosting sprinkles vanilla chocolate strawberry caramel buttercream cream cheese.',
+                    'Marshmallow fluff ganache filling batter dough flour sugar eggs milk butter.',
+                    'Oil baking powder soda salt extract essence flavor taste sweet delicious.',
+                    'Yummy tasty scrumptious delectable mouthwatering appetizing savory rich creamy.',
+                    'Smooth fluffy light airy moist tender cupcake frosting sprinkles vanilla.'
+                ]
+            },
+            cat: {
+                words: ['cat', 'kitten', 'feline', 'purr', 'meow', 'whiskers', 'paws', 'tail', 'fur', 'claws', 'ears', 'eyes', 'nose', 'mouth', 'tongue', 'teeth', 'belly', 'back', 'legs', 'jump', 'climb', 'sleep', 'nap', 'play', 'hunt', 'chase', 'catch', 'mouse', 'bird', 'fish', 'toy', 'ball', 'string', 'yarn', 'box', 'basket', 'bed', 'cushion', 'pillow', 'blanket', 'warm', 'cozy', 'soft', 'gentle', 'loving', 'affectionate', 'independent', 'curious', 'playful', 'lazy', 'sleepy'],
+                sentences: [
+                    'Cat kitten feline purr meow whiskers paws tail fur claws ears.',
+                    'Eyes nose mouth tongue teeth belly back legs jump climb sleep nap.',
+                    'Play hunt chase catch mouse bird fish toy ball string yarn box.',
+                    'Basket bed cushion pillow blanket warm cozy soft gentle loving.',
+                    'Affectionate independent curious playful lazy sleepy cat kitten feline.'
+                ]
+            }
+        };
+
+        function updateOptions() {
+            const textType = document.getElementById('textType').value;
+            const outputType = document.getElementById('outputType').value;
+            const amountLabel = document.getElementById('amountLabel');
+            
+            if (outputType === 'paragraphs') {
+                amountLabel.textContent = 'paragraphs';
+                document.getElementById('amount').max = '100';
+                if (document.getElementById('amount').value > 100) {
+                    document.getElementById('amount').value = 100;
+                }
+            } else if (outputType === 'words') {
+                amountLabel.textContent = 'words';
+                document.getElementById('amount').max = '1000';
+            } else if (outputType === 'sentences') {
+                amountLabel.textContent = 'sentences';
+                document.getElementById.getElementById('amount').max = '500';
+            } else if (outputType === 'bytes') {
+                amountLabel.textContent = 'bytes';
+                document.getElementById('amount').max = '10000';
+            }
+        }
+
+        function generateText() {
+            const textType = document.getElementById('textType').value;
+            const outputType = document.getElementById('outputType').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            const startWithLorem = document.getElementById('startWithLorem').checked;
+            const includeHTML = document.getElementById('includeHTML').checked;
+            
+            if (textType === 'custom') {
+                alert('Please select a different text type or create your own custom text.');
+                return;
+            }
+            
+            let generatedText = '';
+            
+            if (outputType === 'paragraphs') {
+                generatedText = generateParagraphs(textType, amount, startWithLorem, includeHTML);
+            } else if (outputType === 'words') {
+                generatedText = generateWords(textType, amount, startWithLorem);
+            } else if (outputType === 'sentences') {
+                generatedText = generateSentences(textType, amount, startWithLorem);
+            } else if (outputType === 'bytes') {
+                generatedText = generateBytes(textType, amount, startWithLorem);
+            }
+            
+            document.getElementById('generatedText').value = generatedText;
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function generateParagraphs(textType, count, startWithLorem, includeHTML) {
+            const type = textTypes[textType];
+            let text = '';
+            
+            if (startWithLorem && textType === 'lorem') {
+                text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ';
+            }
+            
+            for (let i = 0; i < count; i++) {
+                const paragraph = generateRandomParagraph(type);
+                if (includeHTML) {
+                    text += `<p>${paragraph}</p>\n\n`;
+                } else {
+                    text += paragraph + '\n\n';
+                }
+            }
+            
+            return text.trim();
+        }
+
+        function generateWords(textType, count, startWithLorem) {
+            const type = textTypes[textType];
+            let words = [];
+            
+            if (startWithLorem && textType === 'lorem') {
+                words = ['Lorem', 'ipsum', 'dolor', 'sit', 'amet'];
+                count -= 5;
+            }
+            
+            for (let i = 0; i < count; i++) {
+                const randomWord = type.words[Math.floor(Math.random() * type.words.length)];
+                words.push(randomWord);
+            }
+            
+            return words.join(' ');
+        }
+
+        function generateSentences(textType, count, startWithLorem) {
+            const type = textTypes[textType];
+            let sentences = [];
+            
+            if (startWithLorem && textType === 'lorem') {
+                sentences.push('Lorem ipsum dolor sit amet, consectetur adipiscing elit.');
+                count--;
+            }
+            
+            for (let i = 0; i < count; i++) {
+                const randomSentence = type.sentences[Math.floor(Math.random() * type.sentences.length)];
+                sentences.push(randomSentence);
+            }
+            
+            return sentences.join(' ');
+        }
+
+        function generateBytes(textType, targetBytes, startWithLorem) {
+            let text = '';
+            if (startWithLorem && textType === 'lorem') {
+                text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ';
+            }
+            
+            const type = textTypes[textType];
+            while (new Blob([text]).size < targetBytes) {
+                const randomSentence = type.sentences[Math.floor(Math.random() * type.sentences.length)];
+                text += randomSentence + ' ';
+            }
+            
+            return text.trim();
+        }
+
+        function generateRandomParagraph(type) {
+            const sentences = [];
+            const sentenceCount = Math.floor(Math.random() * 3) + 2; // 2-4 sentences
+            
+            for (let i = 0; i < sentenceCount; i++) {
+                const randomSentence = type.sentences[Math.floor(Math.random() * type.sentences.length)];
+                sentences.push(randomSentence);
+            }
+            
+            return sentences.join(' ');
+        }
+
+        function quickGenerate(preset) {
+            let amount;
+            switch(preset) {
+                case 'short': amount = 1; break;
+                case 'medium': amount = 3; break;
+                case 'long': amount = 5; break;
+                case 'very-long': amount = 10; break;
+                default: amount = 3;
+            }
+            
+            document.getElementById('amount').value = amount;
+            document.getElementById('outputType').value = 'paragraphs';
+            updateOptions();
+            generateText();
+        }
+
+        function copyText() {
+            const text = document.getElementById('generatedText').value;
+            navigator.clipboard.writeText(text).then(() => {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 1000);
+            }).catch(err => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 1000);
+            });
+        }
+
+        function downloadText() {
+            const text = document.getElementById('generatedText').value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lorem_ipsum.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function clearOutput() {
+            document.getElementById('generatedText').value = '';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // Event listeners
+        document.getElementById('outputType').addEventListener('change', updateOptions);
+        document.getElementById('amount').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            const max = parseInt(this.max);
+            if (value > max) {
+                this.value = max;
+            }
+        });
+    </script>
+
+    <style>
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .preset-buttons .btn-secondary {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .generated-text {
+            margin-top: 15px;
+        }
+
+        .generated-text textarea {
+            font-family: 'Inter', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .control-row label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .control-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        #amountLabel {
+            color: #cbd5e1;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+    </style>
+</body>
+</html>

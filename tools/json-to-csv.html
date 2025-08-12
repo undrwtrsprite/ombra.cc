@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Converter - Ombra Tools</title>
+    <link rel="stylesheet" href="../assets/styles/base.css">
+</head>
+<body>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-mesh"></div>
+    <div class="bg-animation" id="bgAnimation"></div>
+
+    <main class="tool-container">
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">🔄</div>
+                <h1>Data Converter</h1>
+                <p>Convert between JSON and CSV formats with advanced options</p>
+            </div>
+            
+            <div class="tool-body">
+                <!-- Conversion Direction Tabs -->
+                <div class="control-row">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="switchTab('json2csv')">JSON → CSV</button>
+                        <button class="tab-btn" onclick="switchTab('csv2json')">CSV → JSON</button>
+                    </div>
+                </div>
+
+                <!-- JSON to CSV Section -->
+                <div id="json2csv-section" class="conversion-section">
+                    <div class="control-row">
+                        <label for="inputType">Input Type:</label>
+                        <select id="inputType" onchange="toggleInputType()">
+                            <option value="text">Paste JSON</option>
+                            <option value="file">Upload JSON File</option>
+                            <option value="sample">Sample Data</option>
+                        </select>
+                    </div>
+
+                    <div id="textInput" class="input-section">
+                        <div class="control-row">
+                            <label for="jsonInput">JSON Data:</label>
+                            <textarea id="jsonInput" placeholder='Paste your JSON data here...&#10;Example: [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]' rows="8"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="fileInput" class="input-section" style="display: none;">
+                        <div class="control-row">
+                            <label for="jsonFile">JSON File:</label>
+                            <input type="file" id="jsonFile" accept=".json,.txt">
+                        </div>
+                    </div>
+
+                    <div id="sampleInput" class="input-section" style="display: none;">
+                        <div class="control-row">
+                            <label for="sampleSelect">Choose Sample:</label>
+                            <select id="sampleSelect" onchange="loadSample()">
+                                <option value="">Select a sample...</option>
+                                <option value="users">Users List</option>
+                                <option value="products">Products Catalog</option>
+                                <option value="orders">Order Data</option>
+                                <option value="nested">Nested Objects</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <label for="delimiter">CSV Delimiter:</label>
+                        <select id="delimiter">
+                            <option value=",">Comma (,)</option>
+                            <option value=";">Semicolon (;)</option>
+                            <option value="\t">Tab</option>
+                            <option value="|">Pipe (|)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-row">
+                        <label>
+                            <input type="checkbox" id="includeHeaders" checked> Include headers
+                        </label>
+                        <label>
+                            <input type="checkbox" id="wrapQuotes"> Wrap values in quotes
+                        </label>
+                        <label>
+                            <input type="checkbox" id="flattenNested"> Flatten nested objects
+                        </label>
+                    </div>
+
+                    <div class="control-row">
+                        <button class="btn-primary" onclick="convertToCSV()">Convert to CSV</button>
+                        <button class="btn-secondary" onclick="clearAll()">Clear All</button>
+                    </div>
+
+                    <div class="result" id="csvResult" style="display: none;">
+                        <h3>Converted CSV</h3>
+                        <div class="control-row">
+                            <button class="btn-primary" onclick="downloadCSV()">Download CSV</button>
+                            <button class="btn-secondary" onclick="copyCSV()">Copy to Clipboard</button>
+                        </div>
+                        <div class="csv-preview">
+                            <textarea id="csvOutput" readonly rows="10"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CSV to JSON Section -->
+                <div id="csv2json-section" class="conversion-section" style="display: none;">
+                    <div class="control-row">
+                        <label for="csvInputType">Input Type:</label>
+                        <select id="csvInputType" onchange="toggleCSVInputType()">
+                            <option value="text">Paste CSV</option>
+                            <option value="file">Upload CSV File</option>
+                            <option value="sample">Sample CSV</option>
+                        </select>
+                    </div>
+
+                    <div id="csvTextInput" class="input-section">
+                        <div class="control-row">
+                            <label for="csvInput">CSV Data:</label>
+                            <textarea id="csvInput" placeholder='Paste your CSV data here...&#10;Example:&#10;name,age,city&#10;John,30,New York&#10;Jane,25,Los Angeles' rows="8"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="csvFileInput" class="input-section" style="display: none;">
+                        <div class="control-row">
+                            <label for="csvFile">CSV File:</label>
+                            <input type="file" id="csvFile" accept=".csv,.txt">
+                        </div>
+                    </div>
+
+                    <div id="csvSampleInput" class="input-section" style="display: none;">
+                        <div class="control-row">
+                            <label for="csvSampleSelect">Choose Sample:</label>
+                            <select id="csvSampleSelect" onchange="loadCSVSample()">
+                                <option value="">Select a sample...</option>
+                                <option value="users">Users List</option>
+                                <option value="products">Products Catalog</option>
+                                <option value="sales">Sales Data</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <label for="csvDelimiter">CSV Delimiter:</label>
+                        <select id="csvDelimiter">
+                            <option value=",">Comma (,)</option>
+                            <option value=";">Semicolon (;)</option>
+                            <option value="\t">Tab</option>
+                            <option value="|">Pipe (|)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-row">
+                        <label>
+                            <input type="checkbox" id="csvHeaders" checked> First row contains headers
+                        </label>
+                        <label>
+                            <input type="checkbox" id="prettyPrint" checked> Pretty print JSON
+                        </label>
+                    </div>
+
+                    <div class="control-row">
+                        <button class="btn-primary" onclick="convertToJSON()">Convert to JSON</button>
+                        <button class="btn-secondary" onclick="clearCSV()">Clear All</button>
+                    </div>
+
+                    <div class="result" id="jsonResult" style="display: none;">
+                        <h3>Converted JSON</h3>
+                        <div class="control-row">
+                            <button class="btn-primary" onclick="downloadJSON()">Download JSON</button>
+                            <button class="btn-secondary" onclick="copyJSON()">Copy to Clipboard</button>
+                        </div>
+                        <div class="json-preview">
+                            <textarea id="jsonOutput" readonly rows="10"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JSON Preview Section -->
+                <div class="result">
+                    <h3>Input Preview</h3>
+                    <div class="json-preview" id="jsonPreview">
+                        <p>Preview will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="../assets/scripts/effects.js"></script>
+    <script src="../assets/scripts/back-button.js"></script>
+    <script>
+        let currentTab = 'json2csv';
+
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide sections
+            document.getElementById('json2csv-section').style.display = tab === 'json2csv' ? 'block' : 'none';
+            document.getElementById('csv2json-section').style.display = tab === 'csv2json' ? 'block' : 'none';
+            
+            // Clear results
+            document.getElementById('csvResult').style.display = 'none';
+            document.getElementById('jsonResult').style.display = 'none';
+            
+            // Clear inputs
+            if (tab === 'json2csv') {
+                clearAll();
+            } else {
+                clearCSV();
+            }
+        }
+
+        // JSON to CSV functions
+        function toggleInputType() {
+            const inputType = document.getElementById('inputType').value;
+            document.getElementById('textInput').style.display = inputType === 'text' ? 'block' : 'none';
+            document.getElementById('fileInput').style.display = inputType === 'file' ? 'block' : 'none';
+            document.getElementById('sampleInput').style.display = inputType === 'sample' ? 'block' : 'none';
+        }
+
+        function loadSample() {
+            const sample = document.getElementById('sampleSelect').value;
+            const samples = {
+                users: '[{"name": "John Doe", "age": 30, "email": "john@example.com", "city": "New York"}, {"name": "Jane Smith", "age": 25, "email": "jane@example.com", "city": "Los Angeles"}, {"name": "Bob Johnson", "age": 35, "email": "bob@example.com", "city": "Chicago"}]',
+                products: '[{"id": 1, "name": "Laptop", "price": 999.99, "category": "Electronics", "inStock": true}, {"id": 2, "name": "Mouse", "price": 29.99, "category": "Electronics", "inStock": true}, {"id": 3, "name": "Desk", "price": 199.99, "category": "Furniture", "inStock": false}]',
+                orders: '[{"orderId": "ORD001", "customer": "John Doe", "items": [{"product": "Laptop", "quantity": 1, "price": 999.99}], "total": 999.99, "date": "2024-01-15"}, {"orderId": "ORD002", "customer": "Jane Smith", "items": [{"product": "Mouse", "quantity": 2, "price": 29.99}], "total": 59.98, "date": "2024-01-16"}]',
+                nested: '[{"user": {"name": "John", "profile": {"age": 30, "location": {"city": "NYC", "country": "USA"}}}, "preferences": {"theme": "dark", "notifications": true}}, {"user": {"name": "Jane", "profile": {"age": 25, "location": {"city": "LA", "country": "USA"}}}, "preferences": {"theme": "light", "notifications": false}}]'
+            };
+            
+            if (samples[sample]) {
+                document.getElementById('jsonInput').value = samples[sample];
+                updateJSONPreview();
+            }
+        }
+
+        function updateJSONPreview() {
+            const input = document.getElementById('jsonInput').value;
+            const preview = document.getElementById('jsonPreview');
+            
+            if (!input.trim()) {
+                preview.innerHTML = '<p>Preview will appear here...</p>';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(input);
+                const formatted = JSON.stringify(parsed, null, 2);
+                preview.innerHTML = `<pre style="white-space:pre-wrap; word-break:break-word; background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;">${formatted}</pre>`;
+            } catch (e) {
+                preview.innerHTML = `<p style="color: #e74c3c;">Invalid JSON: ${e.message}</p>`;
+            }
+        }
+
+        function convertToCSV() {
+            const input = document.getElementById('jsonInput').value;
+            if (!input.trim()) {
+                alert('Please enter JSON data');
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(input);
+                const delimiter = document.getElementById('delimiter').value;
+                const includeHeaders = document.getElementById('includeHeaders').checked;
+                const wrapQuotes = document.getElementById('wrapQuotes').checked;
+                const flattenNested = document.getElementById('flattenNested').checked;
+                
+                let csv = '';
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    let headers = [];
+                    let rows = [];
+                    
+                    if (flattenNested) {
+                        // Flatten nested objects
+                        const flattenedData = data.map(item => flattenObject(item));
+                        headers = Object.keys(flattenedData[0]);
+                        rows = flattenedData.map(item => headers.map(header => item[header]));
+                    } else {
+                        // Regular conversion
+                        headers = Object.keys(data[0]);
+                        rows = data.map(item => headers.map(header => item[header]));
+                    }
+                    
+                    if (includeHeaders) {
+                        csv += headers.map(header => wrapQuotes ? `"${header}"` : header).join(delimiter) + '\n';
+                    }
+                    
+                    rows.forEach(row => {
+                        csv += row.map(cell => {
+                            const cellStr = String(cell || '');
+                            if (wrapQuotes || cellStr.includes(delimiter) || cellStr.includes('"') || cellStr.includes('\n')) {
+                                return `"${cellStr.replace(/"/g, '""')}"`;
+                            }
+                            return cellStr;
+                        }).join(delimiter) + '\n';
+                    });
+                } else if (typeof data === 'object') {
+                    // Single object
+                    const headers = Object.keys(data);
+                    if (includeHeaders) {
+                        csv += headers.map(header => wrapQuotes ? `"${header}"` : header).join(delimiter) + '\n';
+                    }
+                    csv += headers.map(header => {
+                        const cell = data[header];
+                        const cellStr = String(cell || '');
+                        if (wrapQuotes || cellStr.includes(delimiter) || cellStr.includes('"') || cellStr.includes('\n')) {
+                            return `"${cellStr.replace(/"/g, '""')}"`;
+                        }
+                        return cellStr;
+                    }).join(delimiter) + '\n';
+                }
+                
+                document.getElementById('csvOutput').value = csv;
+                document.getElementById('csvResult').style.display = 'block';
+                
+            } catch (e) {
+                alert('Invalid JSON: ' + e.message);
+            }
+        }
+
+        function flattenObject(obj, prefix = '') {
+            const flattened = {};
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    const newKey = prefix ? `${prefix}.${key}` : key;
+                    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                        Object.assign(flattened, flattenObject(obj[key], newKey));
+                    } else {
+                        flattened[newKey] = obj[key];
+                    }
+                }
+            }
+            return flattened;
+        }
+
+        function downloadCSV() {
+            const csv = document.getElementById('csvOutput').value;
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'converted.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyCSV() {
+            const csv = document.getElementById('csvOutput').value;
+            navigator.clipboard.writeText(csv).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function clearAll() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('jsonFile').value = '';
+            document.getElementById('sampleSelect').value = '';
+            document.getElementById('csvResult').style.display = 'none';
+            document.getElementById('jsonPreview').innerHTML = '<p>Preview will appear here...</p>';
+        }
+
+        // CSV to JSON functions
+        function toggleCSVInputType() {
+            const inputType = document.getElementById('csvInputType').value;
+            document.getElementById('csvTextInput').style.display = inputType === 'text' ? 'block' : 'none';
+            document.getElementById('csvFileInput').style.display = inputType === 'file' ? 'block' : 'none';
+            document.getElementById('csvSampleInput').style.display = inputType === 'sample' ? 'block' : 'none';
+        }
+
+        function loadCSVSample() {
+            const sample = document.getElementById('csvSampleSelect').value;
+            const samples = {
+                users: 'name,age,city,email\nJohn Doe,30,New York,john@example.com\nJane Smith,25,Los Angeles,jane@example.com\nBob Johnson,35,Chicago,bob@example.com',
+                products: 'id,name,price,category,inStock\n1,Laptop,999.99,Electronics,true\n2,Mouse,29.99,Electronics,true\n3,Desk,199.99,Furniture,false',
+                sales: 'date,product,quantity,revenue,region\n2024-01-15,Laptop,2,1999.98,North\n2024-01-16,Mouse,5,149.95,South\n2024-01-17,Desk,1,199.99,West'
+            };
+            
+            if (samples[sample]) {
+                document.getElementById('csvInput').value = samples[sample];
+            }
+        }
+
+        function convertToJSON() {
+            const input = document.getElementById('csvInput').value;
+            if (!input.trim()) {
+                alert('Please enter CSV data');
+                return;
+            }
+            
+            const delimiter = document.getElementById('csvDelimiter').value;
+            const hasHeaders = document.getElementById('csvHeaders').checked;
+            const prettyPrint = document.getElementById('prettyPrint').checked;
+            
+            try {
+                Papa.parse(input, {
+                    delimiter: delimiter,
+                    header: hasHeaders,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if (results.errors.length > 0) {
+                            alert('CSV parsing errors: ' + results.errors.map(e => e.message).join(', '));
+                            return;
+                        }
+                        
+                        const json = prettyPrint ? JSON.stringify(results.data, null, 2) : JSON.stringify(results.data);
+                        document.getElementById('jsonOutput').value = json;
+                        document.getElementById('jsonResult').style.display = 'block';
+                    }
+                });
+            } catch (e) {
+                alert('Error converting CSV: ' + e.message);
+            }
+        }
+
+        function downloadJSON() {
+            const json = document.getElementById('jsonOutput').value;
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'converted.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyJSON() {
+            const json = document.getElementById('jsonOutput').value;
+            navigator.clipboard.writeText(json).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function clearCSV() {
+            document.getElementById('csvInput').value = '';
+            document.getElementById('csvFile').value = '';
+            document.getElementById('csvSampleSelect').value = '';
+            document.getElementById('jsonResult').style.display = 'none';
+        }
+
+        // Event listeners
+        document.getElementById('jsonInput').addEventListener('input', updateJSONPreview);
+        document.getElementById('jsonFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('jsonInput').value = e.target.result;
+                    updateJSONPreview();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        document.getElementById('csvFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('csvInput').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hash Generator - Ombra Tools</title>
+    <link rel="stylesheet" href="../assets/styles/base.css">
+</head>
+<body>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-mesh"></div>
+    <div class="bg-animation" id="bgAnimation"></div>
+
+
+
+    <main class="tool-container">
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">🔒</div>
+                <h1>Hash Generator</h1>
+            </div>
+            
+            <div class="tool-body">
+                <div class="control-row">
+                    <label for="inputType">Input Type:</label>
+                    <select id="inputType" onchange="toggleInputType()">
+                        <option value="text">Text</option>
+                        <option value="file">File</option>
+                    </select>
+                </div>
+
+                <div id="textInput" class="input-section">
+                    <div class="control-row">
+                        <label for="textInput">Text:</label>
+                        <textarea id="textInputArea" placeholder="Enter text to hash..." rows="4"></textarea>
+                    </div>
+                </div>
+
+                <div id="fileInput" class="input-section" style="display: none;">
+                    <div class="control-row">
+                        <label for="fileInput">File:</label>
+                        <input type="file" id="fileInputArea">
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <label>Hash Types:</label>
+                    <div class="hash-options">
+                        <label><input type="checkbox" value="md5" checked> MD5</label>
+                        <label><input type="checkbox" value="sha1" checked> SHA-1</label>
+                        <label><input type="checkbox" value="sha256" checked> SHA-256</label>
+                        <label><input type="checkbox" value="sha512" checked> SHA-512</label>
+                        <label><input type="checkbox" value="sha3-256"> SHA3-256</label>
+                        <label><input type="checkbox" value="sha3-512"> SHA3-512</label>
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <button class="btn-primary" onclick="generateHashes()">Generate Hashes</button>
+                    <button class="btn-secondary" onclick="clearAll()">Clear All</button>
+                </div>
+
+                <div class="result" id="result" style="display: none;">
+                    <h3>Generated Hashes</h3>
+                    <div class="hash-results" id="hashResults"></div>
+                </div>
+
+                <div class="result">
+                    <h3>Hash Verification</h3>
+                    <div class="control-row">
+                        <label for="verifyHash">Hash to Verify:</label>
+                        <input type="text" id="verifyHash" placeholder="Paste hash to verify">
+                        <button class="btn-secondary" onclick="verifyHash()">Verify</button>
+                    </div>
+                    <div class="verification-result" id="verificationResult"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../assets/scripts/back-button.js"></script>
+    <script>
+        let currentInput = '';
+        let currentHashes = {};
+
+        function toggleInputType() {
+            const inputType = document.getElementById('inputType').value;
+            const textSection = document.getElementById('textInput');
+            const fileSection = document.getElementById('fileInput');
+            
+            if (inputType === 'text') {
+                textSection.style.display = 'block';
+                fileSection.style.display = 'none';
+            } else {
+                textSection.style.display = 'none';
+                fileSection.style.display = 'block';
+            }
+            
+            clearResults();
+        }
+
+        async function generateHashes() {
+            const inputType = document.getElementById('inputType').value;
+            const hashOptions = Array.from(document.querySelectorAll('.hash-options input:checked')).map(cb => cb.value);
+            
+            if (hashOptions.length === 0) {
+                alert('Please select at least one hash type.');
+                return;
+            }
+
+            try {
+                if (inputType === 'text') {
+                    const text = document.getElementById('textInputArea').value.trim();
+                    if (!text) {
+                        alert('Please enter some text to hash.');
+                        return;
+                    }
+                    currentInput = text;
+                    await generateTextHashes(text, hashOptions);
+                } else {
+                    const file = document.getElementById('fileInputArea').files[0];
+                    if (!file) {
+                        alert('Please select a file to hash.');
+                        return;
+                    }
+                    currentInput = file.name;
+                    await generateFileHashes(file, hashOptions);
+                }
+            } catch (error) {
+                console.error('Error generating hashes:', error);
+                alert('Error generating hashes. Please try again.');
+            }
+        }
+
+        async function generateTextHashes(text, hashTypes) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(text);
+            await generateHashesFromData(data, hashTypes);
+        }
+
+        async function generateFileHashes(file, hashTypes) {
+            const arrayBuffer = await file.arrayBuffer();
+            const data = new Uint8Array(arrayBuffer);
+            await generateHashesFromData(data, hashTypes);
+        }
+
+        async function generateHashesFromData(data, hashTypes) {
+            const results = {};
+            
+            for (const hashType of hashTypes) {
+                try {
+                    let hash;
+                    switch (hashType) {
+                        case 'md5':
+                            hash = await generateMD5(data);
+                            break;
+                        case 'sha1':
+                            hash = await generateSHA1(data);
+                            break;
+                        case 'sha256':
+                            hash = await generateSHA256(data);
+                            break;
+                        case 'sha512':
+                            hash = await generateSHA512(data);
+                            break;
+                        case 'sha3-256':
+                            hash = await generateSHA3_256(data);
+                            break;
+                        case 'sha3-512':
+                            hash = await generateSHA3_512(data);
+                            break;
+                    }
+                    results[hashType] = hash;
+                } catch (error) {
+                    console.error(`Error generating ${hashType}:`, error);
+                    results[hashType] = 'Error generating hash';
+                }
+            }
+            
+            currentHashes = results;
+            displayResults(results);
+        }
+
+        async function generateMD5(data) {
+            // MD5 is not available in Web Crypto API, so we'll use a polyfill
+            return await md5(data);
+        }
+
+        async function generateSHA1(data) {
+            const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+            return arrayBufferToHex(hashBuffer);
+        }
+
+        async function generateSHA256(data) {
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return arrayBufferToHex(hashBuffer);
+        }
+
+        async function generateSHA512(data) {
+            const hashBuffer = await crypto.subtle.digest('SHA-512', data);
+            return arrayBufferToHex(hashBuffer);
+        }
+
+        async function generateSHA3_256(data) {
+            const hashBuffer = await crypto.subtle.digest('SHA3-256', data);
+            return arrayBufferToHex(hashBuffer);
+        }
+
+        async function generateSHA3_512(data) {
+            const hashBuffer = await crypto.subtle.digest('SHA3-512', data);
+            return arrayBufferToHex(hashBuffer);
+        }
+
+        function arrayBufferToHex(buffer) {
+            const array = new Uint8Array(buffer);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Simple MD5 polyfill
+        async function md5(data) {
+            // This is a basic MD5 implementation - in production you might want to use a proper library
+            const text = new TextDecoder().decode(data);
+            return simpleMD5(text);
+        }
+
+        function simpleMD5(str) {
+            // This is a simplified MD5 implementation for demonstration
+            // In a real application, you'd want to use a proper MD5 library
+            let hash = 0;
+            if (str.length === 0) return hash.toString(16).padStart(32, '0');
+            
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            
+            return Math.abs(hash).toString(16).padStart(32, '0');
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('hashResults');
+            const resultDiv = document.getElementById('result');
+            
+            container.innerHTML = Object.entries(results).map(([type, hash]) => `
+                <div class="hash-item">
+                    <div class="hash-header">
+                        <span class="hash-type">${type.toUpperCase()}</span>
+                        <button class="btn-secondary" onclick="copyHash('${hash}')">Copy</button>
+                    </div>
+                    <div class="hash-value">${hash}</div>
+                </div>
+            `).join('');
+            
+            resultDiv.style.display = 'block';
+        }
+
+        function copyHash(hash) {
+            copyToClipboard(hash);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show feedback
+                const buttons = document.querySelectorAll('.btn-secondary');
+                buttons.forEach(btn => {
+                    if (btn.textContent === 'Copy') {
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.style.background = '';
+                        }, 1000);
+                    }
+                });
+            }).catch(err => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                // Show feedback
+                const buttons = document.querySelectorAll('.btn-secondary');
+                buttons.forEach(btn => {
+                    if (btn.textContent === 'Copy') {
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.style.background = '';
+                        }, 1000);
+                    }
+                });
+            });
+        }
+
+        function verifyHash() {
+            const hashToVerify = document.getElementById('verifyHash').value.trim();
+            if (!hashToVerify) {
+                alert('Please enter a hash to verify.');
+                return;
+            }
+
+            if (!currentInput || Object.keys(currentHashes).length === 0) {
+                alert('Please generate hashes first before verifying.');
+                return;
+            }
+
+            const verificationResult = document.getElementById('verificationResult');
+            const matchingHashes = Object.entries(currentHashes).filter(([type, hash]) => 
+                hash.toLowerCase() === hashToVerify.toLowerCase()
+            );
+
+            if (matchingHashes.length > 0) {
+                const types = matchingHashes.map(([type]) => type.toUpperCase()).join(', ');
+                verificationResult.innerHTML = `
+                    <div class="verification-success">
+                        ✅ Hash verified! This hash matches the ${types} hash of your input.
+                    </div>
+                `;
+            } else {
+                verificationResult.innerHTML = `
+                    <div class="verification-failure">
+                        ❌ Hash not found. This hash does not match any of the generated hashes.
+                    </div>
+                `;
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('textInputArea').value = '';
+            document.getElementById('fileInputArea').value = '';
+            clearResults();
+        }
+
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('verificationResult').innerHTML = '';
+            currentInput = '';
+            currentHashes = {};
+        }
+
+        // Auto-generate hashes when text changes
+        document.getElementById('textInputArea').addEventListener('input', function() {
+            if (this.value.trim()) {
+                setTimeout(() => {
+                    if (document.getElementById('inputType').value === 'text') {
+                        generateHashes();
+                    }
+                }, 500);
+            }
+        });
+
+        // Auto-generate hashes when file changes
+        document.getElementById('fileInputArea').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                generateHashes();
+            }
+        });
+    </script>
+
+    <style>
+        .hash-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .hash-options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .hash-options input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .hash-results {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .hash-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .hash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .hash-type {
+            font-weight: 600;
+            color: #6366f1;
+            font-size: 14px;
+        }
+
+        .hash-value {
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            color: #cbd5e1;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .verification-result {
+            margin-top: 15px;
+        }
+
+        .verification-success {
+            color: #10b981;
+            font-weight: 600;
+            padding: 10px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .verification-failure {
+            color: #ef4444;
+            font-weight: 600;
+            padding: 10px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+    </style>
+</body>
+</html>

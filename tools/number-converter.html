@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Base Converter - Ombra Tools</title>
+    <link rel="stylesheet" href="../assets/styles/base.css">
+</head>
+<body>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-mesh"></div>
+    <div class="bg-animation" id="bgAnimation"></div>
+
+
+
+    <main class="tool-container">
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">🔢</div>
+                <h1>Number Base Converter</h1>
+            </div>
+            
+            <div class="tool-body">
+                <div class="control-row">
+                    <label for="inputBase">From Base:</label>
+                    <select id="inputBase" onchange="updateInputPlaceholder()">
+                        <option value="2">Binary (Base 2)</option>
+                        <option value="8">Octal (Base 8)</option>
+                        <option value="10" selected>Decimal (Base 10)</option>
+                        <option value="16">Hexadecimal (Base 16)</option>
+                    </select>
+                </div>
+
+                <div class="control-row">
+                    <label for="inputNumber">Number:</label>
+                    <input type="text" id="inputNumber" placeholder="Enter a decimal number" oninput="convertNumber()">
+                </div>
+
+                <div class="control-row">
+                    <button class="btn-primary" onclick="convertNumber()">Convert</button>
+                    <button class="btn-secondary" onclick="clearAll()">Clear All</button>
+                </div>
+
+                <div class="result" id="result" style="display: none;">
+                    <h3>Converted Values</h3>
+                    <div class="conversion-grid">
+                        <div class="conversion-item">
+                            <div class="base-label">Binary (Base 2)</div>
+                            <div class="number-display">
+                                <input type="text" id="binaryResult" readonly>
+                                <button class="btn-secondary" onclick="copyToClipboard('binaryResult')">Copy</button>
+                            </div>
+                        </div>
+                        
+                        <div class="conversion-item">
+                            <div class="base-label">Octal (Base 8)</div>
+                            <div class="number-display">
+                                <input type="text" id="octalResult" readonly>
+                                <button class="btn-secondary" onclick="copyToClipboard('octalResult')">Copy</button>
+                            </div>
+                        </div>
+                        
+                        <div class="conversion-item">
+                            <div class="base-label">Decimal (Base 10)</div>
+                            <div class="number-display">
+                                <input type="text" id="decimalResult" readonly>
+                                <button class="btn-secondary" onclick="copyToClipboard('decimalResult')">Copy</button>
+                            </div>
+                        </div>
+                        
+                        <div class="conversion-item">
+                            <div class="base-label">Hexadecimal (Base 16)</div>
+                            <div class="number-display">
+                                <input type="text" id="hexResult" readonly>
+                                <button class="btn-secondary" onclick="copyToClipboard('hexResult')">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result">
+                    <h3>Quick Conversions</h3>
+                    <div class="quick-conversions">
+                        <div class="quick-section">
+                            <h4>Common Numbers</h4>
+                            <div class="quick-buttons">
+                                <button class="btn-secondary" onclick="quickConvert('255')">255</button>
+                                <button class="btn-secondary" onclick="quickConvert('1024')">1024</button>
+                                <button class="btn-secondary" onclick="quickConvert('65535')">65535</button>
+                                <button class="btn-secondary" onclick="quickConvert('16777215')">16777215</button>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-section">
+                            <h4>Binary Examples</h4>
+                            <div class="quick-buttons">
+                                <button class="btn-secondary" onclick="quickConvert('1010', 2)">1010₂</button>
+                                <button class="btn-secondary" onclick="quickConvert('11111111', 2)">11111111₂</button>
+                                <button class="btn-secondary" onclick="quickConvert('100000000', 2)">100000000₂</button>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-section">
+                            <h4>Hex Examples</h4>
+                            <div class="quick-buttons">
+                                <button class="btn-secondary" onclick="quickConvert('FF', 16)">FF₁₆</button>
+                                <button class="btn-secondary" onclick="quickConvert('FFFF', 16)">FFFF₁₆</button>
+                                <button class="btn-secondary" onclick="quickConvert('FFFFFF', 16)">FFFFFF₁₆</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result">
+                    <h3>Number Information</h3>
+                    <div class="number-info" id="numberInfo">
+                        <p class="placeholder">Enter a number to see information...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../assets/scripts/back-button.js"></script>
+    <script>
+        function updateInputPlaceholder() {
+            const inputBase = document.getElementById('inputBase').value;
+            const inputNumber = document.getElementById('inputNumber');
+            
+            switch(inputBase) {
+                case '2':
+                    inputNumber.placeholder = 'Enter a binary number (e.g., 1010)';
+                    break;
+                case '8':
+                    inputNumber.placeholder = 'Enter an octal number (e.g., 755)';
+                    break;
+                case '10':
+                    inputNumber.placeholder = 'Enter a decimal number (e.g., 42)';
+                    break;
+                case '16':
+                    inputNumber.placeholder = 'Enter a hexadecimal number (e.g., FF)';
+                    break;
+            }
+        }
+
+        function convertNumber() {
+            const inputBase = parseInt(document.getElementById('inputBase').value);
+            const inputValue = document.getElementById('inputNumber').value.trim();
+            
+            if (!inputValue) {
+                clearResults();
+                return;
+            }
+            
+            try {
+                let decimalValue;
+                
+                // Parse input based on base
+                if (inputBase === 2) {
+                    decimalValue = parseInt(inputValue, 2);
+                    if (isNaN(decimalValue)) throw new Error('Invalid binary number');
+                } else if (inputBase === 8) {
+                    decimalValue = parseInt(inputValue, 8);
+                    if (isNaN(decimalValue)) throw new Error('Invalid octal number');
+                } else if (inputBase === 10) {
+                    decimalValue = parseInt(inputValue, 10);
+                    if (isNaN(decimalValue)) throw new Error('Invalid decimal number');
+                } else if (inputBase === 16) {
+                    decimalValue = parseInt(inputValue, 16);
+                    if (isNaN(decimalValue)) throw new Error('Invalid hexadecimal number');
+                }
+                
+                // Convert to all bases
+                const binary = decimalValue.toString(2);
+                const octal = decimalValue.toString(8);
+                const decimal = decimalValue.toString(10);
+                const hex = decimalValue.toString(16).toUpperCase();
+                
+                // Display results
+                document.getElementById('binaryResult').value = binary;
+                document.getElementById('octalResult').value = octal;
+                document.getElementById('decimalResult').value = decimal;
+                document.getElementById('hexResult').value = hex;
+                
+                document.getElementById('result').style.display = 'block';
+                
+                // Update number information
+                updateNumberInfo(decimalValue);
+                
+            } catch (error) {
+                alert('Invalid number: ' + error.message);
+                clearResults();
+            }
+        }
+
+        function updateNumberInfo(decimalValue) {
+            const info = document.getElementById('numberInfo');
+            
+            const isEven = decimalValue % 2 === 0;
+            const isPowerOf2 = (decimalValue & (decimalValue - 1)) === 0;
+            const isPowerOf16 = (decimalValue & (decimalValue - 1)) === 0 && decimalValue > 0 && (decimalValue & 0xF) === 0;
+            
+            let powerOf2Info = '';
+            if (isPowerOf2) {
+                const power = Math.log2(decimalValue);
+                powerOf2Info = ` (2^${power})`;
+            }
+            
+            let powerOf16Info = '';
+            if (isPowerOf16) {
+                const power = Math.log2(decimalValue) / 4;
+                powerOf16Info = ` (16^${power})`;
+            }
+            
+            const infoHTML = `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Even/Odd:</span>
+                        <span class="info-value ${isEven ? 'even' : 'odd'}">${isEven ? 'Even' : 'Odd'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Power of 2:</span>
+                        <span class="info-value">${isPowerOf2 ? 'Yes' + powerOf2Info : 'No'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Power of 16:</span>
+                        <span class="info-value">${isPowerOf16 ? 'Yes' + powerOf16Info : 'No'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Bit Length:</span>
+                        <span class="info-value">${decimalValue.toString(2).length} bits</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Range:</span>
+                        <span class="info-value">${getRangeInfo(decimalValue)}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Sign:</span>
+                        <span class="info-value">${decimalValue >= 0 ? 'Positive' : 'Negative'}</span>
+                    </div>
+                </div>
+            `;
+            
+            info.innerHTML = infoHTML;
+        }
+
+        function getRangeInfo(value) {
+            if (value >= 0 && value <= 255) return '8-bit unsigned (0-255)';
+            if (value >= -128 && value <= 127) return '8-bit signed (-128 to 127)';
+            if (value >= 0 && value <= 65535) return '16-bit unsigned (0-65535)';
+            if (value >= -32768 && value <= 32767) return '16-bit signed (-32768 to 32767)';
+            if (value >= 0 && value <= 4294967295) return '32-bit unsigned (0-4,294,967,295)';
+            if (value >= -2147483648 && value <= 2147483647) return '32-bit signed (-2,147,483,648 to 2,147,483,647)';
+            return '64-bit or larger';
+        }
+
+        function quickConvert(value, base = 10) {
+            document.getElementById('inputNumber').value = value;
+            if (base !== 10) {
+                document.getElementById('inputBase').value = base;
+                updateInputPlaceholder();
+            }
+            convertNumber();
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            element.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            const button = element.nextElementSibling;
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = '';
+            }, 1000);
+        }
+
+        function clearAll() {
+            document.getElementById('inputNumber').value = '';
+            clearResults();
+        }
+
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('numberInfo').innerHTML = '<p class="placeholder">Enter a number to see information...</p>';
+        }
+
+        // Auto-convert on Enter key
+        document.getElementById('inputNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                convertNumber();
+            }
+        });
+
+        // Initialize placeholder
+        updateInputPlaceholder();
+    </script>
+
+    <style>
+        .conversion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .conversion-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .base-label {
+            font-weight: 600;
+            color: #6366f1;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .number-display {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .number-display input {
+            flex: 1;
+            font-family: monospace;
+            font-size: 16px;
+        }
+
+        .quick-conversions {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .quick-section h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .quick-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-buttons .btn-secondary {
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .info-label {
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .info-value.even {
+            color: #10b981;
+        }
+
+        .info-value.odd {
+            color: #f59e0b;
+        }
+
+        .placeholder {
+            color: #94a3b8;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .control-row label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+    </style>
+</body>
+</html>

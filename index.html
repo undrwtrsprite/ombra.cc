@@ -92,6 +92,11 @@
           <div class="card-title">File Compressor</div>
           <div class="card-description">Compress images, documents, and files to reduce size while maintaining quality.</div>
         </a>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/color-converter.html">
+          <div class="card-icon">🎨</div>
+          <div class="card-title">Color Converter</div>
+          <div class="card-description">Convert between HEX, RGB, HSL, CMYK, and HSV color formats instantly.</div>
+        </a>
       </div>
 
 
@@ -102,11 +107,6 @@
           <div class="card-icon">🔗</div>
           <div class="card-title">QR Code Generator</div>
           <div class="card-description">Create QR codes from any text or URL. Download as high-quality PNG.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/password.html">
-          <div class="card-icon">🔑</div>
-          <div class="card-title">Password Generator</div>
-          <div class="card-description">Generate cryptographically secure passwords with customizable options.</div>
         </a>
         <a class="glass-card tilt-card" data-tags="images" href="/tools/color-picker.html">
           <div class="card-icon">🎨</div>
@@ -128,11 +128,7 @@
           <div class="card-title">Base64 Encoder/Decoder</div>
           <div class="card-description">Encode and decode text or files to/from Base64 locally.</div>
         </a>
-        <a class="glass-card tilt-card" data-tags="data convert" href="/tools/csv-to-json.html">
-          <div class="card-icon">🔄</div>
-          <div class="card-title">CSV to JSON</div>
-          <div class="card-description">Convert CSV files or text to JSON. Download results instantly.</div>
-        </a>
+
         <a class="glass-card tilt-card" data-tags="text" href="/tools/markdown.html">
           <div class="card-icon">📖</div>
           <div class="card-title">Markdown Editor</div>
@@ -142,6 +138,26 @@
           <div class="card-icon">📝</div>
           <div class="card-title">Smart Notepad</div>
           <div class="card-description">Rich text editor with auto-save, formatting, and export to multiple formats.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/text-diff.html">
+          <div class="card-icon">🧩</div>
+          <div class="card-title">Text Diff</div>
+          <div class="card-description">Compare two texts and highlight insertions and deletions.</div>
+        </a>
+                        <a class="glass-card tilt-card" data-tags="data utility" href="/tools/json-to-csv.html">
+                  <div class="card-icon">🔄</div>
+                  <div class="card-title">Data Converter</div>
+                  <div class="card-description">Convert between JSON and CSV formats with advanced options and flattening.</div>
+                </a>
+        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/text-statistics.html">
+          <div class="card-icon">📈</div>
+          <div class="card-title">Text Statistics</div>
+          <div class="card-description">Analyze text for word count, reading time, frequency analysis, and insights.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/lorem-ipsum.html">
+          <div class="card-icon">📝</div>
+          <div class="card-title">Lorem Ipsum Generator</div>
+          <div class="card-description">Generate placeholder text in various styles: Lorem Ipsum, Hipster, Bacon, and more.</div>
         </a>
       </div>
 
@@ -182,6 +198,16 @@
           <div class="card-title">Emoji Picker</div>
           <div class="card-description">Browse, search, and copy emojis with categories and favorites.</div>
         </a>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/hash-generator.html">
+          <div class="card-icon">🔒</div>
+          <div class="card-title">Hash Generator</div>
+          <div class="card-description">Generate MD5, SHA-1, SHA-256, SHA-512, and SHA3 hashes for text and files.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/number-converter.html">
+          <div class="card-icon">🔢</div>
+          <div class="card-title">Number Base Converter</div>
+          <div class="card-description">Convert numbers between binary, octal, decimal, and hexadecimal bases.</div>
+        </a>
       </div>
 
       <h3 class="tools-heading">IT & Network Tools</h3>
@@ -221,10 +247,10 @@
           <div class="card-title">UUID Generator</div>
           <div class="card-description">Generate secure UUIDv4 identifiers with formatting options.</div>
         </a>
-        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/text-diff.html">
-          <div class="card-icon">🧩</div>
-          <div class="card-title">Text Diff</div>
-          <div class="card-description">Compare two texts and highlight insertions and deletions.</div>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/password-generator.html">
+          <div class="card-icon">🔐</div>
+          <div class="card-title">Password Generator</div>
+          <div class="card-description">Generate secure passwords with customizable options and strength checking.</div>
         </a>
       </div>
 
@@ -344,25 +370,19 @@
       navSearch.addEventListener('focus', () => { if (navSearch.value.trim() && navResults) navResults.style.display = 'block'; });
     }
     
-    // Animated background particles
+    // Animated background particles - optimized for performance
     function createParticles() {
       const container = document.getElementById('bgAnimation');
       if (!container) return;
       
-      // Create 25 particles for more noticeable effect
-      for (let i = 0; i < 25; i++) {
+      // Create only 8 particles for better performance
+      for (let i = 0; i < 8; i++) {
         const particle = document.createElement('div');
         particle.className = 'floating-particle';
         
-        // Random starting position and size variation
+        // Simple positioning and timing
         particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 25 + 's';
-        
-        // Add some random size variations
-        if (Math.random() > 0.7) {
-          particle.style.width = (Math.random() * 4 + 3) + 'px';
-          particle.style.height = particle.style.width;
-        }
+        particle.style.animationDelay = Math.random() * 20 + 's';
         
         container.appendChild(particle);
       }
@@ -370,6 +390,20 @@
     
     // Initialize particles when page loads
     createParticles();
+    
+    // Performance optimization: pause animations when page is not visible
+    document.addEventListener('visibilitychange', () => {
+      const particles = document.querySelectorAll('.floating-particle');
+      const bgMesh = document.querySelector('.bg-mesh');
+      
+      if (document.hidden) {
+        particles.forEach(p => p.style.animationPlayState = 'paused');
+        if (bgMesh) bgMesh.style.animationPlayState = 'paused';
+      } else {
+        particles.forEach(p => p.style.animationPlayState = 'running');
+        if (bgMesh) bgMesh.style.animationPlayState = 'running';
+      }
+    });
   </script>
 </body>
 </html>

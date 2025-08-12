@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Statistics - Ombra Tools</title>
+    <link rel="stylesheet" href="../assets/styles/base.css">
+</head>
+<body>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-mesh"></div>
+    <div class="bg-animation" id="bgAnimation"></div>
+
+
+
+    <main class="tool-container">
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon">📊</div>
+                <h1>Text Statistics</h1>
+            </div>
+            
+            <div class="tool-body">
+                <div class="control-row">
+                    <label for="inputType">Input Type:</label>
+                    <select id="inputType" onchange="toggleInputType()">
+                        <option value="text">Paste Text</option>
+                        <option value="file">Upload File</option>
+                        <option value="sample">Sample Text</option>
+                    </select>
+                </div>
+
+                <div id="textInput" class="input-section">
+                    <div class="control-row">
+                        <label for="textInput">Text:</label>
+                        <textarea id="textInputArea" placeholder="Paste your text here to analyze..." rows="10"></textarea>
+                    </div>
+                </div>
+
+                <div id="fileInput" class="input-section" style="display: none;">
+                    <div class="control-row">
+                        <label for="textFile">Text File:</label>
+                        <input type="file" id="textFile" accept=".txt,.md,.html,.css,.js,.py,.java,.cpp,.c,.jsx,.tsx,.ts,.json,.xml,.csv">
+                    </div>
+                </div>
+
+                <div id="sampleInput" class="input-section" style="display: none;">
+                    <div class="control-row">
+                        <label for="sampleSelect">Choose Sample:</label>
+                        <select id="sampleSelect" onchange="loadSample()">
+                            <option value="">Select a sample...</option>
+                            <option value="lorem">Lorem Ipsum</option>
+                            <option value="article">Article Excerpt</option>
+                            <option value="code">Code Sample</option>
+                            <option value="poem">Poem</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <button class="btn-primary" onclick="analyzeText()">Analyze Text</button>
+                    <button class="btn-secondary" onclick="clearAll()">Clear All</button>
+                </div>
+
+                <div class="result" id="result" style="display: none;">
+                    <h3>Text Analysis Results</h3>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="wordCount">0</div>
+                            <div class="stat-label">Words</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="charCount">0</div>
+                            <div class="stat-label">Characters</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="charNoSpaces">0</div>
+                            <div class="stat-label">Characters (no spaces)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="lineCount">0</div>
+                            <div class="stat-label">Lines</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="paragraphCount">0</div>
+                            <div class="stat-label">Paragraphs</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="sentenceCount">0</div>
+                            <div class="stat-label">Sentences</div>
+                        </div>
+                    </div>
+
+                    <div class="reading-time">
+                        <h4>Reading Time</h4>
+                        <div class="time-options">
+                            <label>
+                                <input type="radio" name="readingSpeed" value="slow" checked> Slow (150 wpm)
+                            </label>
+                            <label>
+                                <input type="radio" name="readingSpeed" value="average"> Average (250 wpm)
+                            </label>
+                            <label>
+                                <input type="radio" name="readingSpeed" value="fast"> Fast (350 wpm)
+                            </label>
+                        </div>
+                        <div class="time-result" id="readingTime">0 min 0 sec</div>
+                    </div>
+
+                    <div class="word-frequency">
+                        <h4>Most Common Words</h4>
+                        <div class="frequency-chart" id="wordFrequency"></div>
+                    </div>
+
+                    <div class="text-insights">
+                        <h4>Text Insights</h4>
+                        <div class="insights-grid" id="textInsights"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../assets/scripts/back-button.js"></script>
+    <script>
+        const samples = {
+            lorem: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
+            
+            article: `The rapid advancement of artificial intelligence has transformed numerous industries, from healthcare to finance. Machine learning algorithms now power recommendation systems, autonomous vehicles, and medical diagnostics. However, this technological progress also raises important questions about job displacement, privacy, and ethical decision-making. As we navigate this AI-driven future, it's crucial to balance innovation with responsible development.`,
+            
+            code: `function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+const result = fibonacci(10);
+console.log("Fibonacci of 10:", result);
+
+// Calculate sum of array
+const numbers = [1, 2, 3, 4, 5];
+const sum = numbers.reduce((acc, curr) => acc + curr, 0);
+console.log("Sum:", sum);`,
+            
+            poem: `Shall I compare thee to a summer's day?
+Thou art more lovely and more temperate:
+Rough winds do shake the darling buds of May,
+And summer's lease hath all too short a date:
+Sometime too hot the eye of heaven shines,
+And often is his gold complexion dimm'd;
+And every fair from fair sometime declines,
+By chance or nature's changing course untrimm'd;`
+        };
+
+        function toggleInputType() {
+            const inputType = document.getElementById('inputType').value;
+            const textSection = document.getElementById('textInput');
+            const fileSection = document.getElementById('fileInput');
+            const sampleSection = document.getElementById('sampleInput');
+            
+            textSection.style.display = 'none';
+            fileSection.style.display = 'none';
+            sampleSection.style.display = 'none';
+            
+            if (inputType === 'text') {
+                textSection.style.display = 'block';
+            } else if (inputType === 'file') {
+                fileSection.style.display = 'block';
+            } else if (inputType === 'sample') {
+                sampleSection.style.display = 'block';
+            }
+            
+            clearResults();
+        }
+
+        function loadSample() {
+            const sampleSelect = document.getElementById('sampleSelect');
+            const selectedSample = sampleSelect.value;
+            
+            if (selectedSample && samples[selectedSample]) {
+                const textInput = document.getElementById('textInputArea');
+                textInput.value = samples[selectedSample];
+                analyzeText();
+            }
+        }
+
+        function analyzeText() {
+            const inputType = document.getElementById('inputType').value;
+            let text = '';
+            
+            if (inputType === 'text') {
+                text = document.getElementById('textInputArea').value.trim();
+            } else if (inputType === 'file') {
+                const file = document.getElementById('textFile').files[0];
+                if (!file) {
+                    alert('Please select a text file.');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    text = e.target.result;
+                    processAnalysis(text);
+                };
+                reader.readAsText(file);
+                return;
+            } else if (inputType === 'sample') {
+                const sampleSelect = document.getElementById('sampleSelect');
+                if (!sampleSelect.value) {
+                    alert('Please select a sample.');
+                    return;
+                }
+                text = samples[sampleSelect.value];
+            }
+            
+            if (!text) {
+                alert('Please enter some text to analyze.');
+                return;
+            }
+            
+            processAnalysis(text);
+        }
+
+        function processAnalysis(text) {
+            const stats = calculateStats(text);
+            displayResults(stats);
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function calculateStats(text) {
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+            const characters = text.length;
+            const charactersNoSpaces = text.replace(/\s/g, '').length;
+            const lines = text.split('\n').filter(line => line.trim().length > 0).length;
+            const paragraphs = text.split(/\n\s*\n/).filter(para => para.trim().length > 0).length;
+            const sentences = text.split(/[.!?]+/).filter(sentence => sentence.trim().length > 0).length;
+            
+            // Word frequency analysis
+            const wordFreq = {};
+            words.forEach(word => {
+                const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+                if (cleanWord.length > 0) {
+                    wordFreq[cleanWord] = (wordFreq[cleanWord] || 0) + 1;
+                }
+            });
+            
+            // Sort by frequency
+            const sortedWords = Object.entries(wordFreq)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10);
+            
+            return {
+                wordCount: words.length,
+                charCount: characters,
+                charNoSpaces: charactersNoSpaces,
+                lineCount: lines,
+                paragraphCount: paragraphs,
+                sentenceCount: sentences,
+                wordFrequency: sortedWords,
+                averageWordLength: words.length > 0 ? (charactersNoSpaces / words.length).toFixed(1) : 0,
+                averageSentenceLength: sentences > 0 ? (words.length / sentences).toFixed(1) : 0
+            };
+        }
+
+        function displayResults(stats) {
+            // Update basic stats
+            document.getElementById('wordCount').textContent = stats.wordCount.toLocaleString();
+            document.getElementById('charCount').textContent = stats.charCount.toLocaleString();
+            document.getElementById('charNoSpaces').textContent = stats.charNoSpaces.toLocaleString();
+            document.getElementById('lineCount').textContent = stats.lineCount.toLocaleString();
+            document.getElementById('paragraphCount').textContent = stats.paragraphCount.toLocaleString();
+            document.getElementById('sentenceCount').textContent = stats.sentenceCount.toLocaleString();
+            
+            // Update reading time
+            updateReadingTime(stats.wordCount);
+            
+            // Update word frequency
+            displayWordFrequency(stats.wordFrequency);
+            
+            // Update insights
+            displayInsights(stats);
+        }
+
+        function updateReadingTime(wordCount) {
+            const speed = document.querySelector('input[name="readingSpeed"]:checked').value;
+            let wpm;
+            switch(speed) {
+                case 'slow': wpm = 150; break;
+                case 'average': wpm = 250; break;
+                case 'fast': wpm = 350; break;
+                default: wpm = 250;
+            }
+            
+            const minutes = Math.floor(wordCount / wpm);
+            const seconds = Math.round((wordCount % wpm) / wpm * 60);
+            
+            let timeText = '';
+            if (minutes > 0) {
+                timeText += `${minutes} min `;
+            }
+            timeText += `${seconds} sec`;
+            
+            document.getElementById('readingTime').textContent = timeText;
+        }
+
+        function displayWordFrequency(wordFreq) {
+            const container = document.getElementById('wordFrequency');
+            
+            if (wordFreq.length === 0) {
+                container.innerHTML = '<p>No words found.</p>';
+                return;
+            }
+            
+            const maxFreq = wordFreq[0][1];
+            const html = wordFreq.map(([word, freq]) => {
+                const percentage = (freq / maxFreq * 100).toFixed(1);
+                return `
+                    <div class="frequency-item">
+                        <div class="word-info">
+                            <span class="word">${word}</span>
+                            <span class="count">${freq}</span>
+                        </div>
+                        <div class="frequency-bar">
+                            <div class="bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function displayInsights(stats) {
+            const container = document.getElementById('textInsights');
+            
+            const insights = [];
+            
+            if (stats.wordCount < 100) {
+                insights.push('Short text - suitable for brief content');
+            } else if (stats.wordCount < 500) {
+                insights.push('Medium length - good for articles or descriptions');
+            } else {
+                insights.push('Long text - comprehensive content');
+            }
+            
+            if (stats.averageWordLength > 6) {
+                insights.push('Complex vocabulary - academic or technical content');
+            } else if (stats.averageWordLength < 4) {
+                insights.push('Simple vocabulary - easy to read');
+            } else {
+                insights.push('Balanced vocabulary - accessible to most readers');
+            }
+            
+            if (stats.averageSentenceLength > 20) {
+                insights.push('Long sentences - formal writing style');
+            } else if (stats.averageSentenceLength < 10) {
+                insights.push('Short sentences - conversational style');
+            } else {
+                insights.push('Moderate sentence length - good readability');
+            }
+            
+            if (stats.paragraphCount > 5) {
+                insights.push('Well-structured with multiple paragraphs');
+            } else if (stats.paragraphCount === 1) {
+                insights.push('Single paragraph - consider breaking into sections');
+            }
+            
+            const html = insights.map(insight => `
+                <div class="insight-item">
+                    <span class="insight-icon">💡</span>
+                    <span class="insight-text">${insight}</span>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function clearAll() {
+            document.getElementById('textInputArea').value = '';
+            document.getElementById('textFile').value = '';
+            document.getElementById('sampleSelect').value = '';
+            clearResults();
+        }
+
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // Event listeners
+        document.getElementById('textInputArea').addEventListener('input', function() {
+            if (this.value.trim()) {
+                setTimeout(() => {
+                    if (document.getElementById('inputType').value === 'text') {
+                        analyzeText();
+                    }
+                }, 500);
+            }
+        });
+
+        document.getElementById('textFile').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                analyzeText();
+            }
+        });
+
+        // Update reading time when speed changes
+        document.querySelectorAll('input[name="readingSpeed"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const wordCount = parseInt(document.getElementById('wordCount').textContent.replace(/,/g, '')) || 0;
+                if (wordCount > 0) {
+                    updateReadingTime(wordCount);
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .reading-time {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .reading-time h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .time-options {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .time-options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .time-options input[type="radio"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .time-result {
+            font-size: 24px;
+            font-weight: 600;
+            color: #10b981;
+            text-align: center;
+        }
+
+        .word-frequency {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .word-frequency h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .frequency-item {
+            margin-bottom: 15px;
+        }
+
+        .word-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .word {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .count {
+            color: #6366f1;
+            font-weight: 600;
+        }
+
+        .frequency-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+
+        .text-insights {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .text-insights h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .insights-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .insight-icon {
+            font-size: 18px;
+        }
+
+        .insight-text {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .control-row label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .control-row input[type="radio"],
+        .control-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+    </style>
+</body>
+</html>
