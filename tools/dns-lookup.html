@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNS Lookup — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🔍</div>
+        <h1>DNS Lookup</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="DNS Lookup">
+          <label for="domain">Domain</label>
+          <input type="text" id="domain" placeholder="example.com" />
+          <label for="recordType">Record Type</label>
+          <select id="recordType">
+            <option value="A">A (IPv4)</option>
+            <option value="AAAA">AAAA (IPv6)</option>
+            <option value="CNAME">CNAME</option>
+            <option value="MX">MX</option>
+            <option value="TXT">TXT</option>
+            <option value="NS">NS</option>
+            <option value="PTR">PTR</option>
+            <option value="SOA">SOA</option>
+            <option value="SRV">SRV</option>
+            <option value="ALL">ALL</option>
+          </select>
+          <span class="spacer"></span>
+          <button class="btn-primary" id="lookup">Lookup</button>
+        </div>
+        <div class="result" id="result">
+          <div class="dns-results" id="dnsResults"></div>
+        </div>
+        <p class="note">Query DNS records for any domain. Results are fetched from public DNS servers.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const domainInput = document.getElementById('domain');
+    const recordTypeSelect = document.getElementById('recordType');
+    const lookupBtn = document.getElementById('lookup');
+    const dnsResults = document.getElementById('dnsResults');
+
+    async function performDNSLookup() {
+      const domain = domainInput.value.trim();
+      const recordType = recordTypeSelect.value;
+
+      if (!domain) {
+        alert('Please enter a domain name');
+        return;
+      }
+
+      dnsResults.innerHTML = '<div class="loading">Looking up DNS records...</div>';
+
+      try {
+        const records = await lookupDNS(domain, recordType);
+        displayResults(domain, recordType, records);
+      } catch (error) {
+        dnsResults.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+      }
+    }
+
+    async function lookupDNS(domain, recordType) {
+      const dnsServers = [
+        'https://dns.google/resolve',
+        'https://cloudflare-dns.com/dns-query'
+      ];
+
+      const records = [];
+      const types = recordType === 'ALL' ? ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA'] : [recordType];
+
+      for (const type of types) {
+        try {
+          const response = await fetch(`${dnsServers[0]}?name=${domain}&type=${type}`, {
+            headers: {
+              'Accept': 'application/dns-json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          if (data.Answer) {
+            records.push({
+              type: type,
+              records: data.Answer.map(answer => ({
+                name: answer.name,
+                type: answer.type,
+                ttl: answer.TTL,
+                data: answer.data
+              }))
+            });
+          }
+        } catch (error) {
+          console.error(`Error looking up ${type} records:`, error);
+        }
+      }
+
+      return records;
+    }
+
+    function displayResults(domain, recordType, records) {
+      if (records.length === 0) {
+        dnsResults.innerHTML = '<div class="no-results">No DNS records found</div>';
+        return;
+      }
+
+      let html = `<div class="domain-info">DNS Lookup for <strong>${domain}</strong></div>`;
+
+      records.forEach(recordGroup => {
+        html += `
+          <div class="record-group">
+            <div class="record-type">${recordGroup.type} Records</div>
+            <div class="record-list">
+        `;
+
+        recordGroup.records.forEach(record => {
+          html += `
+            <div class="record-item">
+              <div class="record-name">${record.name}</div>
+              <div class="record-data">${formatRecordData(record)}</div>
+              <div class="record-ttl">TTL: ${record.ttl}s</div>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+      });
+
+      dnsResults.innerHTML = html;
+    }
+
+    function formatRecordData(record) {
+      switch (record.type) {
+        case 'A':
+        case 'AAAA':
+          return record.data;
+        case 'CNAME':
+          return `→ ${record.data}`;
+        case 'MX':
+          const [priority, exchange] = record.data.split(' ');
+          return `${priority} ${exchange}`;
+        case 'TXT':
+          return `"${record.data}"`;
+        case 'NS':
+          return record.data;
+        case 'SOA':
+          const soaParts = record.data.split(' ');
+          return `${soaParts[0]} ${soaParts[1]} (${soaParts.slice(2).join(' ')})`;
+        default:
+          return record.data;
+      }
+    }
+
+    lookupBtn.addEventListener('click', performDNSLookup);
+    
+    [domainInput, recordTypeSelect].forEach(el => {
+      el.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') performDNSLookup();
+      });
+    });
+
+    // Auto-lookup on input change
+    domainInput.addEventListener('input', () => {
+      if (domainInput.value.trim()) {
+        performDNSLookup();
+      }
+    });
+  </script>
+
+  <style>
+    .dns-results {
+      margin: 20px 0;
+    }
+    .loading, .error, .no-results {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .error {
+      color: #ef4444;
+    }
+    .domain-info {
+      font-size: 18px;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .record-group {
+      margin-bottom: 20px;
+    }
+    .record-type {
+      font-size: 16px;
+      font-weight: 600;
+      color: #7877c6;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: rgba(120, 119, 198, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(120, 119, 198, 0.2);
+    }
+    .record-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .record-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: grid;
+      grid-template-columns: 1fr 2fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .record-name {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 14px;
+      color: #a1a1a6;
+    }
+    .record-data {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 14px;
+      color: #ffffff;
+      word-break: break-all;
+    }
+    .record-ttl {
+      font-size: 12px;
+      color: #a1a1a6;
+      text-align: right;
+    }
+    @media (max-width: 768px) {
+      .record-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .record-ttl {
+        text-align: left;
+      }
+    }
+  </style>
+</body>
+</html>

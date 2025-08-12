@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IP Info — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🛰️</div>
+        <h1>IP Info</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="IP Info">
+          <label for="ipInput">IP Address (optional)</label>
+          <input type="text" id="ipInput" placeholder="Leave empty to detect your IP" />
+          <span class="spacer"></span>
+          <button class="btn-primary" id="lookupBtn">Lookup</button>
+        </div>
+        <div class="result" id="result">
+          <div id="info" class="info-grid"></div>
+        </div>
+        <p class="note">No data is stored. Data is fetched live from public APIs.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const ipInput = document.getElementById('ipInput');
+    const lookupBtn = document.getElementById('lookupBtn');
+    const info = document.getElementById('info');
+
+    function row(label, value) {
+      return `<div class="row"><span class="label">${label}</span><span class="value">${value ?? '-'}</span></div>`;
+    }
+
+    async function fetchJson(url, opts = {}) {
+      const res = await fetch(url, { cache: 'no-cache', ...opts });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+
+    async function detectMyIp() {
+      // Use ipify (CORS friendly)
+      try {
+        const data = await fetchJson('https://api64.ipify.org?format=json');
+        return data.ip;
+      } catch { return null; }
+    }
+
+    async function lookup() {
+      info.innerHTML = '<div class="loading">Looking up…</div>';
+      let ip = ipInput.value.trim();
+      if (!ip) ip = await detectMyIp();
+
+      try {
+        // Primary: ipwho.is (no key, CORS enabled)
+        const ipwhoUrl = `https://ipwho.is/${ip ? encodeURIComponent(ip) : ''}`;
+        let data = await fetchJson(ipwhoUrl);
+        if (data && data.success === false) throw new Error(data.message || 'ipwho.is failed');
+
+        const conn = data.connection || {};
+        const fields = [
+          row('IP', data.ip || ip || '-'),
+          row('Country', `${data.country || ''} ${data.country_code ? '('+data.country_code+')' : ''}`.trim()),
+          row('Region / City', `${data.region || ''} ${data.city ? '· ' + data.city : ''}`.trim()),
+          row('Latitude, Longitude', (data.latitude!=null && data.longitude!=null) ? `${data.latitude}, ${data.longitude}` : '-'),
+          row('Timezone', data.timezone?.id || data.timezone || '-'),
+          row('ASN', conn.asn || '-'),
+          row('ISP / Org', conn.isp || conn.org || '-')
+        ];
+        info.innerHTML = fields.join('');
+      } catch (e1) {
+        // Fallback: ipapi
+        try {
+          const geo = await fetchJson(`https://ipapi.co/${ip || ''}/json/`);
+          const fields = [
+            row('IP', geo.ip || ip || '-'),
+            row('Country', `${geo.country_name || ''} ${geo.country ? '('+geo.country+')' : ''}`.trim()),
+            row('Region / City', `${geo.region || ''} ${geo.city ? '· ' + geo.city : ''}`.trim()),
+            row('Latitude, Longitude', geo.latitude && geo.longitude ? `${geo.latitude}, ${geo.longitude}` : '-'),
+            row('Timezone', geo.timezone || '-'),
+            row('ASN', geo.asn || '-'),
+            row('ISP / Org', geo.org || '-')
+          ];
+          info.innerHTML = fields.join('');
+        } catch (e2) {
+          info.innerHTML = `<div class="error">Lookup failed: ${e2.message || e1.message}</div>`;
+        }
+      }
+    }
+
+    lookupBtn.addEventListener('click', lookup);
+    ipInput.addEventListener('keypress', e => { if (e.key === 'Enter') lookup(); });
+    // Auto-run
+    lookup();
+  </script>
+
+  <style>
+    .info-grid { display: grid; gap: 12px; }
+    .row { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(255,255,255,.05); }
+    .label { color: #a1a1a6; font-weight: 500; }
+    .value { color: #fff; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
+    @media (max-width: 768px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</body>
+</html>
+
+

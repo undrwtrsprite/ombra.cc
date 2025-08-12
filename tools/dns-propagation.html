@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNS Propagation — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🛰</div>
+        <h1>DNS Propagation</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="DNS Propagation Checker">
+          <label for="domain">Domain</label>
+          <input type="text" id="domain" placeholder="example.com" />
+          <label for="rtype">Record</label>
+          <select id="rtype">
+            <option value="A">A</option>
+            <option value="AAAA">AAAA</option>
+            <option value="CNAME">CNAME</option>
+            <option value="MX">MX</option>
+            <option value="TXT">TXT</option>
+            <option value="NS">NS</option>
+          </select>
+          <span class="spacer"></span>
+          <button class="btn-primary" id="check">Check</button>
+        </div>
+        <div class="result" id="result">
+          <div class="grid" id="grid"></div>
+        </div>
+        <p class="note">Queries multiple public resolvers over DNS-over-HTTPS.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const domainInput = document.getElementById('domain');
+    const typeSelect = document.getElementById('rtype');
+    const checkBtn = document.getElementById('check');
+    const grid = document.getElementById('grid');
+
+    const resolvers = [
+      { name: 'Google', url: 'https://dns.google/resolve' },
+      { name: 'Cloudflare', url: 'https://cloudflare-dns.com/dns-query' },
+      { name: 'Quad9', url: 'https://dns.quad9.net/dns-query' },
+      { name: 'OpenDNS', url: 'https://doh.opendns.com/dns-query' }
+    ];
+
+    function card(title, content) {
+      return `<div class="cell"><div class="cell-title">${title}</div><div class="cell-body">${content}</div></div>`;
+    }
+
+    async function dohQuery(resolver, name, type) {
+      const url = `${resolver.url}${resolver.url.includes('resolve') ? '' : ''}?name=${encodeURIComponent(name)}&type=${encodeURIComponent(type)}`;
+      const headers = resolver.url.includes('resolve') ? {} : { 'Accept': 'application/dns-json' };
+      const res = await fetch(url, { headers, cache: 'no-cache' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+
+    function fmtAnswer(ans) {
+      if (!ans) return '-';
+      return ans.map(a => a.data || a.value || JSON.stringify(a)).join('<br/>');
+    }
+
+    async function run() {
+      const domain = domainInput.value.trim();
+      const type = typeSelect.value;
+      if (!domain) { alert('Enter a domain'); return; }
+      grid.innerHTML = '';
+      for (const r of resolvers) {
+        const el = document.createElement('div');
+        el.className = 'cell';
+        el.innerHTML = `<div class="cell-title">${r.name}</div><div class="cell-body">Checking…</div>`;
+        grid.appendChild(el);
+        dohQuery(r, domain, type).then(data => {
+          const answers = data.Answer || data.answers || null;
+          el.querySelector('.cell-body').innerHTML = answers ? fmtAnswer(answers) : 'No answer';
+        }).catch(e => {
+          el.querySelector('.cell-body').textContent = 'Error: ' + e.message;
+        });
+      }
+    }
+
+    checkBtn.addEventListener('click', run);
+    [domainInput, typeSelect].forEach(el => el.addEventListener('keypress', e => { if (e.key === 'Enter') run(); }));
+  </script>
+
+  <style>
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
+    .cell { background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 12px; }
+    .cell-title { color:#a1a1a6; font-weight:600; margin-bottom:8px; }
+    .cell-body { color:#fff; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; word-break: break-word; }
+  </style>
+</body>
+</html>
+
+

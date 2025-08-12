@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UUID Generator — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <div class="bg-animation" id="bgAnimation"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🔑</div>
+        <h1>UUID Generator</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="UUID Generator">
+          <label for="count">Count</label>
+          <input type="number" id="count" min="1" max="500" value="10" />
+          <label for="uppercase"><input type="checkbox" id="uppercase" /> Uppercase</label>
+          <label for="braced"><input type="checkbox" id="braced" /> Braced</label>
+          <label for="noHyphens"><input type="checkbox" id="noHyphens" /> No hyphens</label>
+          <span class="spacer"></span>
+          <button class="btn-primary" id="generate">Generate</button>
+          <button class="btn-secondary" id="copy">Copy</button>
+        </div>
+        <div class="result" id="result">
+          <pre id="out" class="out"></pre>
+        </div>
+        <p class="note">Cryptographically secure UUIDv4, generated locally.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const count = document.getElementById('count');
+    const uppercase = document.getElementById('uppercase');
+    const braced = document.getElementById('braced');
+    const noHyphens = document.getElementById('noHyphens');
+    const out = document.getElementById('out');
+
+    function uuidv4() {
+      // RFC 4122 v4 UUID generator
+      const array = new Uint8Array(16);
+      
+      // Use crypto.getRandomValues if available, fallback to Math.random
+      if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(array);
+      } else {
+        for (let i = 0; i < array.length; i++) {
+          array[i] = Math.floor(Math.random() * 256);
+        }
+      }
+      
+      // Set version (4) and variant bits
+      array[6] = (array[6] & 0x0f) | 0x40;
+      array[8] = (array[8] & 0x3f) | 0x80;
+      
+      // Convert to hex string
+      const hex = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+      
+      // Format as UUID
+      return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+    }
+
+    function applyFormat(uuid) {
+      let formatted = uuid;
+      
+      if (noHyphens.checked) {
+        formatted = formatted.replace(/-/g, '');
+      }
+      
+      if (braced.checked) {
+        formatted = `{${formatted}}`;
+      }
+      
+      if (uppercase.checked) {
+        formatted = formatted.toUpperCase();
+      }
+      
+      return formatted;
+    }
+
+    function generate() {
+      try {
+        const n = Math.min(500, Math.max(1, parseInt(count.value) || 1));
+        const list = [];
+        
+        for (let i = 0; i < n; i++) {
+          const uuid = uuidv4();
+          const formatted = applyFormat(uuid);
+          list.push(formatted);
+        }
+        
+        out.textContent = list.join('\n');
+      } catch (error) {
+        console.error('UUID generation error:', error);
+        out.textContent = 'Error generating UUIDs. Please try again.';
+      }
+    }
+
+    document.getElementById('generate').addEventListener('click', generate);
+    document.getElementById('copy').addEventListener('click', async () => {
+      try { 
+        await navigator.clipboard.writeText(out.textContent || ''); 
+        const copyBtn = document.getElementById('copy');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+      } catch (error) {
+        console.error('Copy failed:', error);
+      }
+    });
+    
+    // Auto-regenerate when format options change
+    [uppercase, braced, noHyphens].forEach(checkbox => {
+      checkbox.addEventListener('change', generate);
+    });
+    
+    // initial
+    generate();
+    
+    // Animated background particles
+    function createParticles() {
+      const container = document.getElementById('bgAnimation');
+      if (!container) return;
+      
+      // Create 25 particles for more noticeable effect
+      for (let i = 0; i < 25; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'floating-particle';
+        
+        // Random starting position and size variation
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 25 + 's';
+        
+        // Add some random size variations
+        if (Math.random() > 0.7) {
+          particle.style.width = (Math.random() * 4 + 3) + 'px';
+          particle.style.height = particle.style.width;
+        }
+        
+        container.appendChild(particle);
+      }
+    }
+    
+    // Initialize particles when page loads
+    createParticles();
+  </script>
+
+  <style>
+    .out { white-space: pre; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; min-height: 220px; background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:16px; }
+  </style>
+</body>
+</html>
+
+

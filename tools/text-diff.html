@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text Diff — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🧩</div>
+        <h1>Text Diff</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="Text Diff">
+          <span class="spacer"></span>
+          <button class="btn-primary" id="compare">Compare</button>
+          <button class="btn-secondary" id="swap">Swap</button>
+        </div>
+        <div class="result" id="result">
+          <div class="editor-grid">
+            <textarea id="a" placeholder="Original text..."></textarea>
+            <textarea id="b" placeholder="Modified text..."></textarea>
+          </div>
+          <div class="diff" id="diff"></div>
+        </div>
+        <p class="note">Computes a character-level diff locally. No data leaves your device.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const a = document.getElementById('a');
+    const b = document.getElementById('b');
+    const diffEl = document.getElementById('diff');
+
+    function diffChars(oldStr, newStr) {
+      // Simple dynamic-programming LCS-based diff to mark insertions/deletions
+      const m = oldStr.length, n = newStr.length;
+      const dp = Array.from({length:m+1}, ()=>Array(n+1).fill(0));
+      for (let i=1;i<=m;i++) for (let j=1;j<=n;j++) dp[i][j] = oldStr[i-1]===newStr[j-1]? dp[i-1][j-1]+1 : Math.max(dp[i-1][j], dp[i][j-1]);
+      let i=m, j=n, res=[];
+      while (i>0 || j>0) {
+        if (i>0 && j>0 && oldStr[i-1]===newStr[j-1]) { res.push({t:'eq', c:oldStr[i-1]}); i--; j--; }
+        else if (j>0 && (i===0 || dp[i][j-1] >= dp[i-1][j])) { res.push({t:'ins', c:newStr[j-1]}); j--; }
+        else { res.push({t:'del', c:oldStr[i-1]}); i--; }
+      }
+      return res.reverse();
+    }
+
+    function renderDiff(parts) {
+      const html = parts.map(p => {
+        if (p.t==='eq') return `<span>${escapeHtml(p.c)}</span>`;
+        if (p.t==='ins') return `<span class="ins">${escapeHtml(p.c)}</span>`;
+        return `<span class="del">${escapeHtml(p.c)}</span>`;
+      }).join('');
+      diffEl.innerHTML = html;
+    }
+
+    function escapeHtml(s){ return s.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch])); }
+
+    function compare(){ renderDiff(diffChars(a.value, b.value)); }
+    function swap(){ const t=a.value; a.value=b.value; b.value=t; compare(); }
+
+    document.getElementById('compare').addEventListener('click', compare);
+    document.getElementById('swap').addEventListener('click', swap);
+  </script>
+
+  <style>
+    .editor-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+    textarea { min-height: 180px; resize: vertical; background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:12px; color:#fff; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
+    .diff { padding:12px; background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:10px; font-family:'SF Mono', Monaco, 'Cascadia Code', monospace; white-space:pre-wrap; }
+    .ins { background: rgba(34,197,94,.25); }
+    .del { background: rgba(239,68,68,.25); text-decoration: line-through; }
+    @media (max-width:768px){ .editor-grid{ grid-template-columns:1fr; } }
+  </style>
+</body>
+</html>
+
+

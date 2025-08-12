@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unix Time Converter — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">⏰</div>
+        <h1>Unix Time Converter</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="Unix Time Converter">
+          <label for="epochInput">Unix Time (seconds)</label>
+          <input type="text" id="epochInput" placeholder="1700000000" />
+          <label for="dateInput">Date / Time</label>
+          <input type="datetime-local" id="dateInput" />
+          <span class="spacer"></span>
+          <button class="btn-secondary" id="nowBtn">Now</button>
+          <button class="btn-primary" id="copyBtn">Copy</button>
+        </div>
+        <div class="result" id="result">
+          <div class="grid">
+            <div class="row"><span class="label">Epoch (s)</span><span class="value" id="epochS">-</span></div>
+            <div class="row"><span class="label">Epoch (ms)</span><span class="value" id="epochMs">-</span></div>
+            <div class="row"><span class="label">ISO 8601</span><span class="value" id="iso">-</span></div>
+            <div class="row"><span class="label">UTC</span><span class="value" id="utc">-</span></div>
+            <div class="row"><span class="label">Local</span><span class="value" id="local">-</span></div>
+          </div>
+        </div>
+        <p class="note">Convert between Unix time and human‑readable formats. Works offline in your browser.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const epochInput = document.getElementById('epochInput');
+    const dateInput = document.getElementById('dateInput');
+    const nowBtn = document.getElementById('nowBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const out = {
+      s: document.getElementById('epochS'),
+      ms: document.getElementById('epochMs'),
+      iso: document.getElementById('iso'),
+      utc: document.getElementById('utc'),
+      local: document.getElementById('local')
+    };
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function toLocalInputValue(d) {
+      const tz = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+      return tz.toISOString().slice(0,16);
+    }
+
+    function updateFromDate(d) {
+      if (!(d instanceof Date) || isNaN(d.getTime())) return;
+      const ms = d.getTime();
+      const s = Math.floor(ms/1000);
+      out.s.textContent = s;
+      out.ms.textContent = ms;
+      out.iso.textContent = new Date(ms).toISOString();
+      out.utc.textContent = new Date(ms).toUTCString();
+      out.local.textContent = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      epochInput.value = s;
+      dateInput.value = toLocalInputValue(d);
+    }
+
+    function updateFromEpoch() {
+      const raw = epochInput.value.trim();
+      if (!raw) return;
+      const num = Number(raw);
+      const ms = raw.length > 10 ? num : num*1000;
+      const d = new Date(ms);
+      updateFromDate(d);
+    }
+
+    function updateFromPicker() {
+      if (!dateInput.value) return;
+      const d = new Date(dateInput.value);
+      updateFromDate(d);
+    }
+
+    nowBtn.addEventListener('click', () => updateFromDate(new Date()));
+    copyBtn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(epochInput.value || ''); copyBtn.textContent = 'Copied'; setTimeout(()=>copyBtn.textContent='Copy', 1200);} catch {}
+    });
+    epochInput.addEventListener('input', updateFromEpoch);
+    dateInput.addEventListener('change', updateFromPicker);
+    // init
+    updateFromDate(new Date());
+  </script>
+
+  <style>
+    .grid { display:grid; gap:12px; }
+    .row { display:grid; grid-template-columns: 180px 1fr; gap:12px; padding:12px; border:1px solid rgba(255,255,255,.1); border-radius:10px; background:rgba(255,255,255,.05); }
+    .label { color:#a1a1a6; font-weight:500; }
+    .value { color:#fff; font-family:'SF Mono', Monaco, 'Cascadia Code', monospace; }
+    @media (max-width:768px){ .row{ grid-template-columns:1fr; } }
+  </style>
+</body>
+</html>
+
+

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WHOIS Lookup — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📇</div>
+        <h1>WHOIS Lookup</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="WHOIS Lookup">
+          <label for="domain">Domain</label>
+          <input type="text" id="domain" placeholder="example.com" />
+          <span class="spacer"></span>
+          <button class="btn-primary" id="lookup">Lookup</button>
+        </div>
+        <div class="result" id="result">
+          <pre id="whoisOut" class="whois"></pre>
+        </div>
+        <p class="note">Uses public RDAP (the modern WHOIS). No API key required. Some data may be redacted depending on the registry.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const domainInput = document.getElementById('domain');
+    const lookupBtn = document.getElementById('lookup');
+    const out = document.getElementById('whoisOut');
+
+    function getEvent(data, action) {
+      return data?.events?.find(e => e.eventAction === action)?.eventDate || null;
+    }
+
+    function findEntityByRole(data, role) {
+      return (data.entities || []).find(ent => (ent.roles || []).includes(role));
+    }
+
+    function vcardValue(entity) {
+      if (!entity?.vcardArray) return null;
+      const v = entity.vcardArray[1] || [];
+      const get = (name) => (v.find(x => x[0] === name) || [])[3];
+      const fn = get('fn');
+      const org = get('org');
+      return fn || (org && org.text) || org || null;
+    }
+
+    function formatRDAP(data) {
+      const registrarEnt = findEntityByRole(data, 'registrar');
+      const registrar = vcardValue(registrarEnt) || registrarEnt?.handle || '-';
+      const ns = (data.nameservers || []).map(n => n.ldhName || n.unicodeName).filter(Boolean);
+      const status = (data.status || []).join(', ');
+      const created = getEvent(data, 'registration');
+      const updated = getEvent(data, 'last changed');
+      const expires = getEvent(data, 'expiration');
+      const lines = [
+        `Domain: ${data.ldhName || data.unicodeName || '-'}`,
+        `Registrar: ${registrar || '-'}`,
+        `Created: ${created || '-'}`,
+        `Updated: ${updated || '-'}`,
+        `Expires: ${expires || '-'}`,
+        `Status: ${status || '-'}`,
+        `Nameservers: ${ns.length ? ns.join(', ') : '-'}`
+      ];
+      return lines.join('\n');
+    }
+
+    async function doLookup() {
+      const domain = (domainInput.value || '').trim();
+      if (!domain) { alert('Enter a domain'); return; }
+      out.textContent = 'Looking up…';
+      try {
+        const res = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, {
+          cache: 'no-cache',
+          headers: { 'Accept': 'application/rdap+json, application/json' }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        // Prefer clean formatted output, include raw JSON collapsed below
+        const formatted = formatRDAP(data);
+        out.textContent = formatted + '\n\n— Raw RDAP —\n' + JSON.stringify(data, null, 2);
+      } catch (e) {
+        out.textContent = 'Lookup failed: ' + e.message + '\nTip: Ensure the domain is valid. Some registries may block cross-origin access.';
+      }
+    }
+
+    lookupBtn.addEventListener('click', doLookup);
+    domainInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') doLookup(); });
+  </script>
+
+  <style>
+    .whois { white-space: pre-wrap; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 16px; min-height: 220px; }
+  </style>
+</body>
+</html>
+
+

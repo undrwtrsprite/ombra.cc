@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IP Calculator — ombra tools</title>
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🌐</div>
+        <h1>IP Calculator</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="IP Calculator">
+          <label for="ipAddress">IP Address</label>
+          <input type="text" id="ipAddress" placeholder="192.168.1.1" />
+          <label for="subnetMask">Subnet Mask</label>
+          <select id="subnetMask">
+            <option value="8">/8 (255.0.0.0)</option>
+            <option value="16">/16 (255.255.0.0)</option>
+            <option value="24" selected>/24 (255.255.255.0)</option>
+            <option value="25">/25 (255.255.255.128)</option>
+            <option value="26">/26 (255.255.255.192)</option>
+            <option value="27">/27 (255.255.255.224)</option>
+            <option value="28">/28 (255.255.255.240)</option>
+            <option value="29">/29 (255.255.255.248)</option>
+            <option value="30">/30 (255.255.255.252)</option>
+            <option value="32">/32 (255.255.255.255)</option>
+          </select>
+          <span class="spacer"></span>
+          <button class="btn-primary" id="calculate">Calculate</button>
+        </div>
+        <div class="result" id="result">
+          <div class="network-info">
+            <div class="info-row">
+              <span class="label">Network Address:</span>
+              <span class="value" id="networkAddress">-</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Broadcast Address:</span>
+              <span class="value" id="broadcastAddress">-</span>
+            </div>
+            <div class="info-row">
+              <span class="label">First Host:</span>
+              <span class="value" id="firstHost">-</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Last Host:</span>
+              <span class="value" id="lastHost">-</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Total Hosts:</span>
+              <span class="value" id="totalHosts">-</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Subnet Mask:</span>
+              <span class="value" id="subnetMaskValue">-</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Wildcard Mask:</span>
+              <span class="value" id="wildcardMask">-</span>
+            </div>
+          </div>
+        </div>
+        <p class="note">Enter an IP address and select a subnet mask to calculate network information.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/back-button.js"></script>
+  <script>
+    const ipInput = document.getElementById('ipAddress');
+    const subnetSelect = document.getElementById('subnetMask');
+    const calculateBtn = document.getElementById('calculate');
+
+    function ipToInt(ip) {
+      return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+    }
+
+    function intToIp(int) {
+      return [
+        (int >>> 24) & 255,
+        (int >>> 16) & 255,
+        (int >>> 8) & 255,
+        int & 255
+      ].join('.');
+    }
+
+    function calculateSubnet() {
+      const ip = ipInput.value.trim();
+      const cidr = parseInt(subnetSelect.value);
+
+      if (!ip || !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) {
+        alert('Please enter a valid IP address (e.g., 192.168.1.1)');
+        return;
+      }
+
+      const ipInt = ipToInt(ip);
+      const maskInt = (0xFFFFFFFF << (32 - cidr)) >>> 0;
+      const networkInt = ipInt & maskInt;
+      const broadcastInt = networkInt | (~maskInt >>> 0);
+
+      const subnetMask = intToIp(maskInt);
+      const wildcardMask = intToIp(~maskInt >>> 0);
+      const networkAddress = intToIp(networkInt);
+      const broadcastAddress = intToIp(broadcastInt);
+      const firstHost = intToIp(networkInt + 1);
+      const lastHost = intToIp(broadcastInt - 1);
+      const totalHosts = Math.pow(2, 32 - cidr) - 2;
+
+      document.getElementById('networkAddress').textContent = networkAddress;
+      document.getElementById('broadcastAddress').textContent = broadcastAddress;
+      document.getElementById('firstHost').textContent = firstHost;
+      document.getElementById('lastHost').textContent = lastHost;
+      document.getElementById('totalHosts').textContent = totalHosts;
+      document.getElementById('subnetMaskValue').textContent = subnetMask;
+      document.getElementById('wildcardMask').textContent = wildcardMask;
+    }
+
+    calculateBtn.addEventListener('click', calculateSubnet);
+    [ipInput, subnetSelect].forEach(el => {
+      el.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') calculateSubnet();
+      });
+    });
+
+    // Auto-calculate on input change
+    ipInput.addEventListener('input', calculateSubnet);
+    subnetSelect.addEventListener('change', calculateSubnet);
+
+    // Initial calculation with default values
+    ipInput.value = '192.168.1.1';
+    calculateSubnet();
+  </script>
+
+  <style>
+    .network-info {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .label {
+      font-weight: 500;
+      color: #a1a1a6;
+    }
+    .value {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-weight: 600;
+      color: #ffffff;
+    }
+  </style>
+</body>
+</html>

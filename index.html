@@ -11,6 +11,7 @@
 <body>
   <div class="bg-layer bg-gradient"></div>
   <div class="bg-layer bg-mesh"></div>
+  <div class="bg-animation" id="bgAnimation"></div>
 
   <nav class="nav">
     <div class="nav-inner">
@@ -46,6 +47,7 @@
         <button class="category-btn" data-filter="convert">Convert</button>
         <button class="category-btn" data-filter="compress">Compress</button>
         <button class="category-btn" data-filter="encode">Encode</button>
+        <button class="category-btn" data-filter="network">Network</button>
         <button class="category-btn" data-filter="utility">Utility</button>
       </div>
       <h3 class="tools-heading">Images & PDFs</h3>
@@ -91,6 +93,8 @@
           <div class="card-description">Compress images, documents, and files to reduce size while maintaining quality.</div>
         </a>
       </div>
+
+
 
       <h3 class="tools-heading">Text & Data</h3>
       <div class="cards-grid reveal visible">
@@ -177,6 +181,50 @@
           <div class="card-icon">😊</div>
           <div class="card-title">Emoji Picker</div>
           <div class="card-description">Browse, search, and copy emojis with categories and favorites.</div>
+        </a>
+      </div>
+
+      <h3 class="tools-heading">IT & Network Tools</h3>
+      <div class="cards-grid reveal visible">
+        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/ip-calculator.html">
+          <div class="card-icon">🌐</div>
+          <div class="card-title">IP Calculator</div>
+          <div class="card-description">Calculate subnet masks, network addresses, and host ranges for IP addresses.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/ip-info.html">
+          <div class="card-icon">🛰️</div>
+          <div class="card-title">IP Info</div>
+          <div class="card-description">Detect your public IP, ISP, ASN, and approximate location. No data saved.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/whois-lookup.html">
+          <div class="card-icon">📇</div>
+          <div class="card-title">WHOIS Lookup</div>
+          <div class="card-description">Query domain registration details: registrar, dates, nameservers, contacts.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/dns-propagation.html">
+          <div class="card-icon">🛰</div>
+          <div class="card-title">DNS Propagation</div>
+          <div class="card-description">Check how DNS records resolve across multiple global resolvers.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/dns-lookup.html">
+          <div class="card-icon">🔍</div>
+          <div class="card-title">DNS Lookup</div>
+          <div class="card-description">Query DNS records including A, AAAA, MX, TXT, NS, and more for any domain.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="utility data" href="/tools/unix-time.html">
+          <div class="card-icon">⏰</div>
+          <div class="card-title">Unix Time Converter</div>
+          <div class="card-description">Convert between Unix epoch, ISO 8601, UTC and local time.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/uuid-generator.html">
+          <div class="card-icon">🔑</div>
+          <div class="card-title">UUID Generator</div>
+          <div class="card-description">Generate secure UUIDv4 identifiers with formatting options.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/text-diff.html">
+          <div class="card-icon">🧩</div>
+          <div class="card-title">Text Diff</div>
+          <div class="card-description">Compare two texts and highlight insertions and deletions.</div>
         </a>
       </div>
 
@@ -295,6 +343,33 @@
       // Show again on focus if there is a query
       navSearch.addEventListener('focus', () => { if (navSearch.value.trim() && navResults) navResults.style.display = 'block'; });
     }
+    
+    // Animated background particles
+    function createParticles() {
+      const container = document.getElementById('bgAnimation');
+      if (!container) return;
+      
+      // Create 25 particles for more noticeable effect
+      for (let i = 0; i < 25; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'floating-particle';
+        
+        // Random starting position and size variation
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 25 + 's';
+        
+        // Add some random size variations
+        if (Math.random() > 0.7) {
+          particle.style.width = (Math.random() * 4 + 3) + 'px';
+          particle.style.height = particle.style.width;
+        }
+        
+        container.appendChild(particle);
+      }
+    }
+    
+    // Initialize particles when page loads
+    createParticles();
   </script>
 </body>
 </html>
