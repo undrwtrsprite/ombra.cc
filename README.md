@@ -8,7 +8,7 @@
 
 ## ✨ Overview
 
-**ombra** offers a collection of fast, ad-free, privacy-friendly browser tools — no sign-ups, no uploads, no tracking.  
+**ombra** is a suite of fast, ad-free, privacy-friendly browser tools — no sign-ups, no uploads, no tracking.  
 Everything runs locally in your browser, so your data never leaves your device.
 
 ---
@@ -17,9 +17,9 @@ Everything runs locally in your browser, so your data never leaves your device.
 
 | Category        | Tools |
 |-----------------|-------|
-| **🖼 Image** | Image Converter (JPG, PNG, WEBP) <br> Image Resizer |
-| **📄 PDF & Text** | PDF → Text <br> Text → PDF |
-| **🧰 Utilities** | QR Code Generator <br> Password Generator <br> Color Picker <br> Text Case Converter <br> JSON Formatter <br> Unit Converter <br> URL Encoder / Decoder <br> Markdown Editor <br> Advanced Calculator <br> File Compressor <br> Smart Notepad <br> Calendar & Planner <br> Stopwatch & Timer <br> Currency Converter <br> Emoji Picker |
+| **🖼 Image** | Image Converter (JPG, PNG, WEBP) <br> Image Resizer <br> Image to PDF *(new)* <br> HEIC to JPG *(new)* |
+| **📄 PDF & Text** | PDF → Text <br> Text → PDF <br> PDF Merger *(new)* |
+| **🧰 Utilities** | QR Code Generator <br> QR Code Scanner <br> Password Generator <br> Color Picker <br> Text Case Converter <br> JSON Formatter <br> CSV to JSON <br> Base64 Encoder / Decoder <br> URL Encoder / Decoder <br> Markdown Editor <br> Advanced Calculator <br> File Compressor *(new)* <br> Smart Notepad <br> Stopwatch & Timer <br> Currency Converter <br> Emoji Picker <br> Unit Converter |
 
 ---
 
@@ -34,17 +34,17 @@ Everything runs locally in your browser, so your data never leaves your device.
 ## 🚀 Usage
 
 1. Visit **[ombra.cc](https://ombra.cc)**
-2. Select your desired tool from the homepage
-3. Use it instantly — **no installation or registration required**
+2. Pick your tool from the homepage
+3. Use it instantly — **no installation or registration needed**
 
 ---
 
 ## 💡 Why ombra?
 
-- ⚡ **Fast & hassle-free** – zero loading delays, no uploads
+- ⚡ **Fast & hassle-free** – no uploads, no delays
 - 🔐 **Privacy-focused** – data stays on your device
-- 🎨 **Beautiful & clean** – modern, distraction-free design
-- 📦 **All-in-one** – from image tools to calculators
+- 🎨 **Beautiful & clean** – distraction-free design
+- 📦 **All-in-one** – from image tools to converters
 
 ---
 
