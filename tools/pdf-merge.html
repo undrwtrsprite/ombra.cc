@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Merger — ombra tools</title>
+  <meta name="description" content="Merge multiple PDF files into one, privately in your browser." />
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📎</div>
+        <h1>PDF Merger</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <label>PDF files</label>
+          <input type="file" id="pdfFiles" accept="application/pdf" multiple />
+        </div>
+        <div class="result" id="fileList" style="display:none;"></div>
+        <div class="actions">
+          <button class="btn-primary" id="mergeBtn" disabled>Merge PDFs</button>
+          <a class="btn-secondary" id="downloadLink" download="merged.pdf" style="display:none;">Download</a>
+        </div>
+        <p class="note">All merging happens locally in your browser. No files are uploaded.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const pdfInput = document.getElementById('pdfFiles');
+    const mergeBtn = document.getElementById('mergeBtn');
+    const fileList = document.getElementById('fileList');
+    const downloadLink = document.getElementById('downloadLink');
+
+    let selectedFiles = [];
+
+    pdfInput.addEventListener('change', () => {
+      selectedFiles = Array.from(pdfInput.files || []);
+      mergeBtn.disabled = selectedFiles.length === 0;
+      renderFileList();
+    });
+
+    function renderFileList() {
+      if (selectedFiles.length === 0) { fileList.style.display = 'none'; return; }
+      fileList.style.display = 'block';
+      fileList.innerHTML = '<h3>Files to merge</h3>' + selectedFiles.map((f, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+          <span>${i+1}. ${f.name}</span>
+          <span class="note">${(f.size/1024/1024).toFixed(2)} MB</span>
+        </div>
+      `).join('');
+    }
+
+    mergeBtn.addEventListener('click', async () => {
+      if (selectedFiles.length === 0) return;
+      mergeBtn.disabled = true;
+      mergeBtn.textContent = 'Merging…';
+      downloadLink.style.display = 'none';
+      try {
+        const { PDFDocument } = window.pdfLib;
+        const mergedPdf = await PDFDocument.create();
+        for (const file of selectedFiles) {
+          const arrayBuffer = await file.arrayBuffer();
+          const srcDoc = await PDFDocument.load(arrayBuffer);
+          const srcPages = await mergedPdf.copyPages(srcDoc, srcDoc.getPageIndices());
+          srcPages.forEach(p => mergedPdf.addPage(p));
+        }
+        const bytes = await mergedPdf.save();
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.style.display = 'inline-block';
+      } catch (e) {
+        alert('Merging failed. Please check your PDFs.');
+      } finally {
+        mergeBtn.disabled = false;
+        mergeBtn.textContent = 'Merge PDFs';
+      }
+    });
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image to PDF — ombra tools</title>
+  <meta name="description" content="Convert images to a single PDF with page size and fit options." />
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">🖼️</div>
+        <h1>Image to PDF</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <label>Images</label>
+          <input type="file" id="images" accept="image/*" multiple />
+        </div>
+        <div class="control-row">
+          <label>Page Size</label>
+          <select id="pageSize">
+            <option value="auto">Auto (match image)</option>
+            <option value="A4P">A4 Portrait</option>
+            <option value="A4L">A4 Landscape</option>
+            <option value="LTP">Letter Portrait</option>
+            <option value="LTL">Letter Landscape</option>
+          </select>
+          <label>Fit</label>
+          <select id="fit">
+            <option value="contain">Contain (keep aspect)</option>
+            <option value="cover">Cover (fill page)</option>
+            <option value="stretch">Stretch</option>
+          </select>
+          <label>Margin</label>
+          <input type="number" id="margin" value="16" min="0" step="1" />
+        </div>
+        <div class="actions">
+          <button class="btn-primary" id="buildBtn" disabled>Create PDF</button>
+          <a class="btn-secondary" id="download" download="images.pdf" style="display:none;">Download</a>
+        </div>
+        <p class="note">Runs fully offline in your browser.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const imagesInput = document.getElementById('images');
+    const pageSizeSelect = document.getElementById('pageSize');
+    const fitSelect = document.getElementById('fit');
+    const marginInput = document.getElementById('margin');
+    const buildBtn = document.getElementById('buildBtn');
+    const download = document.getElementById('download');
+
+    let imageFiles = [];
+    imagesInput.addEventListener('change', () => {
+      imageFiles = Array.from(imagesInput.files || []);
+      buildBtn.disabled = imageFiles.length === 0;
+    });
+
+    const POINTS_PER_MM = 2.8346456693;
+    const sizes = {
+      A4P: [210 * POINTS_PER_MM, 297 * POINTS_PER_MM],
+      A4L: [297 * POINTS_PER_MM, 210 * POINTS_PER_MM],
+      LTP: [216 * POINTS_PER_MM, 279 * POINTS_PER_MM],
+      LTL: [279 * POINTS_PER_MM, 216 * POINTS_PER_MM]
+    };
+
+    buildBtn.addEventListener('click', async () => {
+      buildBtn.disabled = true; buildBtn.textContent = 'Building…'; download.style.display = 'none';
+      try {
+        const { PDFDocument } = window.pdfLib;
+        const doc = await PDFDocument.create();
+        const margin = Number(marginInput.value) || 0;
+
+        for (const file of imageFiles) {
+          const bytes = await file.arrayBuffer();
+          const isJpeg = /jpe?g$/i.test(file.name) || file.type === 'image/jpeg';
+          const embedded = isJpeg ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
+          const imgW = embedded.width;
+          const imgH = embedded.height;
+
+          let pageWidth, pageHeight;
+          if (pageSizeSelect.value === 'auto') {
+            pageWidth = imgW + margin * 2;
+            pageHeight = imgH + margin * 2;
+          } else {
+            [pageWidth, pageHeight] = sizes[pageSizeSelect.value];
+          }
+
+          const page = doc.addPage([pageWidth, pageHeight]);
+          const targetW = pageWidth - margin * 2;
+          const targetH = pageHeight - margin * 2;
+          let drawW = targetW, drawH = targetH;
+
+          if (fitSelect.value === 'contain') {
+            const scale = Math.min(targetW / imgW, targetH / imgH);
+            drawW = imgW * scale; drawH = imgH * scale;
+          } else if (fitSelect.value === 'cover') {
+            const scale = Math.max(targetW / imgW, targetH / imgH);
+            drawW = imgW * scale; drawH = imgH * scale;
+          } else {
+            drawW = targetW; drawH = targetH;
+          }
+
+          const x = (pageWidth - drawW) / 2;
+          const y = (pageHeight - drawH) / 2;
+          page.drawImage(embedded, { x, y, width: drawW, height: drawH });
+        }
+
+        const out = await doc.save();
+        const blob = new Blob([out], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        download.href = url; download.style.display = 'inline-block';
+      } catch (e) {
+        alert('Failed to build PDF.');
+      } finally {
+        buildBtn.disabled = false; buildBtn.textContent = 'Create PDF';
+      }
+    });
+  </script>
+</body>
+</html>
+
+

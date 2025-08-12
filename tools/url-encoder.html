@@ -23,16 +23,14 @@
         <h1>URL Encoder/Decoder</h1>
       </div>
       <div class="tool-body">
-        <div class="control-row">
-          <label>Input Text</label>
-        </div>
-        <textarea id="inputText" placeholder="Enter text to encode or decode...">https://example.com/path?name=John Doe&city=New York</textarea>
-        <div class="actions">
+        <div class="toolbar" role="toolbar" aria-label="URL Encoder/Decoder">
+          <span class="spacer"></span>
           <button class="btn-primary" id="encode">Encode URL</button>
           <button class="btn-secondary" id="decode">Decode URL</button>
           <button class="btn-secondary" id="copy">Copy Result</button>
           <button class="btn-secondary" id="clear">Clear</button>
         </div>
+        <textarea id="inputText" placeholder="Enter text to encode or decode...">https://example.com/path?name=John Doe&city=New York</textarea>
         <div id="result" style="margin-top:24px; display:none;">
           <h3 style="margin-bottom:16px; color:#ffffff;">Result</h3>
           <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px;">

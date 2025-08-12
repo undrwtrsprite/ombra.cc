@@ -23,8 +23,8 @@
         <h1>Unit Converter</h1>
       </div>
       <div class="tool-body">
-        <div class="control-row">
-          <label>Category</label>
+        <div class="toolbar" role="toolbar" aria-label="Unit Converter">
+          <label for="category">Category</label>
           <select id="category">
             <option value="length">Length</option>
             <option value="weight">Weight</option>
@@ -35,17 +35,14 @@
             <option value="time">Time</option>
             <option value="data">Data Storage</option>
           </select>
-        </div>
-        <div class="control-row">
-          <label>From</label>
+          <label for="fromValue">From</label>
           <input type="number" id="fromValue" value="1" step="any" />
           <select id="fromUnit"></select>
-          <label>To</label>
+          <label for="toUnit">To</label>
           <select id="toUnit"></select>
-        </div>
-        <div class="actions">
-          <button class="btn-primary" id="convert">Convert</button>
+          <span class="spacer"></span>
           <button class="btn-secondary" id="swap">Swap Units</button>
+          <button class="btn-primary" id="convert">Convert</button>
         </div>
         <div id="result" style="margin-top:24px; text-align:center; display:none;">
           <div style="font-size:24px; font-weight:700; color:#ffffff; margin-bottom:8px;" id="resultValue"></div>

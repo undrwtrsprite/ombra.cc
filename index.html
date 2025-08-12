@@ -30,98 +30,148 @@
     </section>
 
     <div class="content-section" id="tools">
+      <div class="categories" id="toolFilters" style="margin-bottom:12px;">
+        <button class="category-btn active" data-filter="all">All</button>
+        <button class="category-btn" data-filter="images">Images</button>
+        <button class="category-btn" data-filter="pdf">PDF</button>
+        <button class="category-btn" data-filter="text">Text</button>
+        <button class="category-btn" data-filter="data">Data</button>
+        <button class="category-btn" data-filter="qr">QR</button>
+        <button class="category-btn" data-filter="convert">Convert</button>
+        <button class="category-btn" data-filter="compress">Compress</button>
+        <button class="category-btn" data-filter="encode">Encode</button>
+        <button class="category-btn" data-filter="utility">Utility</button>
+      </div>
+      <h3 class="tools-heading">Images & PDFs</h3>
       <div class="cards-grid reveal visible">
-        <a class="glass-card tilt-card" href="/tools/image-converter.html">
+        <a class="glass-card tilt-card" data-tags="images convert" href="/tools/image-converter.html">
           <div class="card-icon">🖼️</div>
           <div class="card-title">Image Converter</div>
           <div class="card-description">Convert between JPG, PNG, WEBP formats with quality control. No upload needed.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/image-resizer.html">
+        <a class="glass-card tilt-card" data-tags="images compress" href="/tools/image-resizer.html">
           <div class="card-icon">📐</div>
           <div class="card-title">Image Resizer</div>
           <div class="card-description">Resize and compress images while maintaining quality and aspect ratio.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/pdf-to-text.html">
+        <a class="glass-card tilt-card" data-tags="pdf text" href="/tools/pdf-to-text.html">
           <div class="card-icon">📄</div>
           <div class="card-title">PDF to Text</div>
           <div class="card-description">Extract text from PDFs locally using your device's processing power.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/text-to-pdf.html">
+        <a class="glass-card tilt-card" data-tags="pdf text" href="/tools/text-to-pdf.html">
           <div class="card-icon">📝</div>
           <div class="card-title">Text to PDF</div>
           <div class="card-description">Convert your notes and text into clean, printable PDF documents.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/qr.html">
-          <div class="card-icon">🔗</div>
-          <div class="card-title">QR Code Generator</div>
-          <div class="card-description">Create QR codes from any text or URL. Download as high-quality PNG.</div>
+        <a class="glass-card tilt-card" data-tags="pdf" href="/tools/pdf-merge.html">
+          <div class="card-icon">📎</div>
+          <div class="card-title">PDF Merger</div>
+          <div class="card-description">Combine multiple PDFs into one. Fast and private, runs in your browser.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/password.html">
-          <div class="card-icon">🔑</div>
-          <div class="card-title">Password Generator</div>
-          <div class="card-description">Generate cryptographically secure passwords with customizable options.</div>
+        <a class="glass-card tilt-card" data-tags="images pdf convert" href="/tools/image-to-pdf.html">
+          <div class="card-icon">🖼️</div>
+          <div class="card-title">Image to PDF</div>
+          <div class="card-description">Turn images into a single PDF. Choose page size and fit options.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/color-picker.html">
-          <div class="card-icon">🎨</div>
-          <div class="card-title">Color Picker</div>
-          <div class="card-description">Pick colors from images, generate palettes, and convert between formats.</div>
+        <a class="glass-card tilt-card" data-tags="images convert" href="/tools/heic-to-jpg.html">
+          <div class="card-icon">📱</div>
+          <div class="card-title">HEIC to JPG</div>
+          <div class="card-description">Convert iPhone HEIC photos to JPG or PNG instantly, offline.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/text-case.html">
-          <div class="card-icon">📝</div>
-          <div class="card-title">Text Case Converter</div>
-          <div class="card-description">Convert text between UPPERCASE, lowercase, Title Case, and more formats.</div>
-        </a>
-        <a class="glass-card tilt-card" href="/tools/json-formatter.html">
-          <div class="card-icon">⚡</div>
-          <div class="card-title">JSON Formatter</div>
-          <div class="card-description">Format, validate, and beautify JSON data with syntax highlighting.</div>
-        </a>
-        <a class="glass-card tilt-card" href="/tools/unit-converter.html">
-          <div class="card-icon">📊</div>
-          <div class="card-title">Unit Converter</div>
-          <div class="card-description">Convert between length, weight, temperature, and other units instantly.</div>
-        </a>
-        <a class="glass-card tilt-card" href="/tools/url-encoder.html">
-          <div class="card-icon">🔗</div>
-          <div class="card-title">URL Encoder/Decoder</div>
-          <div class="card-description">Encode and decode URLs, handle special characters and Unicode.</div>
-        </a>
-        <a class="glass-card tilt-card" href="/tools/markdown.html">
-          <div class="card-icon">📖</div>
-          <div class="card-title">Markdown Editor</div>
-          <div class="card-description">Write and preview Markdown with live rendering and export options.</div>
-        </a>
-        <a class="glass-card tilt-card" href="/tools/calculator.html">
-          <div class="card-icon">🧮</div>
-          <div class="card-title">Advanced Calculator</div>
-          <div class="card-description">Scientific calculator with history, memory functions, and unit conversions.</div>
-        </a>
-        <a class="glass-card tilt-card" href="/tools/file-compressor.html">
+        <a class="glass-card tilt-card" data-tags="compress" href="/tools/file-compressor.html">
           <div class="card-icon">🗜️</div>
           <div class="card-title">File Compressor</div>
           <div class="card-description">Compress images, documents, and files to reduce size while maintaining quality.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/notepad.html">
+      </div>
+
+      <h3 class="tools-heading">Text & Data</h3>
+      <div class="cards-grid reveal visible">
+        <a class="glass-card tilt-card" data-tags="qr" href="/tools/qr.html">
+          <div class="card-icon">🔗</div>
+          <div class="card-title">QR Code Generator</div>
+          <div class="card-description">Create QR codes from any text or URL. Download as high-quality PNG.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/password.html">
+          <div class="card-icon">🔑</div>
+          <div class="card-title">Password Generator</div>
+          <div class="card-description">Generate cryptographically secure passwords with customizable options.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="images" href="/tools/color-picker.html">
+          <div class="card-icon">🎨</div>
+          <div class="card-title">Color Picker</div>
+          <div class="card-description">Pick colors from images, generate palettes, and convert between formats.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="text" href="/tools/text-case.html">
+          <div class="card-icon">📝</div>
+          <div class="card-title">Text Case Converter</div>
+          <div class="card-description">Convert text between UPPERCASE, lowercase, Title Case, and more formats.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="data" href="/tools/json-formatter.html">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">JSON Formatter</div>
+          <div class="card-description">Format, validate, and beautify JSON data with syntax highlighting.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="encode data" href="/tools/base64.html">
+          <div class="card-icon">🧬</div>
+          <div class="card-title">Base64 Encoder/Decoder</div>
+          <div class="card-description">Encode and decode text or files to/from Base64 locally.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="data convert" href="/tools/csv-to-json.html">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">CSV to JSON</div>
+          <div class="card-description">Convert CSV files or text to JSON. Download results instantly.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="text" href="/tools/markdown.html">
+          <div class="card-icon">📖</div>
+          <div class="card-title">Markdown Editor</div>
+          <div class="card-description">Write and preview Markdown with live rendering and export options.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="text" href="/tools/notepad.html">
           <div class="card-icon">📝</div>
           <div class="card-title">Smart Notepad</div>
           <div class="card-description">Rich text editor with auto-save, formatting, and export to multiple formats.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/stopwatch.html">
+      </div>
+
+      <h3 class="tools-heading">Utilities</h3>
+      <div class="cards-grid reveal visible">
+        <a class="glass-card tilt-card" data-tags="qr utility" href="/tools/qr-scanner.html">
+          <div class="card-icon">📷</div>
+          <div class="card-title">QR Scanner</div>
+          <div class="card-description">Scan QR codes using your camera. No uploads or tracking.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="convert utility" href="/tools/unit-converter.html">
+          <div class="card-icon">📊</div>
+          <div class="card-title">Unit Converter</div>
+          <div class="card-description">Convert between length, weight, temperature, and other units instantly.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="encode utility" href="/tools/url-encoder.html">
+          <div class="card-icon">🔗</div>
+          <div class="card-title">URL Encoder/Decoder</div>
+          <div class="card-description">Encode and decode URLs, handle special characters and Unicode.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/calculator.html">
+          <div class="card-icon">🧮</div>
+          <div class="card-title">Advanced Calculator</div>
+          <div class="card-description">Scientific calculator with history, memory functions, and unit conversions.</div>
+        </a>
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/stopwatch.html">
           <div class="card-icon">⏱️</div>
           <div class="card-title">Stopwatch & Timer</div>
           <div class="card-description">Precise stopwatch, countdown timer, and lap time tracking.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/currency-converter.html">
+        <a class="glass-card tilt-card" data-tags="convert utility" href="/tools/currency-converter.html">
           <div class="card-icon">💱</div>
           <div class="card-title">Currency Converter</div>
           <div class="card-description">Real-time currency conversion with live exchange rates and historical data.</div>
         </a>
-        <a class="glass-card tilt-card" href="/tools/emoji-picker.html">
+        <a class="glass-card tilt-card" data-tags="utility" href="/tools/emoji-picker.html">
           <div class="card-icon">😊</div>
           <div class="card-title">Emoji Picker</div>
           <div class="card-description">Browse, search, and copy emojis with categories and favorites.</div>
         </a>
-
       </div>
 
       <section class="cta-section reveal">
@@ -139,5 +189,39 @@
   </footer>
 
   <script src="/assets/scripts/effects.js"></script>
+  <script>
+    // Simple client-side filtering of tool cards
+    const filterBar = document.getElementById('toolFilters');
+    const sections = Array.from(document.querySelectorAll('#tools .cards-grid'));
+    const headings = Array.from(document.querySelectorAll('#tools .tools-heading'));
+
+    function applyFilter(tag) {
+      const showAll = tag === 'all';
+      sections.forEach((grid, gridIdx) => {
+        const cards = Array.from(grid.querySelectorAll('.glass-card'));
+        let visibleCount = 0;
+        cards.forEach(card => {
+          const tags = (card.getAttribute('data-tags') || '').toLowerCase().split(/\s+/);
+          const match = showAll || tags.includes(tag);
+          card.style.display = match ? '' : 'none';
+          if (match) visibleCount++;
+        });
+        // Hide section heading if no visible cards in this grid
+        const heading = headings[gridIdx];
+        if (heading) heading.style.display = visibleCount > 0 ? '' : 'none';
+        grid.style.display = visibleCount > 0 ? 'grid' : 'none';
+      });
+    }
+
+    if (filterBar) {
+      filterBar.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-filter]');
+        if (!btn) return;
+        filterBar.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilter(btn.getAttribute('data-filter'));
+      });
+    }
+  </script>
 </body>
 </html>

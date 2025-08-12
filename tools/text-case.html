@@ -23,15 +23,13 @@
         <h1>Text Case Converter</h1>
       </div>
       <div class="tool-body">
-        <div class="control-row">
-          <label>Input Text</label>
-        </div>
-        <textarea id="inputText" placeholder="Type or paste your text here...">Hello World! This is a sample text for case conversion.</textarea>
-        <div class="actions">
+        <div class="toolbar" role="toolbar" aria-label="Text Case Converter">
+          <span class="spacer"></span>
           <button class="btn-primary" id="convertAll">Convert All Cases</button>
           <button class="btn-secondary" id="copyAll">Copy All</button>
           <button class="btn-secondary" id="clearText">Clear</button>
         </div>
+        <textarea id="inputText" placeholder="Type or paste your text here...">Hello World! This is a sample text for case conversion.</textarea>
         <div id="results" style="display:none;">
           <h3 style="margin-bottom:16px; color:#ffffff;">Converted Text</h3>
           <div id="caseResults" style="display:grid; gap:16px;"></div>

@@ -23,10 +23,10 @@
         <h1>Currency Converter</h1>
       </div>
       <div class="tool-body">
-        <div class="control-row">
-          <label>Amount</label>
+        <div class="toolbar" role="toolbar" aria-label="Currency Converter">
+          <label for="amount">Amount</label>
           <input type="number" id="amount" value="1" min="0" step="0.01" />
-          <label>From</label>
+          <label for="fromCurrency">From</label>
           <select id="fromCurrency">
             <option value="USD">USD - US Dollar</option>
             <option value="EUR">EUR - Euro</option>
@@ -39,7 +39,7 @@
             <option value="INR">INR - Indian Rupee</option>
             <option value="BRL">BRL - Brazilian Real</option>
           </select>
-          <label>To</label>
+          <label for="toCurrency">To</label>
           <select id="toCurrency">
             <option value="EUR">EUR - Euro</option>
             <option value="USD">USD - US Dollar</option>
@@ -52,10 +52,9 @@
             <option value="INR">INR - Indian Rupee</option>
             <option value="BRL">BRL - Brazilian Real</option>
           </select>
-        </div>
-        <div class="actions">
-          <button class="btn-primary" id="convert">Convert</button>
+          <span class="spacer"></span>
           <button class="btn-secondary" id="swap">Swap</button>
+          <button class="btn-primary" id="convert">Convert</button>
         </div>
         <div class="result" id="result">
           <div class="conversion-rate" id="rate"></div>

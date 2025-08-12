@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Scanner — ombra tools</title>
+  <meta name="description" content="Scan QR codes using your camera. Everything stays on device." />
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible">
+      <div class="tool-header">
+        <div class="tool-icon">📷</div>
+        <h1>QR Scanner</h1>
+      </div>
+      <div class="tool-body">
+        <div class="control-row">
+          <button class="btn-primary" id="startBtn">Start Camera</button>
+          <button class="btn-secondary" id="stopBtn" disabled>Stop</button>
+        </div>
+        <div class="preview" style="display:flex;flex-direction:column;gap:12px;align-items:center;">
+          <video id="video" playsinline style="width:100%;max-width:480px;border-radius:12px;"></video>
+          <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+        <div class="result" id="resultBox" style="display:none;">
+          <h3>Result</h3>
+          <div id="resultText" style="word-break:break-all;margin-bottom:12px;"></div>
+          <div class="actions">
+            <button class="btn-secondary" id="copyBtn">Copy</button>
+          </div>
+        </div>
+        <p class="note">Tip: For best results, point your camera at a well-lit, sharp QR code.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="/assets/scripts/effects.js"></script>
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const resultBox = document.getElementById('resultBox');
+    const resultText = document.getElementById('resultText');
+
+    let stream = null;
+    let animationId = null;
+
+    startBtn.addEventListener('click', async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream; await video.play();
+        startBtn.disabled = true; stopBtn.disabled = false; resultBox.style.display = 'none';
+        scanLoop();
+      } catch (e) {
+        alert('Camera access was denied or is unavailable.');
+      }
+    });
+
+    stopBtn.addEventListener('click', stopCamera);
+
+    function stopCamera() {
+      if (animationId) cancelAnimationFrame(animationId);
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      video.srcObject = null; startBtn.disabled = false; stopBtn.disabled = true;
+    }
+
+    async function scanLoop() {
+      const ctx = canvas.getContext('2d');
+      const w = video.videoWidth, h = video.videoHeight;
+      if (!w || !h) { animationId = requestAnimationFrame(scanLoop); return; }
+      canvas.width = w; canvas.height = h;
+      ctx.drawImage(video, 0, 0, w, h);
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const code = jsQR(imageData.data, w, h);
+      if (code && code.data) {
+        resultText.textContent = code.data;
+        resultBox.style.display = 'block';
+        stopCamera();
+        return;
+      }
+      animationId = requestAnimationFrame(scanLoop);
+    }
+
+    copyBtn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(resultText.textContent || ''); } catch {}
+    });
+  </script>
+</body>
+</html>
+
+

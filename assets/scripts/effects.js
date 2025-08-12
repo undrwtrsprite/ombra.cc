@@ -31,8 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Reveal on scroll
-  const revealEls = document.querySelectorAll('.reveal, .cards-grid, .glass-card');
+  // Reveal on scroll (apply to key tool sections)
+  const animatedSelectors = '.reveal, .cards-grid, .glass-card, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
+  const revealEls = document.querySelectorAll(animatedSelectors);
+  // Ensure elements have the baseline reveal class for animation
+  revealEls.forEach((el) => el.classList.add('reveal'));
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -68,16 +71,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Nav background on scroll
+  // Nav background and hide-on-scroll behavior
   const nav = document.querySelector('.nav');
   if (nav) {
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 50) {
+    let lastY = window.scrollY;
+    let ticking = false;
+    function onScroll() {
+      const y = window.scrollY;
+      // Background adjustment
+      if (y > 50) {
         nav.style.background = 'rgba(29, 29, 31, 0.8)';
         nav.style.borderColor = 'rgba(255, 255, 255, 0.15)';
       } else {
-        nav.style.background = 'rgba(29, 29, 31, 0.72)';
+        nav.style.background = 'rgba(255, 255, 255, 0.08)';
         nav.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+      }
+      // Hide when scrolling down, show when scrolling up
+      if (y > lastY && y > 120) {
+        nav.classList.add('nav--hidden');
+      } else {
+        nav.classList.remove('nav--hidden');
+      }
+      lastY = y;
+      ticking = false;
+    }
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(onScroll);
+        ticking = true;
       }
     });
   }

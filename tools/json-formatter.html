@@ -74,8 +74,12 @@
         <h1>JSON Formatter</h1>
       </div>
       <div class="tool-body">
-        <div class="control-row">
-          <label>JSON Input</label>
+        <div class="toolbar" role="toolbar" aria-label="JSON Formatter">
+          <span class="spacer"></span>
+          <button class="btn-primary" id="format">Format JSON</button>
+          <button class="btn-secondary" id="minify">Minify</button>
+          <button class="btn-secondary" id="validate">Validate</button>
+          <button class="btn-secondary" id="copy">Copy</button>
         </div>
         <textarea id="jsonInput" class="json-editor" placeholder='{"example": "Paste your JSON here..."}'>{
   "name": "John Doe",
@@ -88,12 +92,7 @@
     "zip": "10001"
   }
 }</textarea>
-        <div class="actions">
-          <button class="btn-primary" id="format">Format JSON</button>
-          <button class="btn-secondary" id="minify">Minify</button>
-          <button class="btn-secondary" id="validate">Validate</button>
-          <button class="btn-secondary" id="copy">Copy</button>
-        </div>
+        
         <div id="status"></div>
         <div id="stats" class="stats"></div>
         <p class="note">Format, validate, and beautify JSON data with syntax highlighting. All processing happens locally.</p>

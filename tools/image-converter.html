@@ -24,20 +24,20 @@
         <h1>Image Converter</h1>
       </div>
       <div class="tool-body">
-        <div class="control-row">
-          <label>Input</label>
+        <div class="toolbar" role="toolbar" aria-label="Image Converter">
+          <label for="file">Input</label>
           <input type="file" id="file" accept="image/*" />
-        </div>
-        <div class="control-row">
-          <label>Format</label>
+          <label for="format">Format</label>
           <select id="format">
             <option value="image/png">PNG</option>
             <option value="image/jpeg">JPEG</option>
             <option value="image/webp">WEBP</option>
           </select>
-          <label>Quality</label>
+          <label for="quality">Quality</label>
           <input id="quality" type="range" min="0.1" max="1" step="0.05" value="0.9" />
           <span id="qval" class="note">0.90</span>
+          <span class="spacer"></span>
+          <button class="btn-primary" id="convert">Convert</button>
         </div>
         <div class="actions">
           <button class="btn-primary" id="convert">Convert</button>

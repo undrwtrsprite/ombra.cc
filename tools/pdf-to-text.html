@@ -23,14 +23,13 @@
         <h1>PDF to Text</h1>
       </div>
       <div class="tool-body">
-        <div class="control-row">
-          <label>PDF</label>
+        <div class="toolbar" role="toolbar" aria-label="PDF to Text">
+          <label for="file">PDF</label>
           <input type="file" id="file" accept="application/pdf" />
-        </div>
-        <div class="actions">
-          <button class="btn-primary" id="extract">Extract text</button>
+          <span class="spacer"></span>
           <button class="btn-secondary" id="copy">Copy</button>
           <button class="btn-secondary" id="download">Download .txt</button>
+          <button class="btn-primary" id="extract">Extract text</button>
         </div>
         <textarea id="output" placeholder="Extracted text will appear here"></textarea>
         <p class="note">Extraction runs locally using PDF.js. Your file never leaves your device.</p>

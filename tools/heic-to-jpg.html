@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEIC to JPG — ombra tools</title>
+  <meta name="description" content="Convert HEIC/HEIF photos to JPG or PNG quickly in your browser." />
+  <link rel="stylesheet" href="/assets/styles/base.css" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="/" class="logo">ombra</a></li>
+      <li><a href="/index.html#tools">Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible heic-compact">
+      <div class="tool-header">
+        <div class="tool-icon">📱</div>
+        <h1>HEIC to JPG</h1>
+      </div>
+      <div class="tool-body">
+        <div class="toolbar" role="toolbar" aria-label="HEIC to JPG">
+          <label for="heicFiles">Photos</label>
+          <input type="file" id="heicFiles" accept="image/heic,image/heif,.heic,.heif" multiple />
+
+          <label for="outFormat">Output</label>
+          <select id="outFormat" aria-label="Output format">
+            <option value="image/jpeg">JPG</option>
+            <option value="image/png">PNG</option>
+          </select>
+
+          <label for="quality">Quality</label>
+          <input type="range" id="quality" min="0.5" max="1" step="0.05" value="0.9" aria-label="Quality" />
+          <span class="note" id="qval">0.90</span>
+
+          <span class="spacer"></span>
+          <button class="btn-ghost" id="toggleAdvanced" aria-expanded="false">Options</button>
+          <button class="btn-primary" id="downloadAll" disabled>Download ZIP</button>
+        </div>
+
+        <div class="advanced-controls collapsed" id="advancedPanel">
+          <div class="control-row" style="margin-top:6px;">
+            <label>Naming</label>
+            <input type="text" id="baseName" placeholder="base name (optional)" />
+            <label>Start #</label>
+            <input type="number" id="startIndex" value="1" min="1" style="width:100px" />
+          </div>
+        </div>
+        
+        <div class="results" id="results"></div>
+        <!-- Inline modal for quick preview -->
+        <div id="previewModal" class="modal-overlay">
+          <div class="modal-card">
+            <button id="closePreview" class="modal-close" aria-label="Close">×</button>
+            <div class="modal-body">
+              <img id="previewImage" alt="preview" />
+            </div>
+            <div id="previewCaption" class="note" style="text-align:center;"></div>
+            <div class="modal-actions">
+              <button class="btn-primary" id="downloadCurrent">Download</button>
+            </div>
+          </div>
+        </div>
+        <p class="note">Conversion is done locally. Your photos never leave your device.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="/assets/scripts/effects.js"></script>
+  <style>
+    /* Compact, refined layout for HEIC tool */
+    .heic-compact { padding: 16px; border-radius: 16px; }
+    .heic-compact .tool-header { margin-bottom: 12px; }
+    .heic-compact .tool-header h1 { font-size: 24px; letter-spacing: -0.02em; }
+    .heic-compact .tool-header .tool-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 20px; }
+    .heic-compact .control-row { gap: 10px; }
+    .heic-compact .control-row label { font-size: 13px; }
+    .heic-compact .control-row input,
+    .heic-compact .control-row select { padding: 10px 12px; font-size: 13px; border-radius: 10px; }
+    .heic-compact .btn-primary,
+    .heic-compact .btn-secondary { padding: 10px 14px; font-size: 14px; border-radius: 10px; }
+    .heic-compact .tool-body { max-width: 980px; margin: 0 auto; gap: 12px; }
+    .heic-compact #results { background: transparent; border: none; padding: 0; }
+    .heic-compact .result-item {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .heic-compact .result-header { flex: 1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; min-width: 0; }
+    .heic-compact .result-header strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .heic-compact .result-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+  </style>
+  <script>
+    const heicFiles = document.getElementById('heicFiles');
+    const outFormat = document.getElementById('outFormat');
+    const qualityInput = document.getElementById('quality');
+    const qval = document.getElementById('qval');
+    const results = document.getElementById('results');
+    const downloadAllBtn = document.getElementById('downloadAll');
+    const toggleAdvanced = document.getElementById('toggleAdvanced');
+    const advancedPanel = document.getElementById('advancedPanel');
+    const baseName = document.getElementById('baseName');
+    const startIndex = document.getElementById('startIndex');
+    const previewModal = document.getElementById('previewModal');
+    const previewImage = document.getElementById('previewImage');
+    const previewCaption = document.getElementById('previewCaption');
+    const closePreview = document.getElementById('closePreview');
+    const downloadCurrentBtn = document.getElementById('downloadCurrent');
+    const converted = [];
+    let currentPreview = null;
+
+    qualityInput.addEventListener('input', () => qval.textContent = Number(qualityInput.value).toFixed(2));
+
+    heicFiles.addEventListener('change', async () => {
+      results.innerHTML = '';
+      converted.length = 0;
+      const files = Array.from(heicFiles.files || []);
+      for (const file of files) {
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.innerHTML = `<div class="result-header"><strong>${file.name}</strong><span class="note">Converting…</span></div>`;
+        results.appendChild(item);
+        try {
+          const blob = await heic2any({ blob: file, toType: outFormat.value, quality: Number(qualityInput.value) });
+          const url = URL.createObjectURL(blob);
+          const ext = outFormat.value === 'image/png' ? 'png' : 'jpg';
+          const indexPrefix = baseName.value ? `${baseName.value.trim()}_${(converted.length + Number(startIndex.value || 1)).toString().padStart(2,'0')}` : file.name.replace(/\.[^.]+$/, '');
+          const outName = `${indexPrefix}.${ext}`;
+          converted.push({ name: outName, url, blob });
+          item.innerHTML = `
+            <img src="${url}" data-preview data-name="${outName}" alt="preview" />
+            <div class="result-header">
+              <strong>${outName}</strong>
+              <a class="btn-secondary" href="${url}" download="${outName}">Download</a>
+            </div>
+          `;
+        } catch (e) {
+          item.innerHTML = `<div class="result-header"><strong>${file.name}</strong><span class="note">Failed to convert</span></div>`;
+        }
+      }
+      const hasFiles = converted.length > 0;
+      downloadAllBtn.disabled = !hasFiles;
+    });
+
+    toggleAdvanced.addEventListener('click', () => {
+      const collapsed = advancedPanel.classList.toggle('collapsed');
+      toggleAdvanced.setAttribute('aria-expanded', String(!collapsed));
+    });
+
+    function openPreview(url, name) {
+      previewImage.src = url;
+      previewCaption.textContent = name;
+      previewModal.style.display = 'flex';
+      currentPreview = { url, name };
+    }
+    function closePreviewModal() {
+      previewModal.style.display = 'none';
+      previewImage.src = '';
+      currentPreview = null;
+    }
+    closePreview.addEventListener('click', closePreviewModal);
+    previewModal.addEventListener('click', (e) => { if (e.target === previewModal) closePreviewModal(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePreviewModal(); });
+
+    downloadAllBtn.addEventListener('click', async () => {
+      if (converted.length === 0) return;
+      downloadAllBtn.disabled = true;
+      const originalText = downloadAllBtn.textContent;
+      downloadAllBtn.textContent = 'Preparing ZIP…';
+      try {
+        const zip = new JSZip();
+        for (const file of converted) {
+          const buf = await file.blob.arrayBuffer();
+          zip.file(file.name, buf);
+        }
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'images.zip'; document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      } finally {
+        downloadAllBtn.textContent = originalText;
+        downloadAllBtn.disabled = false;
+      }
+    });
+    downloadCurrentBtn.addEventListener('click', () => {
+      if (!currentPreview) return;
+      const a = document.createElement('a');
+      a.href = currentPreview.url; a.download = currentPreview.name; document.body.appendChild(a); a.click(); a.remove();
+    });
+
+    // Delegate clicks on generated thumbnails to open modal
+    results.addEventListener('click', (e) => {
+      const img = e.target.closest('img[data-preview]');
+      if (!img) return;
+      openPreview(img.src, img.getAttribute('data-name') || '');
+    });
+  </script>
+</body>
+</html>
+
+
