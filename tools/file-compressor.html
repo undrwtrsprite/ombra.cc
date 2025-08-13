@@ -6,6 +6,7 @@
   <title>File Compressor — ombra tools</title>
   <meta name="description" content="Compress images, documents, and files to reduce size while maintaining quality. Free, private, and runs entirely in your browser.">
   <link rel="stylesheet" href="/assets/styles/base.css">
+  <link rel="manifest" href="/manifest.json" />
   <style>
     .compressor {
       max-width: 600px;
@@ -485,6 +486,21 @@
       `;
       
       results.appendChild(resultItem);
+    }
+  </script>
+    
+  <!-- Service Worker Registration for offline support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
     }
   </script>
   <script src="/assets/scripts/effects.js"></script>

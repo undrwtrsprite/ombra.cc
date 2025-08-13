@@ -1,4 +1,56 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Utility: truncate text nicely with ellipsis
+  function truncateText(text, max) {
+    if (!text) return '';
+    if (text.length <= max) return text;
+    const head = Math.max(0, max - 1); // reserve 1 for ellipsis
+    return text.slice(0, head) + '…';
+  }
+
+  // Globally enhance file inputs across tools: show truncated filename next to input
+  const fileInputs = Array.from(document.querySelectorAll('.tool-body input[type="file"]'));
+  fileInputs.forEach((inp) => {
+    const max = Number(inp.getAttribute('data-max-chars') || 20);
+    let label = inp.nextElementSibling && inp.nextElementSibling.classList && inp.nextElementSibling.classList.contains('filename')
+      ? inp.nextElementSibling
+      : null;
+    if (!label) {
+      label = document.createElement('span');
+      label.className = 'filename truncate';
+      label.style.marginLeft = '8px';
+      inp.insertAdjacentElement('afterend', label);
+    }
+    function applyName() {
+      const file = inp.files && inp.files[0];
+      const name = file ? file.name : '';
+      label.title = name;
+      label.textContent = truncateText(name, max);
+    }
+    inp.addEventListener('change', applyName);
+    applyName();
+  });
+  // Typewriter effect for hero title
+  const typeWriter = () => {
+    const text = "Tools that just work.";
+    const typingText = document.getElementById('typingText');
+    let i = 0;
+    
+    // Start typing after a short delay
+    setTimeout(() => {
+      const typeInterval = setInterval(() => {
+        if (i < text.length) {
+          typingText.innerHTML += text.charAt(i);
+          i++;
+        } else {
+          clearInterval(typeInterval);
+        }
+      }, 80); // Adjust speed here (lower = faster)
+    }, 500);
+  };
+  
+  // Start typewriter effect
+  typeWriter();
+  
   // Parallax mesh effect
   const meshLayer = document.querySelector('.bg-mesh');
   if (meshLayer) {
@@ -31,20 +83,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Reveal on scroll (apply to key tool sections)
-  const animatedSelectors = '.reveal, .cards-grid, .glass-card, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
-  const revealEls = document.querySelectorAll(animatedSelectors);
-  // Ensure elements have the baseline reveal class for animation
-  revealEls.forEach((el) => el.classList.add('reveal'));
+  // Card reveal animations (faster)
+  const cards = document.querySelectorAll('.glass-card');
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
+    const cardObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        } else {
+          // If scrolled away and it's displayable, keep it ready to re-animate when needed
+          if (entry.target.style.display !== 'none') {
+            entry.target.classList.remove('visible');
+          }
+        }
+      });
+    }, {
+      threshold: 0.05,
+      rootMargin: '0px 0px -20px 0px'
+    });
+
+    cards.forEach((card) => {
+      // remove any previous stagger to reveal immediately
+      card.style.transitionDelay = '0ms';
+      cardObserver.observe(card);
+    });
+  } else {
+    cards.forEach((card) => card.classList.add('visible'));
+  }
+
+  // General reveal animations for other elements
+  const animatedSelectors = '.reveal, .cards-grid, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
+  const revealEls = document.querySelectorAll(animatedSelectors);
+  revealEls.forEach((el) => el.classList.add('reveal'));
+  
+  if ('IntersectionObserver' in window) {
+    const generalObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
         }
       });
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    revealEls.forEach((el) => observer.observe(el));
+    revealEls.forEach((el) => generalObserver.observe(el));
   } else {
     revealEls.forEach((el) => el.classList.add('visible'));
   }
@@ -95,6 +175,27 @@ document.addEventListener('DOMContentLoaded', () => {
         ticking = true;
       }
     });
+  }
+
+  // Hide scroll indicator when scrolling down
+  const scrollIndicator = document.querySelector('.scroll-indicator');
+  if (scrollIndicator) {
+    console.log('Scroll indicator found:', scrollIndicator);
+    
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      const fadeThreshold = 100;
+      
+      if (currentScrollY > fadeThreshold) {
+        const opacity = Math.max(0, 1 - ((currentScrollY - fadeThreshold) / 200));
+        scrollIndicator.style.opacity = opacity;
+        console.log('Scroll Y:', currentScrollY, 'Opacity:', opacity);
+      } else {
+        scrollIndicator.style.opacity = 1;
+      }
+    });
+  } else {
+    console.log('Scroll indicator not found');
   }
 });
 

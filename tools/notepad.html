@@ -6,6 +6,7 @@
   <title>Smart Notepad — ombra tools</title>
   <meta name="description" content="Rich text editor with auto-save, formatting, and export to multiple formats. Free, private, and runs entirely in your browser.">
   <link rel="stylesheet" href="/assets/styles/base.css">
+  <link rel="manifest" href="/manifest.json" />
   <style>
     .notepad {
       max-width: 800px;
@@ -469,6 +470,21 @@
         }
       }
     });
+  </script>
+    
+  <!-- Service Worker Registration for offline support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
   </script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>

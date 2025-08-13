@@ -6,7 +6,13 @@
   <title>ombra tools — fast, private, beautiful</title>
   <meta name="description" content="A clean collection of fast, private, ad‑free tools: image convert, resize, PDF to text, text to PDF, QR code, password generator, and more." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=4" />
+  <link rel="manifest" href="/manifest.json" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
   <div class="bg-layer bg-gradient"></div>
@@ -18,38 +24,45 @@
       <a href="/" class="logo">ombra</a>
       <div class="nav-links"></div>
       <div class="nav-actions">
-        <div class="nav-search">
-          <input id="navSearch" type="search" placeholder="Search tools" aria-label="Search tools" autocomplete="off" />
-          <div id="navResults" class="nav-results" aria-live="polite"></div>
+        <div class="nav-search collapsed" id="navSearch">
+          <span class="nav-search-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 14L11.5 11.5L14 14ZM12.5 7C12.5 10.6 9.6 12.5 7 12.5C4.4 12.5 1.5 9.6 1.5 7C1.5 4.4 4.4 1.5 7 1.5C9.6 1.5 12.5 4.4 12.5 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <input type="search" placeholder="Search tools" aria-label="Search tools" autocomplete="off" />
+          <div class="nav-results" id="navResults" aria-live="polite"></div>
         </div>
+        <div class="offline-indicator" id="offlineIndicator" style="display: none;">
+          <span class="offline-dot"></span>
+          <span class="offline-text">Offline</span>
+        </div>
+        <button id="refreshBtn" class="refresh-btn" title="Force refresh for updates" style="display: none;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.681 3H2V2h3.5l.5.5V6H5V4a5 5 0 1 0 4.53-.761l.302-.954A6 6 0 1 1 4.681 3z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          </svg>
+        </button>
       </div>
     </div>
   </nav>
 
-  <div class="container">
-    <section class="hero">
-      <h1>Tools that just work.</h1>
-      <p>Fast, private, and free. No ads, no tracking, no nonsense. Just the tools you need, beautifully designed.</p>
-      <div class="button-group" style="margin-top:24px;">
+  <div class="container homepage-return">
+    <section class="hero homepage-return">
+      <h1 class="hero-title">
+        <span class="typing-text" id="typingText"></span><span class="typing-cursor"></span>
+      </h1>
+      <p class="hero-subtitle">Fast, private, and free. No ads, no tracking, no nonsense.</p>
+      <div class="hero-actions">
         <a class="btn-primary" href="#tools">Explore tools</a>
       </div>
-      <div class="scroll-indicator"><span>Scroll to explore</span></div>
+      <div class="scroll-indicator">
+        <div class="scroll-dot"></div>
+        <span>Discover tools below</span>
+        <div class="scroll-arrow">↓</div>
+      </div>
     </section>
 
-    <div class="content-section" id="tools">
-      <div class="categories" id="toolFilters" style="margin-bottom:12px;">
-        <button class="category-btn active" data-filter="all">All</button>
-        <button class="category-btn" data-filter="images">Images</button>
-        <button class="category-btn" data-filter="pdf">PDF</button>
-        <button class="category-btn" data-filter="text">Text</button>
-        <button class="category-btn" data-filter="data">Data</button>
-        <button class="category-btn" data-filter="qr">QR</button>
-        <button class="category-btn" data-filter="convert">Convert</button>
-        <button class="category-btn" data-filter="compress">Compress</button>
-        <button class="category-btn" data-filter="encode">Encode</button>
-        <button class="category-btn" data-filter="network">Network</button>
-        <button class="category-btn" data-filter="utility">Utility</button>
-      </div>
+      <div class="content-section" id="tools">
       <h3 class="tools-heading">Images & PDFs</h3>
       <div class="cards-grid reveal visible">
         <a class="glass-card tilt-card" data-tags="images convert" href="/tools/image-converter.html">
@@ -144,11 +157,11 @@
           <div class="card-title">Text Diff</div>
           <div class="card-description">Compare two texts and highlight insertions and deletions.</div>
         </a>
-                        <a class="glass-card tilt-card" data-tags="data utility" href="/tools/json-to-csv.html">
-                  <div class="card-icon">🔄</div>
-                  <div class="card-title">Data Converter</div>
-                  <div class="card-description">Convert between JSON and CSV formats with advanced options and flattening.</div>
-                </a>
+                                <a class="glass-card tilt-card" data-tags="data utility" href="/tools/json-to-csv.html">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">Data Converter</div>
+          <div class="card-description">Convert between JSON and CSV formats with advanced options and flattening.</div>
+        </a>
         <a class="glass-card tilt-card" data-tags="text utility" href="/tools/text-statistics.html">
           <div class="card-icon">📈</div>
           <div class="card-title">Text Statistics</div>
@@ -272,37 +285,12 @@
   <script>
     const toolSearch = document.getElementById('toolSearch');
     // Simple client-side filtering of tool cards
-    const filterBar = document.getElementById('toolFilters');
+    const filterBar = null;
+    const underline = null;
     const sections = Array.from(document.querySelectorAll('#tools .cards-grid'));
     const headings = Array.from(document.querySelectorAll('#tools .tools-heading'));
 
-    function applyFilter(tag) {
-      const showAll = tag === 'all';
-      sections.forEach((grid, gridIdx) => {
-        const cards = Array.from(grid.querySelectorAll('.glass-card'));
-        let visibleCount = 0;
-        cards.forEach(card => {
-          const tags = (card.getAttribute('data-tags') || '').toLowerCase().split(/\s+/);
-          const match = showAll || tags.includes(tag);
-          card.style.display = match ? '' : 'none';
-          if (match) visibleCount++;
-        });
-        // Hide section heading if no visible cards in this grid
-        const heading = headings[gridIdx];
-        if (heading) heading.style.display = visibleCount > 0 ? '' : 'none';
-        grid.style.display = visibleCount > 0 ? 'grid' : 'none';
-      });
-    }
-
-    if (filterBar) {
-      filterBar.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-filter]');
-        if (!btn) return;
-        filterBar.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        applyFilter(btn.getAttribute('data-filter'));
-      });
-    }
+    // Filters removed
 
     if (toolSearch) {
       toolSearch.addEventListener('input', () => {
@@ -329,6 +317,8 @@
     // Wire up nav search to the same filter
     const navSearch = document.getElementById('navSearch');
     const navResults = document.getElementById('navResults');
+    const searchInput = navSearch.querySelector('input[type="search"]');
+    
     // Build an index of tools for suggestions
     const toolCards = Array.from(document.querySelectorAll('.glass-card'));
     const toolIndex = toolCards.map(card => ({
@@ -337,12 +327,40 @@
       desc: card.querySelector('.card-description')?.textContent || '',
       icon: card.querySelector('.card-icon')?.textContent || '•'
     }));
-    if (navSearch) {
-      navSearch.addEventListener('input', () => {
-        const q = navSearch.value.trim();
+    
+    if (navSearch && searchInput) {
+      // Expand search on click
+      navSearch.addEventListener('click', (e) => {
+        if (e.target === navSearch || e.target === searchInput) {
+          navSearch.classList.remove('collapsed');
+          navSearch.classList.add('expanded');
+          searchInput.focus();
+        }
+      });
+      
+      // Collapse search on blur (when clicking outside)
+      searchInput.addEventListener('blur', () => {
+        if (!searchInput.value.trim()) {
+          setTimeout(() => {
+            navSearch.classList.remove('expanded');
+            navSearch.classList.add('collapsed');
+          }, 200);
+        }
+      });
+      
+      // Keep expanded if there's text
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim();
+        if (q) {
+          navSearch.classList.remove('collapsed');
+          navSearch.classList.add('expanded');
+        }
+        
+        // Tool search functionality
         toolSearch && (toolSearch.value = q);
         const event = new Event('input');
         toolSearch && toolSearch.dispatchEvent(event);
+        
         // Suggestions dropdown
         const query = q.toLowerCase();
         if (!navResults) return;
@@ -364,10 +382,11 @@
         `).join('');
         navResults.style.display = 'block';
       });
+      
       // Hide on blur after a short delay to allow click
-      navSearch.addEventListener('blur', () => setTimeout(() => { if (navResults) navResults.style.display = 'none'; }, 200));
+      searchInput.addEventListener('blur', () => setTimeout(() => { if (navResults) navResults.style.display = 'none'; }, 200));
       // Show again on focus if there is a query
-      navSearch.addEventListener('focus', () => { if (navSearch.value.trim() && navResults) navResults.style.display = 'block'; });
+      searchInput.addEventListener('focus', () => { if (searchInput.value.trim() && navResults) navResults.style.display = 'block'; });
     }
     
     // Animated background particles - optimized for performance
@@ -391,6 +410,19 @@
     // Initialize particles when page loads
     createParticles();
     
+    // Check if returning from a tool and trigger smooth return animation
+    if (sessionStorage.getItem('returningFromTool')) {
+      sessionStorage.removeItem('returningFromTool');
+      
+      // Trigger the return animation smoothly
+      const returnElements = document.querySelectorAll('.homepage-return');
+      returnElements.forEach(el => {
+        el.style.animation = 'none';
+        el.offsetHeight; // Trigger reflow
+        el.style.animation = null;
+      });
+    }
+    
     // Performance optimization: pause animations when page is not visible
     document.addEventListener('visibilitychange', () => {
       const particles = document.querySelectorAll('.floating-particle');
@@ -404,6 +436,76 @@
         if (bgMesh) bgMesh.style.animationPlayState = 'running';
       }
     });
+    
+    // Service Worker Registration for offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('Service Worker registered successfully:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available - force refresh
+                  console.log('New version available, refreshing...');
+                  window.location.reload();
+                }
+              });
+            });
+            
+            // Handle service worker updates
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              console.log('Service Worker updated, refreshing...');
+              window.location.reload();
+            });
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+      
+      // Force refresh if service worker is controlling
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      }
+      
+      // Show refresh button in development
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (refreshBtn) {
+        refreshBtn.style.display = 'block';
+        refreshBtn.addEventListener('click', () => {
+          // Clear all caches and reload
+          if ('caches' in window) {
+            caches.keys().then(names => {
+              names.forEach(name => caches.delete(name));
+            });
+          }
+          window.location.reload(true);
+        });
+      }
+    }
+    
+    // Offline/Online detection
+    function updateOfflineStatus() {
+      const offlineIndicator = document.getElementById('offlineIndicator');
+      if (offlineIndicator) {
+        if (!navigator.onLine) {
+          offlineIndicator.style.display = 'flex';
+        } else {
+          offlineIndicator.style.display = 'none';
+        }
+      }
+    }
+    
+    // Listen for online/offline events
+    window.addEventListener('online', updateOfflineStatus);
+    window.addEventListener('offline', updateOfflineStatus);
+    
+    // Check initial status
+    updateOfflineStatus();
   </script>
 </body>
 </html>

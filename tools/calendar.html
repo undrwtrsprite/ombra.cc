@@ -6,6 +6,7 @@
   <title>Calendar & Planner — ombra tools</title>
   <meta name="description" content="Personal calendar with event management, reminders, and task organization. Free, private, and runs entirely in your browser.">
   <link rel="stylesheet" href="/assets/styles/base.css">
+  <link rel="manifest" href="/manifest.json" />
   <style>
     .calendar {
       max-width: 900px;
@@ -815,6 +816,21 @@
       if (view === 'month') renderCalendar();
       if (view === 'day') renderDayView();
       // (event rendering for week will be added soon)
+    }
+  </script>
+    
+  <!-- Service Worker Registration for offline support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
     }
   </script>
   <script src="/assets/scripts/effects.js"></script>

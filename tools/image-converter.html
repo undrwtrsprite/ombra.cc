@@ -24,42 +24,94 @@
         <h1>Image Converter</h1>
       </div>
       <div class="tool-body">
-        <div class="toolbar" role="toolbar" aria-label="Image Converter">
-          <label for="file">Input</label>
-          <input type="file" id="file" accept="image/*" />
-          <label for="format">Format</label>
-          <select id="format">
-            <option value="image/png">PNG</option>
-            <option value="image/jpeg">JPEG</option>
-            <option value="image/webp">WEBP</option>
-          </select>
-          <label for="quality">Quality</label>
-          <input id="quality" type="range" min="0.1" max="1" step="0.05" value="0.9" />
-          <span id="qval" class="note">0.90</span>
-          <span class="spacer"></span>
-          <button class="btn-primary" id="convert">Convert</button>
+        <div class="tool-topbar">
+          <div class="tool-subtitle">Convert images privately on-device</div>
         </div>
-        <div class="actions">
+        <div class="toolbar" role="toolbar" aria-label="Image Converter">
+          <div class="control-group">
+            <label>Input</label>
+            <button type="button" class="btn-secondary" id="pick">Browse…</button>
+            <input type="file" id="file" accept="image/*" style="display: none;" />
+            <span class="filename truncate" id="filename"></span>
+          </div>
+          <div class="control-group">
+            <label>Format</label>
+            <div class="segmented" id="formatSeg">
+              <button type="button" data-mime="image/png" class="active">PNG</button>
+              <button type="button" data-mime="image/jpeg">JPEG</button>
+              <button type="button" data-mime="image/webp">WEBP</button>
+            </div>
+            <select id="format" style="display:none">
+              <option value="image/png" selected>PNG</option>
+              <option value="image/jpeg">JPEG</option>
+              <option value="image/webp">WEBP</option>
+            </select>
+          </div>
+          <div class="control-group" id="qualityGroup">
+            <label for="quality">Quality</label>
+            <input id="quality" type="range" min="0.1" max="1" step="0.05" value="0.9" />
+            <span id="qval" class="note">0.90</span>
+          </div>
+          <span class="spacer"></span>
           <button class="btn-primary" id="convert">Convert</button>
           <a id="download" class="btn-secondary" download style="display:none;">Download</a>
         </div>
-        <div class="preview" id="preview"><span class="note">Preview will appear here</span></div>
+
+        <div class="dropzone" id="dropzone">
+          <span>Drag & drop an image here or click “Input”</span>
+        </div>
+
+        <div class="preview-grid">
+          <div class="panel">
+            <div id="preview-in"><span class="note">Input preview</span></div>
+            <div id="meta-in" class="preview-meta"></div>
+          </div>
+          <div class="panel">
+            <div id="preview-out"><span class="note">Output preview</span></div>
+            <div id="meta-out" class="preview-meta"></div>
+          </div>
+        </div>
         <p class="note">Runs locally in your browser. Your image never leaves your device.</p>
       </div>
     </div>
   </main>
 
+    
+  <!-- Service Worker Registration for offline support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
     const fileInput = document.getElementById('file');
+    const pickBtn = document.getElementById('pick');
+    const filenameEl = document.getElementById('filename');
     const formatSelect = document.getElementById('format');
+    const formatSeg = document.getElementById('formatSeg');
     const qualityInput = document.getElementById('quality');
     const qval = document.getElementById('qval');
     const convertBtn = document.getElementById('convert');
     const downloadLink = document.getElementById('download');
-    const preview = document.getElementById('preview');
+    const dropzone = document.getElementById('dropzone');
+    const previewIn = document.getElementById('preview-in');
+    const previewOut = document.getElementById('preview-out');
+    const metaIn = document.getElementById('meta-in');
+    const metaOut = document.getElementById('meta-out');
+    const qualityGroup = document.getElementById('qualityGroup');
     let imageBitmap;
+    let currentFile = null;
+    let currentOutUrl = null;
 
     qualityInput.addEventListener('input', () => {
       qval.textContent = Number(qualityInput.value).toFixed(2);
@@ -74,8 +126,78 @@
       return img;
     }
 
-    convertBtn.addEventListener('click', async () => {
+    function humanSize(bytes){
+      if (bytes < 1024) return bytes + ' B';
+      const units = ['KB','MB','GB']; let i= -1; do{ bytes/=1024; i++; }while(bytes>=1024 && i<units.length-1); return bytes.toFixed(2)+' '+units[i];
+    }
+
+    function showToast(msg){
+      let t = document.querySelector('.toast');
+      if(!t){ t = document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(()=> t.classList.remove('show'), 1600);
+    }
+
+    function setInputPreview(img, file){
+      previewIn.innerHTML=''; previewIn.appendChild(img.cloneNode());
+      if (file) metaIn.textContent = `${file.name} • ${humanSize(file.size)} • ${img.naturalWidth}×${img.naturalHeight}`;
+    }
+
+    async function handleFile(file){
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { showToast('Unsupported file'); return; }
+      currentFile = file;
+      const img = await readImage(file);
+      setInputPreview(img, file);
+    }
+
+    function updateQualityVisibility(){
+      const f = formatSelect.value;
+      const show = (f === 'image/jpeg' || f === 'image/webp');
+      qualityGroup.style.display = show ? '' : 'none';
+    }
+
+    // Drag & drop
+    ;['dragenter','dragover'].forEach(ev=>dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.add('dragover'); }));
+    ;['dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.remove('dragover'); }));
+    dropzone.addEventListener('drop', async (e)=>{
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(!file) return;
+      fileInput.files = e.dataTransfer.files;
+      await handleFile(file);
+      showToast('Image loaded');
+    });
+
+    dropzone.addEventListener('click', ()=> fileInput.click());
+    pickBtn.addEventListener('click', ()=> fileInput.click());
+    fileInput.addEventListener('change', async ()=>{
       const file = fileInput.files && fileInput.files[0];
+      if (file) {
+        filenameEl.textContent = file.name;
+        await handleFile(file);
+      } else {
+        filenameEl.textContent = '';
+      }
+    });
+    window.addEventListener('paste', async (e)=>{
+      const item = [...(e.clipboardData?.items||[])].find(i=> i.type && i.type.startsWith('image/'));
+      if (!item) return;
+      const file = item.getAsFile();
+      await handleFile(file);
+      showToast('Image pasted');
+    });
+    formatSelect.addEventListener('change', updateQualityVisibility);
+    formatSeg.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-mime]'); if(!btn) return;
+      formatSeg.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      formatSelect.value = btn.dataset.mime;
+      updateQualityVisibility();
+    });
+    updateQualityVisibility();
+
+    convertBtn.addEventListener('click', async () => {
+      const file = currentFile || (fileInput.files && fileInput.files[0]);
       if (!file) { alert('Choose an image'); return; }
       const img = await readImage(file);
       const canvas = document.createElement('canvas');
@@ -86,13 +208,18 @@
       const quality = Number(qualityInput.value);
       const blob = await new Promise(res => canvas.toBlob(res, formatSelect.value, quality));
       if (!blob) { alert('Conversion failed'); return; }
-      const outUrl = URL.createObjectURL(blob);
-      preview.innerHTML = '';
-      const outImg = document.createElement('img'); outImg.src = outUrl; preview.appendChild(outImg);
+      if (currentOutUrl) URL.revokeObjectURL(currentOutUrl);
+      const outUrl = URL.createObjectURL(blob); currentOutUrl = outUrl;
+      previewOut.innerHTML = '';
+      const outImg = document.createElement('img'); outImg.src = outUrl; previewOut.appendChild(outImg);
       const ext = formatSelect.value.split('/')[1];
       downloadLink.href = outUrl; downloadLink.download = `converted.${ext}`; downloadLink.style.display = 'inline-block';
+      metaOut.textContent = `Output • ${ext.toUpperCase()} • ${humanSize(blob.size)} • ${img.naturalWidth}×${img.naturalHeight}`;
+      showToast('Converted');
     });
   </script>
+  <div class="toast" aria-live="polite"></div>
 </body>
 </html>
+
 
