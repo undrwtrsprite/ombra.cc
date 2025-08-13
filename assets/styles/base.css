@@ -1604,7 +1604,22 @@ select option:disabled {
   }
   
   .hero {
-    padding: 100px 0 60px;
+    padding: 80px 20px 60px;
+    min-height: 80vh;
+  }
+  
+  .hero-title {
+    font-size: 3.5rem;
+    line-height: 1.1;
+    margin-bottom: 30px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 40px;
+    padding: 0 10px;
   }
   
   .hero p {
@@ -1628,6 +1643,72 @@ select option:disabled {
   
   .control-row input[type="text"] {
     min-width: auto;
+  }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 480px) {
+  body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1e1e3f 100%);
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .bg-gradient {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1e1e3f 100%);
+  }
+  
+  .bg-layer {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .hero {
+    padding: 60px 16px 40px;
+    min-height: 70vh;
+    padding-top: calc(60px + env(safe-area-inset-top));
+  }
+  
+  .hero-title {
+    font-size: 2.8rem;
+    line-height: 1.2;
+    margin-bottom: 24px;
+    padding: 0 8px;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 32px;
+    padding: 0 16px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  
+  .hero-actions {
+    margin-bottom: 40px;
+  }
+  
+  .btn-primary {
+    padding: 16px 28px;
+    font-size: 1rem;
+  }
+  
+  .scroll-indicator {
+    font-size: 0.9rem;
+  }
+  
+  .bg-mesh {
+    animation: none;
+  }
+  
+  .floating-particle {
+    animation: none;
+    opacity: 0.2;
+  }
+  
+  /* Ensure navigation doesn't overlap with status bar */
+  .nav {
+    padding-top: env(safe-area-inset-top);
   }
 }
 
