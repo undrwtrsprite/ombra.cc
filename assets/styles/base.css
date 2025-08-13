@@ -1043,7 +1043,7 @@ body {
   top: 76px; /* below nav */
   z-index: 10;
   padding: 8px 12px;
-  margin: -8px -12px 8px -12px;
+  margin: -8px 10px 8px 10px;
   background: linear-gradient(180deg, rgba(17,24,39,0.28), rgba(17,24,39,0.12));
   border-bottom: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(12px);
