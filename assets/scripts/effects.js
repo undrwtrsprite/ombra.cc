@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
           i++;
         } else {
           clearInterval(typeInterval);
+          // After finished, keep subtitles visible in case animation was skipped
+          const subtitles = document.querySelectorAll('.hero-subtitle');
+          subtitles.forEach(el => el.style.opacity = '1');
         }
       }, 80); // Adjust speed here (lower = faster)
     }, 500);
