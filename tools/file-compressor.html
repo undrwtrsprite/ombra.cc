@@ -7,6 +7,9 @@
   <meta name="description" content="Compress images, documents, and files to reduce size while maintaining quality. Free, private, and runs entirely in your browser.">
   <link rel="stylesheet" href="/assets/styles/base.css">
   <link rel="manifest" href="/manifest.json" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.min.js"></script>
   <style>
     .compressor {
       max-width: 600px;
@@ -267,15 +270,15 @@
         <div class="upload-area" id="uploadArea">
           <div class="upload-icon">📁</div>
           <h3>Drop files here or click to browse</h3>
-          <p>Supports images (JPG, PNG, WEBP), documents, and other files</p>
-          <input type="file" id="fileInput" class="file-input" multiple accept="image/*,.pdf,.doc,.docx,.txt">
+          <p>Supports images (JPG, PNG, WEBP), documents, text/code, and other files</p>
+          <input type="file" id="fileInput" class="file-input" multiple accept="image/*,.pdf,.doc,.docx,.txt,.md,.json,.csv,.html,.htm,.js,.css,.svg,.xml,.yaml,.yml,.ts,.tsx,.rtf,.odt,.ppt,.pptx,.xls,.xlsx">
         </div>
 
         <div class="compression-options">
           <div class="option-group">
-            <label class="option-label">Image Quality (for images)</label>
-            <input type="range" id="qualitySlider" class="quality-slider" min="1" max="100" value="80">
-            <div class="quality-value" id="qualityValue">80%</div>
+            <label class="option-label">Compression level (higher = smaller files)</label>
+            <input type="range" id="compressionSlider" class="quality-slider" min="1" max="100" value="70">
+            <div class="quality-value" id="compressionValue">Level 70</div>
           </div>
           
           <div class="option-group">
@@ -310,13 +313,13 @@
     const fileList = document.getElementById('fileList');
     const results = document.getElementById('results');
     const compressBtn = document.getElementById('compressBtn');
-    const qualitySlider = document.getElementById('qualitySlider');
-    const qualityValue = document.getElementById('qualityValue');
+    const compressionSlider = document.getElementById('compressionSlider');
+    const compressionValue = document.getElementById('compressionValue');
     const formatSelect = document.getElementById('formatSelect');
 
-    // Quality slider update
-    qualitySlider.addEventListener('input', (e) => {
-      qualityValue.textContent = e.target.value + '%';
+    // Compression slider update
+    compressionSlider.addEventListener('input', (e) => {
+      compressionValue.textContent = `Level ${e.target.value}`;
     });
 
     // Upload area click
@@ -407,61 +410,196 @@
       compressBtn.textContent = 'Compressing...';
       results.innerHTML = '';
       
-      const quality = parseInt(qualitySlider.value) / 100;
+      const compressionLevel = parseInt(compressionSlider.value);
       const format = formatSelect.value;
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        await compressFile(file, quality, format, i);
+        await compressFile(file, compressionLevel, format, i);
       }
       
       compressBtn.disabled = false;
       compressBtn.textContent = 'Compress Files';
     });
 
-    async function compressFile(file, quality, format) {
+    const MAX_IMAGE_DIM = 2000; // base downscale for images
+
+    function computeImageQuality(level) {
+      const clamped = Math.min(100, Math.max(1, level));
+      const q = 1 - clamped / 120; // higher level => lower quality
+      return Math.min(0.9, Math.max(0.35, q));
+    }
+
+    function computePdfRasterSettings(level) {
+      const clamped = Math.min(100, Math.max(1, level));
+      const scale = Math.min(1, Math.max(0.55, 1 - clamped / 160));
+      const quality = Math.min(0.92, Math.max(0.35, 1 - clamped / 120));
+      return { scale, quality };
+    }
+
+    async function compressFile(file, compressionLevel, format) {
+      if (file.type.startsWith('image/')) {
+        return compressImage(file, compressionLevel, format);
+      }
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        return compressPdf(file, compressionLevel);
+      }
+      return compressGeneric(file);
+    }
+
+    function compressImage(file, compressionLevel, format) {
       return new Promise((resolve) => {
-        if (file.type.startsWith('image/')) {
-          compressImage(file, quality, format);
-        } else {
-          // For non-images, just show the file (no compression possible in browser)
-          showResult(file, file, 'No compression possible for this file type');
-        }
-        resolve();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Downscale if larger than MAX_IMAGE_DIM
+          let { width, height } = img;
+          const maxDim = Math.max(width, height);
+          if (maxDim > MAX_IMAGE_DIM) {
+            const scale = MAX_IMAGE_DIM / maxDim;
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0);
+          
+          let outputFormat = format;
+          if (format === 'auto') {
+            outputFormat = file.type.split('/')[1];
+          }
+          
+          let mimeType;
+          switch (outputFormat) {
+            case 'jpeg': mimeType = 'image/jpeg'; break;
+            case 'png': mimeType = 'image/png'; break;
+            case 'webp': mimeType = 'image/webp'; break;
+            default: mimeType = file.type || 'image/jpeg';
+          }
+          
+          const imageQuality = computeImageQuality(compressionLevel);
+          canvas.toBlob((blob) => {
+            if (!blob) { showResult(file, file, 'Compression failed'); resolve(); return; }
+            const compressedFile = new File([blob], `compressed_${file.name}`, { type: mimeType });
+            const compressionRatio = ((1 - blob.size / file.size) * 100).toFixed(1);
+            showResult(file, compressedFile, `Compressed by ${compressionRatio}%`);
+            URL.revokeObjectURL(img.src);
+            resolve();
+          }, mimeType, imageQuality);
+        };
+        img.onerror = () => { showResult(file, file, 'Could not load image'); resolve(); };
+        
+        img.src = URL.createObjectURL(file);
       });
     }
 
-    function compressImage(file, quality, format) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        
-        let outputFormat = format;
-        if (format === 'auto') {
-          outputFormat = file.type.split('/')[1];
+    async function compressPdf(file, compressionLevel) {
+      if (!window.PDFLib) {
+        showResult(file, file, 'PDF compression unavailable');
+        return;
+      }
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        const optimizedBytes = await pdfDoc.save({ useObjectStreams: true });
+        let bestBlob = new Blob([optimizedBytes], { type: 'application/pdf' });
+        let bestName = `compressed_${file.name}`;
+        let bestSize = bestBlob.size;
+
+        // Try gzip for textual PDFs
+        const gzCandidate = await gzipBlob(bestBlob);
+        if (gzCandidate && gzCandidate.size < bestSize * 0.98) {
+          bestBlob = gzCandidate;
+          bestName = `${file.name}.gz`;
+          bestSize = gzCandidate.size;
         }
-        
-        let mimeType;
-        switch (outputFormat) {
-          case 'jpeg': mimeType = 'image/jpeg'; break;
-          case 'png': mimeType = 'image/png'; break;
-          case 'webp': mimeType = 'image/webp'; break;
-          default: mimeType = file.type;
+
+        // If gains are small, try a rasterized rebuild for image-heavy PDFs
+        const percentGain = (1 - bestSize / file.size) * 100;
+        const likelyImageHeavy = percentGain < 15 && file.size > 300000;
+        if (likelyImageHeavy && window.pdfjsLib) {
+          const { scale, quality } = computePdfRasterSettings(compressionLevel);
+          const rasterBlob = await rasterizePdf(file, { scale, quality, maxPages: 30 });
+          if (rasterBlob && rasterBlob.size < bestSize * 0.95) {
+            bestBlob = rasterBlob;
+            bestName = `compressed_${file.name}`;
+            bestSize = rasterBlob.size;
+          }
         }
-        
-        canvas.toBlob((blob) => {
-          const compressedFile = new File([blob], `compressed_${file.name}`, { type: mimeType });
-          const compressionRatio = ((1 - blob.size / file.size) * 100).toFixed(1);
-          showResult(file, compressedFile, `Compressed by ${compressionRatio}%`);
-        }, mimeType, quality);
-      };
-      
-      img.src = URL.createObjectURL(file);
+
+        const compressionRatio = ((1 - bestSize / file.size) * 100).toFixed(1);
+        showResult(file, new File([bestBlob], bestName, { type: bestBlob.type || 'application/pdf' }), `Compressed by ${compressionRatio}%`);
+      } catch (err) {
+        showResult(file, file, 'PDF compression failed');
+      }
+    }
+
+    async function rasterizePdf(file, { scale = 0.68, quality = 0.5, maxPages = 30 } = {}) {
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pageCount = pdf.numPages;
+        if (pageCount > maxPages) return null; // avoid heavy work on huge PDFs
+
+        const outDoc = await PDFLib.PDFDocument.create();
+        for (let i = 1; i <= pageCount; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d', { willReadFrequently: false });
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: context, viewport }).promise;
+          const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+          if (!blob) continue;
+          const imgBytes = await blob.arrayBuffer();
+          const embedded = await outDoc.embedJpg(imgBytes);
+          const pdfPage = outDoc.addPage([viewport.width, viewport.height]);
+          pdfPage.drawImage(embedded, {
+            x: 0,
+            y: 0,
+            width: viewport.width,
+            height: viewport.height
+          });
+        }
+        const rasterBytes = await outDoc.save({ useObjectStreams: true });
+        return new Blob([rasterBytes], { type: 'application/pdf' });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function gzipBlob(blob) {
+      try {
+        if ('CompressionStream' in window) {
+          const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
+          return await new Response(stream).blob();
+        }
+        if (window.fflate) {
+          const arr = new Uint8Array(await blob.arrayBuffer());
+          const gz = window.fflate.gzipSync(arr);
+          return new Blob([gz], { type: 'application/gzip' });
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function compressGeneric(file) {
+      try {
+        const cs = new CompressionStream('gzip');
+        const compressedStream = file.stream().pipeThrough(cs);
+        const compressedBlob = await new Response(compressedStream).blob();
+        const compressedFile = new File([compressedBlob], `${file.name}.gz`, { type: 'application/gzip' });
+        const compressionRatio = ((1 - compressedBlob.size / file.size) * 100).toFixed(1);
+        showResult(file, compressedFile, `Compressed by ${compressionRatio}% (gzip)`);
+      } catch (err) {
+        showResult(file, file, 'Compression not supported in this browser');
+      }
     }
 
     function showResult(originalFile, compressedFile, message) {
@@ -486,6 +624,13 @@
       `;
       
       results.appendChild(resultItem);
+
+      // Revoke download URL after click to avoid leaks
+      const link = resultItem.querySelector('a.download-btn');
+      const url = link.getAttribute('href');
+      link.addEventListener('click', () => {
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
     }
   </script>
     

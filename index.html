@@ -47,9 +47,9 @@
   </nav>
 
   <div class="container homepage-return">
-    <section class="hero homepage-return">
+    <section class="hero hero-desktop homepage-return">
       <h1 class="hero-title">
-        <span class="typing-text" id="typingText"></span><span class="typing-cursor"></span>
+        <span class="typing-text" data-typing></span><span class="typing-cursor"></span>
       </h1>
       <p class="hero-subtitle">Fast, private, and free. No ads, no tracking, no nonsense.</p>
       <div class="hero-actions">
@@ -59,6 +59,16 @@
         <div class="scroll-dot"></div>
         <span>Discover tools below</span>
         <div class="scroll-arrow">↓</div>
+      </div>
+    </section>
+
+    <section class="hero hero-mobile homepage-return">
+      <h1 class="hero-title">
+        <span class="typing-text" data-typing></span><span class="typing-cursor"></span>
+      </h1>
+      <p class="hero-subtitle">Fast, private, and free. No ads, no tracking, no nonsense.</p>
+      <div class="hero-actions">
+        <a class="btn-primary" href="#tools">Explore tools</a>
       </div>
     </section>
 
@@ -389,13 +399,24 @@
       searchInput.addEventListener('focus', () => { if (searchInput.value.trim() && navResults) navResults.style.display = 'block'; });
     }
     
+    const lowPowerMode = (() => {
+      const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const lowCores = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
+      const lowMemory = navigator.deviceMemory && navigator.deviceMemory <= 4;
+      return prefersReduce || lowCores || lowMemory;
+    })();
+    if (lowPowerMode) {
+      document.body.classList.add('reduce-effects');
+    }
+    
     // Animated background particles - optimized for performance
     function createParticles() {
+      if (lowPowerMode) return;
       const container = document.getElementById('bgAnimation');
       if (!container) return;
       
-      // Create only 8 particles for better performance
-      for (let i = 0; i < 8; i++) {
+      // Create fewer particles for better performance
+      for (let i = 0; i < 4; i++) {
         const particle = document.createElement('div');
         particle.className = 'floating-particle';
         

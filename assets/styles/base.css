@@ -34,9 +34,20 @@ body {
   --shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 12px 30px rgba(0,0,0,0.24);
 }
 
-/* Smooth animations everywhere */
+/* Smooth but limited animations (avoid transitioning every property) */
 * {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reduce-effects * {
+  transition-duration: 120ms;
 }
 
 /* Background layers */
@@ -55,6 +66,24 @@ body {
   opacity: 1;
 }
 
+/* Hero variants */
+.hero-desktop { display: flex; }
+.hero-mobile { display: none; }
+
+@media (max-width: 768px) {
+  .hero-desktop { display: none; }
+  .hero-mobile { 
+    display: flex; 
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .hero-mobile .hero-actions {
+    justify-content: center;
+  }
+}
+
 .bg-mesh {
   background: 
     radial-gradient(ellipse 90% 60% at 20% 20%, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0.1) 40%, rgba(99, 102, 241, 0.02) 70%, transparent 85%),
@@ -62,8 +91,12 @@ body {
     radial-gradient(ellipse 80% 55% at 40% 60%, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0.08) 45%, rgba(99, 102, 241, 0.02) 75%, transparent 88%);
   opacity: 0.8;
   filter: hue-rotate(0deg) saturate(0.8);
-  animation: gradientShift 25s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  will-change: filter;
+  animation: none;
+  will-change: auto;
+}
+
+.reduce-effects .bg-mesh {
+  filter: none;
 }
 
 /* Animated background elements */
@@ -85,16 +118,20 @@ body {
   height: 4px;
   background: rgba(99, 102, 241, 0.4);
   border-radius: 50%;
-  animation: float 15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: float 18s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   will-change: transform;
   transform: translateZ(0);
+}
+
+.reduce-effects .floating-particle {
+  display: none;
 }
 
 .floating-particle:nth-child(2n) {
   width: 3px;
   height: 3px;
   background: rgba(59, 130, 246, 0.3);
-  animation-duration: 20s;
+  animation-duration: 24s;
   animation-delay: -4s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -103,7 +140,7 @@ body {
   width: 5px;
   height: 5px;
   background: rgba(99, 102, 241, 0.35);
-  animation-duration: 25s;
+  animation-duration: 28s;
   animation-delay: -8s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -136,6 +173,20 @@ body {
   100% {
     transform: translateY(-20px) translateX(0);
     opacity: 0;
+  }
+}
+
+/* Respect reduced motion preferences and provide a lighter path */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .bg-mesh {
+    filter: none;
+  }
+  .floating-particle {
+    display: none;
   }
 }
 

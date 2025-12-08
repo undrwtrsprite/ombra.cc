@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const enableParallax = false; // set true to re-enable mesh parallax
   // Utility: truncate text nicely with ellipsis
   function truncateText(text, max) {
     if (!text) return '';
@@ -32,14 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Typewriter effect for hero title
   const typeWriter = () => {
     const text = "Tools that just work.";
-    const typingText = document.getElementById('typingText');
+    const typingNodes = Array.from(document.querySelectorAll('.typing-text'));
+    if (!typingNodes.length) return;
+    typingNodes.forEach(node => node.textContent = '');
     let i = 0;
     
     // Start typing after a short delay
     setTimeout(() => {
       const typeInterval = setInterval(() => {
         if (i < text.length) {
-          typingText.innerHTML += text.charAt(i);
+          typingNodes.forEach(node => node.innerHTML += text.charAt(i));
           i++;
         } else {
           clearInterval(typeInterval);
@@ -51,15 +55,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // Start typewriter effect
   typeWriter();
   
-  // Parallax mesh effect
+  // Parallax mesh effect (disabled by default to reduce GPU load)
   const meshLayer = document.querySelector('.bg-mesh');
-  if (meshLayer) {
-    document.addEventListener('mousemove', (e) => {
-      const x = e.clientX / window.innerWidth;
-      const y = e.clientY / window.innerHeight;
-      const xOffset = (x - 0.5) * 30;
-      const yOffset = (y - 0.5) * 30;
+  if (meshLayer && !prefersReducedMotion && enableParallax) {
+    let pending = false;
+    let targetX = 0;
+    let targetY = 0;
+    function applyParallax() {
+      const xOffset = (targetX - 0.5) * 30;
+      const yOffset = (targetY - 0.5) * 30;
       meshLayer.style.transform = `translate(${xOffset}px, ${yOffset}px) scale(1.05)`;
+      pending = false;
+    }
+    function queueUpdate(x, y) {
+      targetX = x;
+      targetY = y;
+      if (!pending) {
+        pending = true;
+        requestAnimationFrame(applyParallax);
+      }
+    }
+    document.addEventListener('mousemove', (e) => {
+      queueUpdate(e.clientX / window.innerWidth, e.clientY / window.innerHeight);
     });
     
     // Reset position when mouse leaves window
@@ -70,11 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Touch support for mobile devices
     document.addEventListener('touchmove', (e) => {
       const touch = e.touches[0];
-      const x = touch.clientX / window.innerWidth;
-      const y = touch.clientY / window.innerHeight;
-      const xOffset = (x - 0.5) * 20;
-      const yOffset = (y - 0.5) * 20;
-      meshLayer.style.transform = `translate(${xOffset}px, ${yOffset}px) scale(1.02)`;
+      queueUpdate(touch.clientX / window.innerWidth, touch.clientY / window.innerHeight);
     });
     
     // Reset on touch end
@@ -180,8 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Hide scroll indicator when scrolling down
   const scrollIndicator = document.querySelector('.scroll-indicator');
   if (scrollIndicator) {
-    console.log('Scroll indicator found:', scrollIndicator);
-    
     window.addEventListener('scroll', () => {
       const currentScrollY = window.scrollY;
       const fadeThreshold = 100;
@@ -189,13 +200,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentScrollY > fadeThreshold) {
         const opacity = Math.max(0, 1 - ((currentScrollY - fadeThreshold) / 200));
         scrollIndicator.style.opacity = opacity;
-        console.log('Scroll Y:', currentScrollY, 'Opacity:', opacity);
       } else {
         scrollIndicator.style.opacity = 1;
       }
     });
-  } else {
-    console.log('Scroll indicator not found');
+  }
+
+  // Pause particle animations during scroll to reduce GPU spikes
+  const floatingParticles = Array.from(document.querySelectorAll('.floating-particle'));
+  if (floatingParticles.length) {
+    let resumeTimeout;
+    function pauseParticles() {
+      floatingParticles.forEach(p => p.style.animationPlayState = 'paused');
+      clearTimeout(resumeTimeout);
+      resumeTimeout = setTimeout(() => {
+        floatingParticles.forEach(p => p.style.animationPlayState = 'running');
+      }, 200);
+    }
+    window.addEventListener('scroll', pauseParticles, { passive: true });
   }
 });
 
