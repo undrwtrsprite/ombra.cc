@@ -84,6 +84,29 @@ body {
   }
 }
 
+/* Mobile hero sizing and spacing */
+@media (max-width: 768px) {
+  .hero {
+    padding: 72px 20px;
+    min-height: calc(100vh - 140px);
+  }
+  .hero-title {
+    font-size: 2.6rem;
+    line-height: 1.1;
+    margin-bottom: 18px;
+  }
+  .hero-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 28px;
+  }
+  .hero-actions {
+    margin-bottom: 16px;
+  }
+  .scroll-indicator {
+    margin-top: 12px;
+  }
+}
+
 .bg-mesh {
   background: 
     radial-gradient(ellipse 90% 60% at 20% 20%, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0.1) 40%, rgba(99, 102, 241, 0.02) 70%, transparent 85%),
