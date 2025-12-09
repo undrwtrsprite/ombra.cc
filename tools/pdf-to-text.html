@@ -31,6 +31,17 @@
           <button class="btn-secondary" id="download">Download .txt</button>
           <button class="btn-primary" id="extract">Extract text</button>
         </div>
+        <div class="progress-container" id="progressContainer" style="display:none; margin-top:16px;">
+          <div class="progress-info" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:rgba(255,255,255,0.9);">
+            <span class="progress-status" id="progressStatus" style="font-weight:600;color:#9333ea;">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-details" id="progressDetails" style="font-size:13px;opacity:0.7;margin-top:4px;">Loading PDF...</div>
+          <div class="progress-bar-container" style="width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-top:12px;">
+            <div class="progress-bar-fill" id="progressBarFill" style="height:100%;background:linear-gradient(90deg, #9333ea, #7c3aed);width:0%;transition:width 0.3s ease;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <textarea id="output" placeholder="Extracted text will appear here"></textarea>
         <p class="note">Extraction runs locally using PDF.js. Your file never leaves your device.</p>
       </div>
@@ -53,6 +64,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
@@ -61,6 +73,29 @@
     const copyBtn = document.getElementById('copy');
     const downloadBtn = document.getElementById('download');
     const output = document.getElementById('output');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressDetails = document.getElementById('progressDetails');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      progressContainer.style.display = 'none';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+
+    function showProgress(show = true) {
+      progressContainer.style.display = show ? 'block' : 'none';
+      if (!show) {
+        progressBarFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+      }
+    }
 
     async function readAsArrayBuffer(file) {
       return await file.arrayBuffer();
@@ -68,17 +103,76 @@
 
     extractBtn.addEventListener('click', async () => {
       const file = fileInput.files && fileInput.files[0];
-      if (!file) { alert('Choose a PDF'); return; }
-      const data = await readAsArrayBuffer(file);
-      const pdf = await pdfjsLib.getDocument({ data }).promise;
-      let text = '';
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const strings = content.items.map(it => it.str);
-        text += strings.join(' ') + "\n\n";
+      if (!file) {
+        showError('Please choose a PDF file first');
+        return;
       }
-      output.value = text.trim();
+
+      showProgress(true);
+      errorMessage.style.display = 'none';
+      extractBtn.disabled = true;
+      extractBtn.textContent = 'Extracting...';
+      output.value = '';
+      
+      try {
+        progressStatus.textContent = 'Loading PDF...';
+        progressDetails.textContent = `Reading: ${file.name}`;
+        progressBarFill.style.width = '10%';
+        progressPercent.textContent = '10%';
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const data = await readAsArrayBuffer(file);
+        const pdf = await pdfjsLib.getDocument({ data }).promise;
+        
+        const totalPages = pdf.numPages;
+        progressDetails.textContent = `Found ${totalPages} page${totalPages > 1 ? 's' : ''}. Extracting text...`;
+        progressBarFill.style.width = '20%';
+        progressPercent.textContent = '20%';
+
+        let text = '';
+        for (let i = 1; i <= totalPages; i++) {
+          const progress = 20 + ((i / totalPages) * 70);
+          progressBarFill.style.width = `${progress}%`;
+          progressPercent.textContent = `${Math.round(progress)}%`;
+          progressStatus.textContent = `Extracting page ${i} of ${totalPages}`;
+          progressDetails.textContent = `Processing page ${i}...`;
+
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const strings = content.items.map(it => it.str);
+          text += strings.join(' ') + "\n\n";
+
+          // Yield to browser for better performance
+          if (i % 5 === 0) {
+            await new Promise(resolve => rafUpdate(resolve));
+          }
+        }
+
+        progressBarFill.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressStatus.textContent = 'Complete!';
+        progressDetails.textContent = `Successfully extracted text from ${totalPages} page${totalPages > 1 ? 's' : ''}`;
+        
+        output.value = text.trim();
+        
+        setTimeout(() => {
+          showProgress(false);
+        }, 2000);
+      } catch (e) {
+        let errorMsg = 'Failed to extract text from PDF. ';
+        if (e.message.includes('encrypted') || e.message.includes('password')) {
+          errorMsg += 'The PDF appears to be password-protected or encrypted.';
+        } else if (e.message.includes('corrupt') || e.message.includes('invalid')) {
+          errorMsg += 'The PDF file appears to be corrupted or invalid.';
+        } else {
+          errorMsg += 'Please ensure the file is a valid PDF.';
+        }
+        showError(errorMsg);
+        showProgress(false);
+      } finally {
+        extractBtn.disabled = false;
+        extractBtn.textContent = 'Extract text';
+      }
     });
 
     copyBtn.addEventListener('click', async () => {

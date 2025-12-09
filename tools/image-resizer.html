@@ -38,6 +38,17 @@
           <button class="btn-primary" id="resize">Resize</button>
           <a id="download" class="btn-secondary" download style="display:none;">Download</a>
         </div>
+        <div class="progress-container" id="progressContainer" style="display:none; margin-top:16px;">
+          <div class="progress-info" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:rgba(255,255,255,0.9);">
+            <span class="progress-status" id="progressStatus" style="font-weight:600;color:#9333ea;">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-details" id="progressDetails" style="font-size:13px;opacity:0.7;margin-top:4px;">Resizing image...</div>
+          <div class="progress-bar-container" style="width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-top:12px;">
+            <div class="progress-bar-fill" id="progressBarFill" style="height:100%;background:linear-gradient(90deg, #9333ea, #7c3aed);width:0%;transition:width 0.3s ease;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <div class="preview" id="preview"><span class="note">Preview will appear here</span></div>
         <p class="note">Processed locally in your browser.</p>
       </div>
@@ -59,6 +70,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
@@ -71,6 +83,27 @@
     const resizeBtn = document.getElementById('resize');
     const downloadLink = document.getElementById('download');
     const preview = document.getElementById('preview');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressDetails = document.getElementById('progressDetails');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = 'block';
+      progressContainer.style.display = 'none';
+      setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
+    }
+
+    function showProgress(show = true) {
+      progressContainer.style.display = show ? 'block' : 'none';
+      if (!show) {
+        progressBarFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+      }
+    }
 
     qInput.addEventListener('input', () => qval.textContent = Number(qInput.value).toFixed(2));
 
@@ -80,20 +113,79 @@
 
     resizeBtn.addEventListener('click', async () => {
       const file = fileInput.files && fileInput.files[0];
-      if (!file) { alert('Choose an image'); return; }
-      const img = await readImage(file);
-      let w = parseInt(wInput.value, 10); let h = parseInt(hInput.value, 10);
-      if (keepAspect.checked) {
-        if (w && !h) { h = Math.round((w / img.naturalWidth) * img.naturalHeight); }
-        else if (!w && h) { w = Math.round((h / img.naturalHeight) * img.naturalWidth); }
+      if (!file) { 
+        showError('Please choose an image file first');
+        return; 
       }
-      if (!w) w = img.naturalWidth; if (!h) h = img.naturalHeight;
-      const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', Number(qInput.value)));
-      const outUrl = URL.createObjectURL(blob);
-      preview.innerHTML = ''; const outImg = document.createElement('img'); outImg.src = outUrl; preview.appendChild(outImg);
-      downloadLink.href = outUrl; downloadLink.download = 'resized.jpg'; downloadLink.style.display = 'inline-block';
+
+      showProgress(true);
+      errorMessage.style.display = 'none';
+      resizeBtn.disabled = true;
+      resizeBtn.textContent = 'Resizing...';
+
+      try {
+        progressStatus.textContent = 'Loading image...';
+        progressDetails.textContent = `Reading: ${file.name}`;
+        progressBarFill.style.width = '20%';
+        progressPercent.textContent = '20%';
+
+        const img = await readImage(file);
+        
+        progressBarFill.style.width = '40%';
+        progressPercent.textContent = '40%';
+        progressStatus.textContent = 'Calculating dimensions...';
+        progressDetails.textContent = 'Processing resize parameters...';
+
+        let w = parseInt(wInput.value, 10); 
+        let h = parseInt(hInput.value, 10);
+        if (keepAspect.checked) {
+          if (w && !h) { h = Math.round((w / img.naturalWidth) * img.naturalHeight); }
+          else if (!w && h) { w = Math.round((h / img.naturalHeight) * img.naturalWidth); }
+        }
+        if (!w) w = img.naturalWidth; 
+        if (!h) h = img.naturalHeight;
+
+        progressBarFill.style.width = '60%';
+        progressPercent.textContent = '60%';
+        progressStatus.textContent = 'Resizing...';
+        progressDetails.textContent = `Resizing to ${w}×${h} pixels...`;
+
+        const canvas = document.createElement('canvas'); 
+        canvas.width = w; 
+        canvas.height = h;
+        const ctx = canvas.getContext('2d'); 
+        ctx.drawImage(img, 0, 0, w, h);
+
+        progressBarFill.style.width = '80%';
+        progressPercent.textContent = '80%';
+        progressDetails.textContent = 'Encoding image...';
+
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', Number(qInput.value)));
+        const outUrl = URL.createObjectURL(blob);
+        
+        preview.innerHTML = ''; 
+        const outImg = document.createElement('img'); 
+        outImg.src = outUrl; 
+        preview.appendChild(outImg);
+        downloadLink.href = outUrl; 
+        downloadLink.download = 'resized.jpg'; 
+        downloadLink.style.display = 'inline-block';
+
+        progressBarFill.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressStatus.textContent = 'Complete!';
+        progressDetails.textContent = `Successfully resized to ${w}×${h} pixels`;
+
+        setTimeout(() => {
+          showProgress(false);
+        }, 1500);
+      } catch (e) {
+        showError('Failed to resize image. Please ensure the file is a valid image.');
+        showProgress(false);
+      } finally {
+        resizeBtn.disabled = false;
+        resizeBtn.textContent = 'Resize';
+      }
     });
   </script>
 </body>

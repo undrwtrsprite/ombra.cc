@@ -68,6 +68,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
@@ -320,7 +321,8 @@
       performConversion();
     });
 
-    fromValue.addEventListener('input', performConversion);
+    // Debounce input for better performance
+    fromValue.addEventListener('input', debounce(performConversion, 200));
     fromUnit.addEventListener('change', performConversion);
     toUnit.addEventListener('change', performConversion);
     convertBtn.addEventListener('click', performConversion);

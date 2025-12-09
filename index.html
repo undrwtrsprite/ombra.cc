@@ -6,6 +6,8 @@
   <title>ombra tools — fast, private, beautiful</title>
   <meta name="description" content="A clean collection of fast, private, ad‑free tools: image convert, resize, PDF to text, text to PDF, QR code, password generator, and more." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
   <link rel="stylesheet" href="/assets/styles/base.css?v=4" />
   <link rel="manifest" href="/manifest.json" />
   
@@ -49,7 +51,7 @@
   <div class="container homepage-return">
     <section class="hero hero-desktop homepage-return">
       <h1 class="hero-title">
-        <span class="typing-text" data-typing></span><span class="typing-cursor"></span>
+        <span class="typing-text" data-typing>Tools that just work.</span><span class="typing-cursor"></span>
       </h1>
       <p class="hero-subtitle">Fast, private, and free. No ads, no tracking, no nonsense.</p>
       <div class="hero-actions">
@@ -64,7 +66,7 @@
 
     <section class="hero hero-mobile homepage-return">
       <h1 class="hero-title">
-        <span class="typing-text" data-typing></span><span class="typing-cursor"></span>
+        <span class="typing-text" data-typing>Tools that just work.</span><span class="typing-cursor"></span>
       </h1>
       <p class="hero-subtitle">Fast, private, and free. No ads, no tracking, no nonsense.</p>
       <div class="hero-actions">
@@ -291,6 +293,17 @@
     <p>© 2025 ombra. Built with care and privacy in mind.</p>
   </footer>
 
+  <script>
+    // Ensure hero text is visible immediately on low-end devices (runs before effects.js)
+    (function() {
+      const typingNodes = document.querySelectorAll('.typing-text');
+      typingNodes.forEach(node => {
+        if (!node.textContent.trim()) {
+          node.textContent = "Tools that just work.";
+        }
+      });
+    })();
+  </script>
   <script src="/assets/scripts/effects.js"></script>
   <script>
     const toolSearch = document.getElementById('toolSearch');
@@ -358,6 +371,13 @@
         }
       });
       
+      // Debounce function for search performance
+      let searchTimeout;
+      const debounceSearch = (callback, delay = 150) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(callback, delay);
+      };
+      
       // Keep expanded if there's text
       searchInput.addEventListener('input', () => {
         const q = searchInput.value.trim();
@@ -366,31 +386,34 @@
           navSearch.classList.add('expanded');
         }
         
-        // Tool search functionality
-        toolSearch && (toolSearch.value = q);
-        const event = new Event('input');
-        toolSearch && toolSearch.dispatchEvent(event);
-        
-        // Suggestions dropdown
-        const query = q.toLowerCase();
-        if (!navResults) return;
-        if (!query) { navResults.style.display = 'none'; navResults.innerHTML=''; return; }
-        const matches = toolIndex.filter(t =>
-          t.title.toLowerCase().includes(query) ||
-          t.desc.toLowerCase().includes(query) ||
-          t.href.toLowerCase().includes(query)
-        ).slice(0, 6);
-        if (matches.length === 0) { navResults.style.display = 'none'; navResults.innerHTML=''; return; }
-        navResults.innerHTML = matches.map(m => `
-          <a class="result-item" href="${m.href}">
-            <span class="icon">${m.icon}</span>
-            <div style="display:flex;flex-direction:column;">
-              <span class="title">${m.title}</span>
-              <span class="desc">${m.desc}</span>
-            </div>
-          </a>
-        `).join('');
-        navResults.style.display = 'block';
+        // Debounce search operations
+        debounceSearch(() => {
+          // Tool search functionality
+          toolSearch && (toolSearch.value = q);
+          const event = new Event('input');
+          toolSearch && toolSearch.dispatchEvent(event);
+          
+          // Suggestions dropdown
+          const query = q.toLowerCase();
+          if (!navResults) return;
+          if (!query) { navResults.style.display = 'none'; navResults.innerHTML=''; return; }
+          const matches = toolIndex.filter(t =>
+            t.title.toLowerCase().includes(query) ||
+            t.desc.toLowerCase().includes(query) ||
+            t.href.toLowerCase().includes(query)
+          ).slice(0, 6);
+          if (matches.length === 0) { navResults.style.display = 'none'; navResults.innerHTML=''; return; }
+          navResults.innerHTML = matches.map(m => `
+            <a class="result-item" href="${m.href}">
+              <span class="icon">${m.icon}</span>
+              <div style="display:flex;flex-direction:column;">
+                <span class="title">${m.title}</span>
+                <span class="desc">${m.desc}</span>
+              </div>
+            </a>
+          `).join('');
+          navResults.style.display = 'block';
+        });
       });
       
       // Hide on blur after a short delay to allow click
@@ -399,24 +422,74 @@
       searchInput.addEventListener('focus', () => { if (searchInput.value.trim() && navResults) navResults.style.display = 'block'; });
     }
     
+    // Enhanced low-power mode detection
     const lowPowerMode = (() => {
       const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const lowCores = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
       const lowMemory = navigator.deviceMemory && navigator.deviceMemory <= 4;
-      return prefersReduce || lowCores || lowMemory;
+      
+      // Check connection speed (if available)
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const slowConnection = connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g' || connection.saveData);
+      
+      // Check battery status (if available)
+      let lowBattery = false;
+      if (navigator.getBattery) {
+        navigator.getBattery().then(battery => {
+          if (battery.level < 0.2 || battery.charging === false) {
+            lowBattery = true;
+            if (lowBattery) {
+              document.body.classList.add('reduce-effects');
+            }
+          }
+        }).catch(() => {});
+      }
+      
+      // Check for mobile devices (often lower performance)
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // Check viewport size (smaller screens often have less power)
+      const isSmallScreen = window.innerWidth <= 768;
+      
+      return prefersReduce || lowCores || lowMemory || slowConnection || (isMobile && isSmallScreen);
     })();
+    
     if (lowPowerMode) {
       document.body.classList.add('reduce-effects');
+      // Disable expensive effects
+      const bgMesh = document.querySelector('.bg-mesh');
+      if (bgMesh) {
+        bgMesh.style.animation = 'none';
+        bgMesh.style.filter = 'none';
+      }
     }
     
     // Animated background particles - optimized for performance
     function createParticles() {
-      if (lowPowerMode) return;
+      if (lowPowerMode) {
+        // Completely disable particles on low-power mode
+        const container = document.getElementById('bgAnimation');
+        if (container) container.style.display = 'none';
+        return;
+      }
+      
       const container = document.getElementById('bgAnimation');
       if (!container) return;
       
-      // Create fewer particles for better performance
-      for (let i = 0; i < 4; i++) {
+      // Detect very low-end devices
+      const veryLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) ||
+                         (navigator.deviceMemory && navigator.deviceMemory <= 2);
+      
+      // Reduce particles: 2 for low-end, 4 for normal devices
+      const particleCount = veryLowEnd ? 0 : (lowPowerMode ? 0 : 2);
+      
+      if (particleCount === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      
+      // Create particles
+      for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.className = 'floating-particle';
         
@@ -428,12 +501,39 @@
       }
     }
     
-    // Initialize particles when page loads
-    createParticles();
+    // Initialize particles when page loads (deferred)
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(createParticles, { timeout: 3000 });
+    } else {
+      setTimeout(createParticles, 1000);
+    }
     
     // Check if returning from a tool and trigger smooth return animation
     if (sessionStorage.getItem('returningFromTool')) {
       sessionStorage.removeItem('returningFromTool');
+      
+      // Ensure text is visible when returning
+      const typingNodes = document.querySelectorAll('.typing-text');
+      typingNodes.forEach(node => {
+        if (!node.textContent.trim()) {
+          node.textContent = "Tools that just work.";
+        }
+      });
+      
+      // Ensure cards are visible when returning
+      const cards = document.querySelectorAll('.glass-card');
+      cards.forEach(card => {
+        card.classList.add('visible');
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      });
+      
+      const cardGrids = document.querySelectorAll('.cards-grid');
+      cardGrids.forEach(grid => {
+        grid.classList.add('visible');
+        grid.style.opacity = '1';
+        grid.style.transform = 'translateY(0)';
+      });
       
       // Trigger the return animation smoothly
       const returnElements = document.querySelectorAll('.homepage-return');

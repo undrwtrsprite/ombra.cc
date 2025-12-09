@@ -131,8 +131,59 @@
     .quality-value {
       text-align: center;
       font-weight: 600;
-      color: #9333ea;
+      color: #ffffff;
+      background: rgba(147, 51, 234, 0.2);
+      padding: 8px 16px;
+      border-radius: 8px;
       margin-top: 8px;
+      font-size: 16px;
+      border: 1px solid rgba(147, 51, 234, 0.3);
+    }
+    
+    .progress-container {
+      margin-top: 24px;
+      display: none;
+    }
+    
+    .progress-container.active {
+      display: block;
+    }
+    
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .progress-status {
+      font-weight: 600;
+      color: #9333ea;
+    }
+    
+    .progress-details {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+    
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #9333ea, #7c3aed);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 4px;
     }
     
     .compress-btn {
@@ -278,7 +329,7 @@
           <div class="option-group">
             <label class="option-label">Compression level (higher = smaller files)</label>
             <input type="range" id="compressionSlider" class="quality-slider" min="1" max="100" value="70">
-            <div class="quality-value" id="compressionValue">Level 70</div>
+            <div class="quality-value" id="compressionValue">Level 70 - Balanced</div>
           </div>
           
           <div class="option-group">
@@ -295,6 +346,18 @@
         </div>
 
         <div class="file-list" id="fileList"></div>
+        
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-info">
+            <span class="progress-status" id="progressStatus">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-details" id="progressDetails">Preparing files...</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBarFill"></div>
+          </div>
+        </div>
+        
         <div class="results" id="results"></div>
         </div>
         <div class="note">
@@ -316,11 +379,25 @@
     const compressionSlider = document.getElementById('compressionSlider');
     const compressionValue = document.getElementById('compressionValue');
     const formatSelect = document.getElementById('formatSelect');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressDetails = document.getElementById('progressDetails');
+    const progressBarFill = document.getElementById('progressBarFill');
 
     // Compression slider update
     compressionSlider.addEventListener('input', (e) => {
-      compressionValue.textContent = `Level ${e.target.value}`;
+      const level = parseInt(e.target.value);
+      let label = '';
+      if (level <= 30) label = 'Low - Best Quality';
+      else if (level <= 60) label = 'Medium - Balanced';
+      else if (level <= 85) label = 'High - Good Compression';
+      else label = 'Maximum - Smallest Size';
+      compressionValue.textContent = `Level ${level} - ${label}`;
     });
+    
+    // Initialize label
+    compressionSlider.dispatchEvent(new Event('input'));
 
     // Upload area click
     uploadArea.addEventListener('click', () => {
@@ -409,17 +486,42 @@
       compressBtn.disabled = true;
       compressBtn.textContent = 'Compressing...';
       results.innerHTML = '';
+      progressContainer.classList.add('active');
+      progressBarFill.style.width = '0%';
+      progressPercent.textContent = '0%';
       
       const compressionLevel = parseInt(compressionSlider.value);
       const format = formatSelect.value;
+      const totalFiles = files.length;
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        const progress = ((i / totalFiles) * 100).toFixed(0);
+        progressBarFill.style.width = `${progress}%`;
+        progressPercent.textContent = `${progress}%`;
+        progressStatus.textContent = `Processing file ${i + 1} of ${totalFiles}`;
+        progressDetails.textContent = `Compressing: ${file.name} (${formatFileSize(file.size)})`;
+        
         await compressFile(file, compressionLevel, format, i);
+        
+        // Update progress after each file
+        const newProgress = (((i + 1) / totalFiles) * 100).toFixed(0);
+        progressBarFill.style.width = `${newProgress}%`;
+        progressPercent.textContent = `${newProgress}%`;
       }
+      
+      progressStatus.textContent = 'Complete!';
+      progressDetails.textContent = `Successfully compressed ${totalFiles} file${totalFiles > 1 ? 's' : ''}`;
+      progressBarFill.style.width = '100%';
+      progressPercent.textContent = '100%';
       
       compressBtn.disabled = false;
       compressBtn.textContent = 'Compress Files';
+      
+      // Hide progress after a delay
+      setTimeout(() => {
+        progressContainer.classList.remove('active');
+      }, 3000);
     });
 
     const MAX_IMAGE_DIM = 2000; // base downscale for images

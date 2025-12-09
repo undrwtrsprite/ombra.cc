@@ -46,6 +46,17 @@
           <label>Margin</label>
           <input type="number" id="margin" value="16" min="0" step="1" />
         </div>
+        <div class="progress-container" id="progressContainer" style="display:none; margin-top:16px;">
+          <div class="progress-info" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:rgba(255,255,255,0.9);">
+            <span class="progress-status" id="progressStatus" style="font-weight:600;color:#9333ea;">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-details" id="progressDetails" style="font-size:13px;opacity:0.7;margin-top:4px;">Preparing images...</div>
+          <div class="progress-bar-container" style="width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-top:12px;">
+            <div class="progress-bar-fill" id="progressBarFill" style="height:100%;background:linear-gradient(90deg, #9333ea, #7c3aed);width:0%;transition:width 0.3s ease;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <div class="actions">
           <button class="btn-primary" id="buildBtn" disabled>Create PDF</button>
           <a class="btn-secondary" id="download" download="images.pdf" style="display:none;">Download</a>
@@ -71,6 +82,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
@@ -80,11 +92,33 @@
     const marginInput = document.getElementById('margin');
     const buildBtn = document.getElementById('buildBtn');
     const download = document.getElementById('download');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressDetails = document.getElementById('progressDetails');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = 'block';
+      progressContainer.style.display = 'none';
+      setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
+    }
+
+    function showProgress(show = true) {
+      progressContainer.style.display = show ? 'block' : 'none';
+      if (!show) {
+        progressBarFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+      }
+    }
 
     let imageFiles = [];
     imagesInput.addEventListener('change', () => {
       imageFiles = Array.from(imagesInput.files || []);
       buildBtn.disabled = imageFiles.length === 0;
+      errorMessage.style.display = 'none';
     });
 
     const POINTS_PER_MM = 2.8346456693;
@@ -96,13 +130,36 @@
     };
 
     buildBtn.addEventListener('click', async () => {
-      buildBtn.disabled = true; buildBtn.textContent = 'Building…'; download.style.display = 'none';
+      if (imageFiles.length === 0) {
+        showError('Please select at least one image file');
+        return;
+      }
+
+      buildBtn.disabled = true; 
+      buildBtn.textContent = 'Building…'; 
+      download.style.display = 'none';
+      showProgress(true);
+      errorMessage.style.display = 'none';
+
       try {
+        progressStatus.textContent = 'Initializing PDF...';
+        progressDetails.textContent = 'Creating document...';
+        progressBarFill.style.width = '5%';
+        progressPercent.textContent = '5%';
+
         const { PDFDocument } = window.pdfLib;
         const doc = await PDFDocument.create();
         const margin = Number(marginInput.value) || 0;
+        const totalFiles = imageFiles.length;
 
-        for (const file of imageFiles) {
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
+          const progress = 5 + ((i / totalFiles) * 85);
+          progressBarFill.style.width = `${progress}%`;
+          progressPercent.textContent = `${Math.round(progress)}%`;
+          progressStatus.textContent = `Processing image ${i + 1} of ${totalFiles}`;
+          progressDetails.textContent = `Adding: ${file.name}`;
+
           const bytes = await file.arrayBuffer();
           const isJpeg = /jpe?g$/i.test(file.name) || file.type === 'image/jpeg';
           const embedded = isJpeg ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
@@ -135,16 +192,36 @@
           const x = (pageWidth - drawW) / 2;
           const y = (pageHeight - drawH) / 2;
           page.drawImage(embedded, { x, y, width: drawW, height: drawH });
+
+          // Yield to browser for better performance
+          await new Promise(resolve => rafUpdate(resolve));
         }
+
+        progressStatus.textContent = 'Finalizing...';
+        progressDetails.textContent = 'Saving PDF document...';
+        progressBarFill.style.width = '95%';
+        progressPercent.textContent = '95%';
 
         const out = await doc.save();
         const blob = new Blob([out], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
-        download.href = url; download.style.display = 'inline-block';
+        download.href = url; 
+        download.style.display = 'inline-block';
+
+        progressBarFill.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressStatus.textContent = 'Complete!';
+        progressDetails.textContent = `Successfully created PDF with ${totalFiles} image${totalFiles > 1 ? 's' : ''}`;
+
+        setTimeout(() => {
+          showProgress(false);
+        }, 2000);
       } catch (e) {
-        alert('Failed to build PDF.');
+        showError('Failed to build PDF. Please ensure all files are valid images.');
+        showProgress(false);
       } finally {
-        buildBtn.disabled = false; buildBtn.textContent = 'Create PDF';
+        buildBtn.disabled = false; 
+        buildBtn.textContent = 'Create PDF';
       }
     });
   </script>

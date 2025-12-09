@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Font loading optimized - loaded via link tag in HTML for better performance */
+/* Fallback to system fonts immediately */
 
 * {
   margin: 0;
@@ -11,7 +12,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
   background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 40%, #16213e 70%, #1e1e3f 100%);
   color: #ffffff;
   overflow-x: hidden;
@@ -34,19 +35,27 @@ body {
   --shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 12px 30px rgba(0,0,0,0.24);
 }
 
-/* Smooth but limited animations (avoid transitioning every property) */
-* {
+/* Smooth but limited animations - only apply to interactive elements */
+a, button, input, select, textarea, .glass-card, .btn-primary, .btn-secondary, .nav a, .card-icon {
   transition:
     color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.reduce-effects * {
+.reduce-effects a,
+.reduce-effects button,
+.reduce-effects input,
+.reduce-effects select,
+.reduce-effects textarea,
+.reduce-effects .glass-card,
+.reduce-effects .btn-primary,
+.reduce-effects .btn-secondary,
+.reduce-effects .nav a,
+.reduce-effects .card-icon {
   transition-duration: 120ms;
 }
 
@@ -87,7 +96,7 @@ body {
 /* Mobile hero sizing and spacing */
 @media (max-width: 768px) {
   .hero {
-    padding: 72px 20px;
+    padding: 180px 20px 72px;
     min-height: calc(100vh - 140px);
   }
   .hero-title {
@@ -223,6 +232,46 @@ body {
   }
   .floating-particle {
     display: none;
+  }
+}
+
+/* Low-end device optimizations - disable expensive backdrop-filter */
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  .nav,
+  .nav:hover,
+  .glass-card,
+  .btn-secondary,
+  .tool-card,
+  .modal-overlay,
+  .modal-card,
+  .nav-results,
+  .offline-indicator,
+  .refresh-btn,
+  .dropzone,
+  .tool-topbar {
+    backdrop-filter: none !important;
+  }
+  .nav {
+    background: rgba(29, 29, 31, 0.95) !important;
+  }
+  .nav:hover {
+    background: rgba(29, 29, 31, 0.98) !important;
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.12) !important;
+  }
+  .tool-card {
+    background: rgba(255, 255, 255, 0.12) !important;
+  }
+}
+
+/* Further reduce backdrop-filter on very low-end devices */
+@media (max-width: 480px) {
+  .nav,
+  .glass-card,
+  .tool-card,
+  .btn-secondary {
+    backdrop-filter: none !important;
   }
 }
 
@@ -505,13 +554,13 @@ body {
 /* Hero section - simple and beautiful */
 .hero {
   text-align: center;
-  padding: 100px 40px;
+  padding: 240px 40px 100px;
   max-width: 1200px;
   margin: 0 auto;
   min-height: 90vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   position: relative;
 }
@@ -528,12 +577,17 @@ body {
   letter-spacing: -0.03em;
   text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
 }
 
 .typing-text {
   display: inline-block;
   white-space: nowrap;
   margin-right: 8px;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .typing-cursor {
@@ -559,7 +613,7 @@ body {
   margin-bottom: 56px;
   line-height: 1.4;
   font-weight: 500;
-  opacity: 0;
+  opacity: 1;
   animation: fadeInUp 0.8s ease-out 1.5s forwards;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.02em;
@@ -567,7 +621,7 @@ body {
 
 .hero-actions {
   margin-bottom: 60px;
-  opacity: 0;
+  opacity: 1;
   animation: fadeInUp 0.8s ease-out 2s forwards;
 }
 
@@ -823,6 +877,7 @@ body {
 .content-section {
   position: relative;
   padding: 120px 0;
+  contain: layout style;
 }
 
 .cards-grid {
@@ -834,9 +889,11 @@ body {
   max-width: 1600px;
   width: 100%;
   justify-content: start;
-  opacity: 0;
-  transform: translateY(50px);
+  opacity: 1;
+  transform: translateY(0);
   transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+  contain: layout style paint;
+  content-visibility: auto;
 }
 
 .cards-grid.visible {
@@ -860,12 +917,26 @@ body {
   perspective: 1000px;
   cursor: pointer;
   will-change: transform;
-  opacity: 0;
-  transform: translateY(18px);
+  opacity: 1;
+  transform: translateY(0);
   transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+  contain: layout style paint;
+  content-visibility: auto;
 }
 
 .glass-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Ensure cards are visible even without animation */
+.cards-grid .glass-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Ensure cards are visible even without animation */
+.cards-grid .glass-card {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1099,6 +1170,7 @@ body {
   margin: 100px auto 40px;
   padding: 0 16px;
   animation: toolPageEnter var(--ios-mid) var(--ios-ease-out);
+  contain: layout style;
 }
 
 /* Enhanced tool card animations */
@@ -1109,6 +1181,7 @@ body {
   border: 1px solid var(--border);
   padding: 20px;
   box-shadow: var(--shadow);
+  contain: layout style paint;
 }
 
 /* Enhanced tool card animations */
@@ -1225,6 +1298,8 @@ body {
   font-size: 14px;
   font-weight: 500;
   transition: background var(--ios-fast) var(--ios-ease-out), border-color var(--ios-fast) var(--ios-ease-out), box-shadow var(--ios-fast) var(--ios-ease-out), transform var(--ios-fast) var(--ios-ease-out);
+  will-change: contents;
+  contain: layout style paint;
 }
 
 .tool-body textarea::placeholder,
@@ -1278,6 +1353,8 @@ select option:disabled {
   resize: vertical;
   font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   line-height: 1.5;
+  contain: layout style paint;
+  content-visibility: auto;
 }
 
 .control-row {
@@ -1460,6 +1537,37 @@ select option:disabled {
   padding-right: 20px;
 }
 
+/* Performance optimizations for tool interactions */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+button[data-loading="true"] {
+  position: relative;
+  color: transparent;
+}
+
+button[data-loading="true"]::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .preview {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1561,6 +1669,8 @@ select option:disabled {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 16px;
+  contain: layout style paint;
+  will-change: contents;
 }
 
 .result h3,
@@ -1749,9 +1859,9 @@ select option:disabled {
   }
   
   .hero {
-    padding: 60px 16px 40px;
+    padding: 160px 16px 40px;
     min-height: 70vh;
-    padding-top: calc(60px + env(safe-area-inset-top));
+    padding-top: calc(160px + env(safe-area-inset-top));
   }
   
   .hero-title {

@@ -1,6 +1,24 @@
+// Set hero text immediately (before DOMContentLoaded) for low-end devices
+(function() {
+  if (typeof window === 'undefined') return;
+  const isToolPage = window.location.pathname.includes('/tools/');
+  if (!isToolPage) {
+    const typingNodes = document.querySelectorAll('.typing-text');
+    typingNodes.forEach(node => {
+      if (!node.textContent.trim()) {
+        node.textContent = "Tools that just work.";
+      }
+    });
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
-  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const enableParallax = false; // set true to re-enable mesh parallax
+  // Skip expensive animations on tool pages for better performance
+  const isToolPage = window.location.pathname.includes('/tools/');
+  if (isToolPage) {
+    // Only run essential file input enhancements on tool pages
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const enableParallax = false;
   // Utility: truncate text nicely with ellipsis
   function truncateText(text, max) {
     if (!text) return '';
@@ -31,11 +49,16 @@ document.addEventListener('DOMContentLoaded', () => {
     inp.addEventListener('change', applyName);
     applyName();
   });
-  // Typewriter effect for hero title
+  // Typewriter effect for hero title - deferred to not block initial render
   const typeWriter = () => {
     const text = "Tools that just work.";
     const typingNodes = Array.from(document.querySelectorAll('.typing-text'));
     if (!typingNodes.length) return;
+    
+    // Check if text is already set (e.g., when returning from tool page)
+    const alreadyHasText = typingNodes.some(node => node.textContent.trim().length > 0);
+    if (alreadyHasText) return; // Don't re-animate if text is already there
+    
     typingNodes.forEach(node => node.textContent = '');
     let i = 0;
     
@@ -55,10 +78,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
   };
   
-  // Start typewriter effect
-  typeWriter();
+  // Initialize text immediately if not already set (for performance and when returning)
+  const typingNodes = Array.from(document.querySelectorAll('.typing-text'));
+  if (typingNodes.length && !isToolPage) {
+    typingNodes.forEach(node => {
+      if (!node.textContent.trim()) {
+        // Set text immediately, then optionally animate
+        node.textContent = "Tools that just work.";
+      }
+    });
+  }
   
-  // Parallax mesh effect (disabled by default to reduce GPU load)
+  // Defer typewriter effect until page is interactive or idle
+  const startTypewriter = () => {
+    if (document.readyState === 'complete') {
+      // Use requestIdleCallback if available, otherwise setTimeout
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(typeWriter, { timeout: 2000 });
+      } else {
+        setTimeout(typeWriter, 1000);
+      }
+    } else {
+      window.addEventListener('load', () => {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(typeWriter, { timeout: 2000 });
+        } else {
+          setTimeout(typeWriter, 1000);
+        }
+      });
+    }
+  };
+  
+  // Start typewriter effect (deferred) - skip on tool pages
+  if (!isToolPage) {
+    startTypewriter();
+  }
+  
+  // Parallax mesh effect (disabled by default to reduce GPU load) - skip on tool pages
   const meshLayer = document.querySelector('.bg-mesh');
   if (meshLayer && !prefersReducedMotion && enableParallax) {
     let pending = false;
@@ -99,53 +155,71 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Card reveal animations (faster)
-  const cards = document.querySelectorAll('.glass-card');
-  if ('IntersectionObserver' in window) {
-    const cardObserver = new IntersectionObserver((entries) => {
+  // Optimized reveal animations - single observer with higher threshold
+  // Skip expensive animations on tool pages
+  if (!isToolPage && 'IntersectionObserver' in window) {
+    // Combined observer for better performance - higher threshold, larger rootMargin
+    const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
+          // Unobserve after animation to reduce overhead (for one-time animations)
+          if (!entry.target.classList.contains('glass-card')) {
+            revealObserver.unobserve(entry.target);
+          }
         } else {
-          // If scrolled away and it's displayable, keep it ready to re-animate when needed
-          if (entry.target.style.display !== 'none') {
+          // Only remove visible class for cards that need to re-animate
+          if (entry.target.classList.contains('glass-card') && entry.target.style.display !== 'none') {
             entry.target.classList.remove('visible');
           }
         }
       });
     }, {
-      threshold: 0.05,
-      rootMargin: '0px 0px -20px 0px'
+      threshold: 0.15, // Increased from 0.05/0.1 to reduce callbacks
+      rootMargin: '50px 0px 50px 0px' // Larger margin for earlier but less frequent triggers
     });
 
+    // Card reveal animations
+    const cards = document.querySelectorAll('.glass-card');
     cards.forEach((card) => {
-      // remove any previous stagger to reveal immediately
       card.style.transitionDelay = '0ms';
-      cardObserver.observe(card);
+      // Ensure cards are visible immediately if they're already in viewport
+      if (card.getBoundingClientRect().top < window.innerHeight) {
+        card.classList.add('visible');
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }
+      revealObserver.observe(card);
+    });
+
+    // General reveal animations for other elements
+    const animatedSelectors = '.reveal, .cards-grid, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
+    const revealEls = document.querySelectorAll(animatedSelectors);
+    revealEls.forEach((el) => {
+      el.classList.add('reveal');
+      // Ensure elements are visible immediately if they're already in viewport
+      if (el.getBoundingClientRect().top < window.innerHeight) {
+        el.classList.add('visible');
+        if (el.classList.contains('cards-grid')) {
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }
+      }
+      revealObserver.observe(el);
     });
   } else {
+    // Fallback for browsers without IntersectionObserver
+    const cards = document.querySelectorAll('.glass-card');
     cards.forEach((card) => card.classList.add('visible'));
+    const animatedSelectors = '.reveal, .cards-grid, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
+    const revealEls = document.querySelectorAll(animatedSelectors);
+    revealEls.forEach((el) => {
+      el.classList.add('reveal');
+      el.classList.add('visible');
+    });
   }
 
-  // General reveal animations for other elements
-  const animatedSelectors = '.reveal, .cards-grid, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
-  const revealEls = document.querySelectorAll(animatedSelectors);
-  revealEls.forEach((el) => el.classList.add('reveal'));
-  
-  if ('IntersectionObserver' in window) {
-    const generalObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    revealEls.forEach((el) => generalObserver.observe(el));
-  } else {
-    revealEls.forEach((el) => el.classList.add('visible'));
-  }
-
-  // Smooth scroll for hash links
+  // Smooth scroll for hash links - always enabled for navigation
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', (e) => {
       const target = document.querySelector(anchor.getAttribute('href'));
@@ -167,9 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Nav background and hide-on-scroll behavior
+  // Nav background and hide-on-scroll behavior - skip on tool pages for performance
   const nav = document.querySelector('.nav');
-  if (nav) {
+  if (nav && !isToolPage) {
     let lastY = window.scrollY;
     let ticking = false;
     function onScroll() {
@@ -193,9 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Hide scroll indicator when scrolling down
+  // Hide scroll indicator when scrolling down - skip on tool pages
   const scrollIndicator = document.querySelector('.scroll-indicator');
-  if (scrollIndicator) {
+  if (scrollIndicator && !isToolPage) {
     window.addEventListener('scroll', () => {
       const currentScrollY = window.scrollY;
       const fadeThreshold = 100;
@@ -209,9 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Pause particle animations during scroll to reduce GPU spikes
+  // Pause particle animations during scroll to reduce GPU spikes - skip on tool pages
   const floatingParticles = Array.from(document.querySelectorAll('.floating-particle'));
-  if (floatingParticles.length) {
+  if (floatingParticles.length && !isToolPage) {
     let resumeTimeout;
     function pauseParticles() {
       floatingParticles.forEach(p => p.style.animationPlayState = 'paused');

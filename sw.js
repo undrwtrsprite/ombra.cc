@@ -1,51 +1,24 @@
-const CACHE_NAME = 'ombra-tools-v4';
-const STATIC_CACHE = 'ombra-static-v4';
-const DYNAMIC_CACHE = 'ombra-dynamic-v4';
+const CACHE_NAME = 'ombra-tools-v5';
+const STATIC_CACHE = 'ombra-static-v5';
+const DYNAMIC_CACHE = 'ombra-dynamic-v5';
+const MAX_CACHE_SIZE = 50; // Maximum number of items in dynamic cache
 
-// Files to cache immediately
-const STATIC_FILES = [
+// Only cache critical files immediately for faster initial load
+const CRITICAL_FILES = [
   '/',
   '/index.html',
   '/assets/styles/base.css',
   '/assets/scripts/effects.js',
-  '/favicon.svg',
-  '/favicon.ico',
-  '/apple-touch-icon.png',
-  // Tool pages
-  '/tools/image-converter.html',
-  '/tools/image-resizer.html',
-  '/tools/pdf-to-text.html',
-  '/tools/text-to-pdf.html',
-  '/tools/pdf-merge.html',
-  '/tools/image-to-pdf.html',
-  '/tools/heic-to-jpg.html',
-  '/tools/file-compressor.html',
-  '/tools/color-converter.html',
-  '/tools/calculator.html',
-  '/tools/currency-converter.html',
-  '/tools/ip-calculator.html',
-  '/tools/ip-info.html',
-  '/tools/whois-lookup.html',
-  '/tools/dns-propagation.html',
-  '/tools/dns-lookup.html',
-  '/tools/unix-time.html',
-  '/tools/uuid-generator.html',
-  '/tools/text-diff.html',
-  '/tools/json-to-csv.html',
-  '/tools/text-statistics.html',
-  '/tools/lorem-ipsum.html',
-  '/tools/number-converter.html',
-  '/tools/password-generator.html',
-  '/tools/hash-generator.html'
+  '/favicon.svg'
 ];
 
-// Install event - cache static files
+// Install event - cache only critical files
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => {
-        console.log('Caching static files for offline use');
-        return cache.addAll(STATIC_FILES);
+        console.log('Caching critical files for offline use');
+        return cache.addAll(CRITICAL_FILES);
       })
       .catch(error => {
         console.log('Some files failed to cache:', error);
@@ -78,7 +51,18 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event - serve from cache when offline
+// Helper function to limit cache size
+async function limitCacheSize(cacheName, maxSize) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxSize) {
+    // Delete oldest entries (simple FIFO)
+    const toDelete = keys.slice(0, keys.length - maxSize);
+    await Promise.all(toDelete.map(key => cache.delete(key)));
+  }
+}
+
+// Fetch event - serve from cache when offline, lazy cache tool pages
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
@@ -93,37 +77,50 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Check if it's a tool page (lazy cache)
+  const isToolPage = url.pathname.startsWith('/tools/');
+
   event.respondWith(
-    // Try network first, then cache
-    fetch(request)
-      .then(response => {
-        // Don't cache non-successful responses
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
+    // Try cache first for tool pages (lazy cached), network first for others
+    (isToolPage ? caches.match(request) : Promise.resolve(null))
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-
-        // Clone the response for caching
-        const responseToCache = response.clone();
-
-        // Cache successful responses
-        caches.open(DYNAMIC_CACHE)
-          .then(cache => {
-            cache.put(request, responseToCache);
-          });
-
-        return response;
-      })
-      .catch(() => {
-        // If offline, try cache
-        return caches.match(request)
-          .then(cachedResponse => {
-            if (cachedResponse) {
-              return cachedResponse;
+        
+        // Try network
+        return fetch(request)
+          .then(response => {
+            // Don't cache non-successful responses
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
             }
-            // If no cache and offline, return offline page for documents
-            if (request.destination === 'document') {
-              return caches.match('/index.html');
+
+            // Lazy cache tool pages and other resources
+            if (isToolPage || url.pathname.startsWith('/assets/')) {
+              const responseToCache = response.clone();
+              caches.open(DYNAMIC_CACHE)
+                .then(cache => {
+                  cache.put(request, responseToCache);
+                  // Limit cache size
+                  limitCacheSize(DYNAMIC_CACHE, MAX_CACHE_SIZE);
+                });
             }
+
+            return response;
+          })
+          .catch(() => {
+            // If offline, try cache (fallback)
+            return caches.match(request)
+              .then(cachedResponse => {
+                if (cachedResponse) {
+                  return cachedResponse;
+                }
+                // If no cache and offline, return offline page for documents
+                if (request.destination === 'document') {
+                  return caches.match('/index.html');
+                }
+              });
           });
       })
   );

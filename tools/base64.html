@@ -49,6 +49,7 @@
           <input type="text" id="fileName" placeholder="output.bin" />
           <button class="btn-secondary" id="b64ToFileBtn">Download</button>
         </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <p class="note">Processing is done locally. Large files may take longer.</p>
       </div>
     </div>
@@ -69,6 +70,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
@@ -81,43 +83,81 @@
     const fileToB64Btn = document.getElementById('fileToB64Btn');
     const fileNameInput = document.getElementById('fileName');
     const b64ToFileBtn = document.getElementById('b64ToFileBtn');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = 'block';
+      setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
+    }
 
     function setOutput(text) { output.textContent = text; }
 
+    // Optimize button clicks with RAF and prevent double-clicks
     encodeBtn.addEventListener('click', () => {
-      try {
-        const encoded = btoa(unescape(encodeURIComponent(textArea.value)));
-        setOutput(encoded);
-      } catch {
-        setOutput('Encoding failed.');
-      }
+      rafUpdate(() => {
+        try {
+          const encoded = btoa(unescape(encodeURIComponent(textArea.value)));
+          setOutput(encoded);
+        } catch {
+          setOutput('Encoding failed.');
+        }
+      });
     });
 
     decodeBtn.addEventListener('click', () => {
-      try {
-        const decoded = decodeURIComponent(escape(atob(textArea.value.replace(/\s+/g, ''))));
-        setOutput(decoded);
-      } catch {
-        setOutput('Decoding failed. Ensure valid Base64.');
-      }
+      rafUpdate(() => {
+        try {
+          const decoded = decodeURIComponent(escape(atob(textArea.value.replace(/\s+/g, ''))));
+          setOutput(decoded);
+        } catch {
+          setOutput('Decoding failed. Ensure valid Base64.');
+        }
+      });
     });
 
     copyBtn.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(output.textContent || ''); } catch {}
+      try { 
+        await navigator.clipboard.writeText(output.textContent || ''); 
+      } catch {}
     });
 
     fileToB64Btn.addEventListener('click', async () => {
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-      setOutput(btoa(binary));
+      
+      setButtonLoading(fileToB64Btn, true, 'Convert');
+      
+      try {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        
+        // Chunk large files for better performance
+        const chunkSize = 10000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.slice(i, i + chunkSize);
+          for (let j = 0; j < chunk.length; j++) {
+            binary += String.fromCharCode(chunk[j]);
+          }
+          // Yield to browser for large files
+          if (i % (chunkSize * 10) === 0) {
+            await new Promise(resolve => rafUpdate(resolve));
+          }
+        }
+        
+        rafUpdate(() => setOutput(btoa(binary)));
+      } finally {
+        setButtonLoading(fileToB64Btn, false);
+      }
     });
 
     b64ToFileBtn.addEventListener('click', () => {
       const base64 = textArea.value.replace(/\s+/g, '');
+      if (!base64) {
+        showError('Please enter Base64 data to decode');
+        return;
+      }
       try {
         const binary = atob(base64);
         const len = binary.length;
@@ -128,8 +168,9 @@
         const a = document.createElement('a');
         a.href = url; a.download = fileNameInput.value || 'output.bin'; a.click();
         URL.revokeObjectURL(url);
+        errorMessage.style.display = 'none';
       } catch {
-        alert('Invalid Base64 input');
+        showError('Invalid Base64 input. Please ensure the input is valid Base64 encoded data.');
       }
     });
   </script>

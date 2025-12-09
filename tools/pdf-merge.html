@@ -29,6 +29,17 @@
           <input type="file" id="pdfFiles" accept="application/pdf" multiple />
         </div>
         <div class="result" id="fileList" style="display:none;"></div>
+        <div class="progress-container" id="progressContainer" style="display:none; margin-top:16px;">
+          <div class="progress-info" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:rgba(255,255,255,0.9);">
+            <span class="progress-status" id="progressStatus" style="font-weight:600;color:#9333ea;">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-details" id="progressDetails" style="font-size:13px;opacity:0.7;margin-top:4px;">Preparing files...</div>
+          <div class="progress-bar-container" style="width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-top:12px;">
+            <div class="progress-bar-fill" id="progressBarFill" style="height:100%;background:linear-gradient(90deg, #9333ea, #7c3aed);width:0%;transition:width 0.3s ease;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <div class="actions">
           <button class="btn-primary" id="mergeBtn" disabled>Merge PDFs</button>
           <a class="btn-secondary" id="downloadLink" download="merged.pdf" style="display:none;">Download</a>
@@ -54,6 +65,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
@@ -61,47 +73,176 @@
     const mergeBtn = document.getElementById('mergeBtn');
     const fileList = document.getElementById('fileList');
     const downloadLink = document.getElementById('downloadLink');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressDetails = document.getElementById('progressDetails');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const errorMessage = document.getElementById('errorMessage');
 
     let selectedFiles = [];
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      progressContainer.style.display = 'none';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+
+    function showProgress(show = true) {
+      progressContainer.style.display = show ? 'block' : 'none';
+      if (!show) {
+        progressBarFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+      }
+    }
 
     pdfInput.addEventListener('change', () => {
       selectedFiles = Array.from(pdfInput.files || []);
       mergeBtn.disabled = selectedFiles.length === 0;
       renderFileList();
+      errorMessage.style.display = 'none';
     });
 
     function renderFileList() {
       if (selectedFiles.length === 0) { fileList.style.display = 'none'; return; }
       fileList.style.display = 'block';
-      fileList.innerHTML = '<h3>Files to merge</h3>' + selectedFiles.map((f, i) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
-          <span>${i+1}. ${f.name}</span>
-          <span class="note">${(f.size/1024/1024).toFixed(2)} MB</span>
+      fileList.innerHTML = '<h3>Files to merge (' + selectedFiles.length + ') <span class="note" style="font-size:12px;font-weight:normal;">Drag to reorder</span></h3>' + selectedFiles.map((f, i) => `
+        <div class="file-item" draggable="true" data-index="${i}" style="display:flex;justify-content:space-between;align-items:center;padding:12px;margin:8px 0;border:1px solid rgba(255,255,255,0.1);border-radius:8px;background:rgba(255,255,255,0.05);cursor:move;transition:all 0.2s;">
+          <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+            <span style="color:#9333ea;font-weight:600;min-width:24px;">${i+1}.</span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.name}">${f.name}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="note">${(f.size/1024/1024).toFixed(2)} MB</span>
+            <button class="remove-file-btn" data-index="${i}" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:4px 8px;border-radius:4px;font-size:14px;opacity:0.7;transition:opacity 0.2s;" title="Remove file">×</button>
+          </div>
         </div>
       `).join('');
+      
+      // Add drag and drop handlers
+      const fileItems = fileList.querySelectorAll('.file-item');
+      let draggedIndex = null;
+      
+      fileItems.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          draggedIndex = parseInt(item.dataset.index);
+          item.style.opacity = '0.5';
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        
+        item.addEventListener('dragend', () => {
+          item.style.opacity = '1';
+          fileItems.forEach(i => {
+            i.style.borderColor = 'rgba(255,255,255,0.1)';
+            i.style.background = 'rgba(255,255,255,0.05)';
+          });
+        });
+        
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          const targetIndex = parseInt(item.dataset.index);
+          if (targetIndex !== draggedIndex) {
+            item.style.borderColor = '#9333ea';
+            item.style.background = 'rgba(147,51,234,0.1)';
+          }
+        });
+        
+        item.addEventListener('dragleave', () => {
+          item.style.borderColor = 'rgba(255,255,255,0.1)';
+          item.style.background = 'rgba(255,255,255,0.05)';
+        });
+        
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const targetIndex = parseInt(item.dataset.index);
+          if (draggedIndex !== null && draggedIndex !== targetIndex) {
+            // Reorder files
+            const [movedFile] = selectedFiles.splice(draggedIndex, 1);
+            selectedFiles.splice(targetIndex, 0, movedFile);
+            renderFileList();
+          }
+          draggedIndex = null;
+        });
+      });
+      
+      // Add remove file handlers
+      fileList.querySelectorAll('.remove-file-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const index = parseInt(btn.dataset.index);
+          selectedFiles.splice(index, 1);
+          pdfInput.value = ''; // Clear input to allow re-selecting same files
+          mergeBtn.disabled = selectedFiles.length === 0;
+          renderFileList();
+        });
+      });
     }
 
     mergeBtn.addEventListener('click', async () => {
       if (selectedFiles.length === 0) return;
+      
       mergeBtn.disabled = true;
       mergeBtn.textContent = 'Merging…';
       downloadLink.style.display = 'none';
+      showProgress(true);
+      errorMessage.style.display = 'none';
+      
       try {
         const { PDFDocument } = window.pdfLib;
         const mergedPdf = await PDFDocument.create();
-        for (const file of selectedFiles) {
+        const totalFiles = selectedFiles.length;
+        
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const progress = ((i / totalFiles) * 90);
+          progressBarFill.style.width = `${progress}%`;
+          progressPercent.textContent = `${Math.round(progress)}%`;
+          progressStatus.textContent = `Merging file ${i + 1} of ${totalFiles}`;
+          progressDetails.textContent = `Processing: ${file.name}`;
+
           const arrayBuffer = await file.arrayBuffer();
           const srcDoc = await PDFDocument.load(arrayBuffer);
           const srcPages = await mergedPdf.copyPages(srcDoc, srcDoc.getPageIndices());
           srcPages.forEach(p => mergedPdf.addPage(p));
+
+          // Yield to browser for better performance
+          await new Promise(resolve => rafUpdate(resolve));
         }
+
+        progressStatus.textContent = 'Finalizing...';
+        progressDetails.textContent = 'Creating merged PDF...';
+        progressBarFill.style.width = '95%';
+        progressPercent.textContent = '95%';
+
         const bytes = await mergedPdf.save();
         const blob = new Blob([bytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         downloadLink.href = url;
         downloadLink.style.display = 'inline-block';
+
+        progressBarFill.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressStatus.textContent = 'Complete!';
+        progressDetails.textContent = `Successfully merged ${totalFiles} file${totalFiles > 1 ? 's' : ''}`;
+
+        setTimeout(() => {
+          showProgress(false);
+        }, 2000);
       } catch (e) {
-        alert('Merging failed. Please check your PDFs.');
+        let errorMsg = 'Failed to merge PDFs. ';
+        if (e.message.includes('encrypted') || e.message.includes('password')) {
+          errorMsg += 'One or more PDFs appear to be password-protected.';
+        } else if (e.message.includes('corrupt') || e.message.includes('invalid')) {
+          errorMsg += 'One or more PDF files appear to be corrupted or invalid.';
+        } else {
+          errorMsg += 'Please ensure all files are valid PDFs.';
+        }
+        showError(errorMsg);
+        showProgress(false);
       } finally {
         mergeBtn.disabled = false;
         mergeBtn.textContent = 'Merge PDFs';

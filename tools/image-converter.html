@@ -61,6 +61,17 @@
           <span>Drag & drop an image here or click “Input”</span>
         </div>
 
+        <div class="progress-container" id="progressContainer" style="display:none; margin-top:16px;">
+          <div class="progress-info" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:rgba(255,255,255,0.9);">
+            <span class="progress-status" id="progressStatus" style="font-weight:600;color:#9333ea;">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-details" id="progressDetails" style="font-size:13px;opacity:0.7;margin-top:4px;">Converting image...</div>
+          <div class="progress-bar-container" style="width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-top:12px;">
+            <div class="progress-bar-fill" id="progressBarFill" style="height:100%;background:linear-gradient(90deg, #9333ea, #7c3aed);width:0%;transition:width 0.3s ease;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <div class="preview-grid">
           <div class="panel">
             <div id="preview-in"><span class="note">Input preview</span></div>
@@ -91,6 +102,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
@@ -109,9 +121,30 @@
     const metaIn = document.getElementById('meta-in');
     const metaOut = document.getElementById('meta-out');
     const qualityGroup = document.getElementById('qualityGroup');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressDetails = document.getElementById('progressDetails');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const errorMessage = document.getElementById('errorMessage');
     let imageBitmap;
     let currentFile = null;
     let currentOutUrl = null;
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = 'block';
+      progressContainer.style.display = 'none';
+      setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
+    }
+
+    function showProgress(show = true) {
+      progressContainer.style.display = show ? 'block' : 'none';
+      if (!show) {
+        progressBarFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+      }
+    }
 
     qualityInput.addEventListener('input', () => {
       qval.textContent = Number(qualityInput.value).toFixed(2);
@@ -145,10 +178,15 @@
 
     async function handleFile(file){
       if (!file) return;
-      if (!file.type.startsWith('image/')) { showToast('Unsupported file'); return; }
+      if (!file.type.startsWith('image/')) { 
+        showError('Unsupported file type. Please select an image file.');
+        showToast('Unsupported file'); 
+        return; 
+      }
       currentFile = file;
       const img = await readImage(file);
       setInputPreview(img, file);
+      errorMessage.style.display = 'none';
     }
 
     function updateQualityVisibility(){
@@ -198,24 +236,99 @@
 
     convertBtn.addEventListener('click', async () => {
       const file = currentFile || (fileInput.files && fileInput.files[0]);
-      if (!file) { alert('Choose an image'); return; }
-      const img = await readImage(file);
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (formatSelect.value === 'image/jpeg') { ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height); }
-      ctx.drawImage(img, 0, 0);
-      const quality = Number(qualityInput.value);
-      const blob = await new Promise(res => canvas.toBlob(res, formatSelect.value, quality));
-      if (!blob) { alert('Conversion failed'); return; }
-      if (currentOutUrl) URL.revokeObjectURL(currentOutUrl);
-      const outUrl = URL.createObjectURL(blob); currentOutUrl = outUrl;
-      previewOut.innerHTML = '';
-      const outImg = document.createElement('img'); outImg.src = outUrl; previewOut.appendChild(outImg);
-      const ext = formatSelect.value.split('/')[1];
-      downloadLink.href = outUrl; downloadLink.download = `converted.${ext}`; downloadLink.style.display = 'inline-block';
-      metaOut.textContent = `Output • ${ext.toUpperCase()} • ${humanSize(blob.size)} • ${img.naturalWidth}×${img.naturalHeight}`;
-      showToast('Converted');
+      if (!file) { 
+        showError('Please choose an image file first');
+        return; 
+      }
+
+      showProgress(true);
+      errorMessage.style.display = 'none';
+      convertBtn.disabled = true;
+      convertBtn.textContent = 'Converting...';
+
+      try {
+        progressStatus.textContent = 'Loading image...';
+        progressDetails.textContent = `Reading: ${file.name}`;
+        progressBarFill.style.width = '20%';
+        progressPercent.textContent = '20%';
+
+        const img = await readImage(file);
+        
+        progressStatus.textContent = 'Converting...';
+        progressDetails.textContent = 'Processing image data...';
+        progressBarFill.style.width = '50%';
+        progressPercent.textContent = '50%';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth; 
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (formatSelect.value === 'image/jpeg') { 
+          ctx.fillStyle = '#000'; 
+          ctx.fillRect(0,0,canvas.width,canvas.height); 
+        }
+        ctx.drawImage(img, 0, 0);
+
+        progressBarFill.style.width = '80%';
+        progressPercent.textContent = '80%';
+        progressDetails.textContent = 'Encoding to output format...';
+
+        const quality = Number(qualityInput.value);
+        const blob = await new Promise(res => canvas.toBlob(res, formatSelect.value, quality));
+        
+        if (!blob) { 
+          showError('Conversion failed. The image may be too large or corrupted.');
+          showProgress(false);
+          return; 
+        }
+
+        if (currentOutUrl) URL.revokeObjectURL(currentOutUrl);
+        const outUrl = URL.createObjectURL(blob); 
+        currentOutUrl = outUrl;
+        
+        previewOut.innerHTML = '';
+        const outImg = document.createElement('img'); 
+        outImg.src = outUrl; 
+        previewOut.appendChild(outImg);
+        const ext = formatSelect.value.split('/')[1];
+        downloadLink.href = outUrl; 
+        downloadLink.download = `converted.${ext}`; 
+        downloadLink.style.display = 'inline-block';
+        
+        const sizeReduction = file.size > blob.size ? ((1 - blob.size / file.size) * 100).toFixed(1) : 0;
+        const sizeIncrease = blob.size > file.size ? ((blob.size / file.size - 1) * 100).toFixed(1) : 0;
+        const sizeInfo = sizeReduction > 0 
+          ? ` • <span style="color:#10b981;">${sizeReduction}% smaller</span>` 
+          : sizeIncrease > 0 
+            ? ` • <span style="color:#f59e0b;">${sizeIncrease}% larger</span>`
+            : '';
+        metaOut.innerHTML = `Output • ${ext.toUpperCase()} • ${humanSize(blob.size)}${sizeInfo} • ${img.naturalWidth}×${img.naturalHeight}`;
+        
+        // Update input meta with comparison
+        const originalSizeInfo = file.size > blob.size 
+          ? ` • <span style="color:#ef4444;">Original: ${humanSize(file.size)}</span>`
+          : '';
+        if (metaIn.textContent) {
+          metaIn.innerHTML = metaIn.textContent + originalSizeInfo;
+        }
+        
+        progressBarFill.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressStatus.textContent = 'Complete!';
+        progressDetails.textContent = 'Image converted successfully';
+        
+        showToast('Converted');
+        
+        setTimeout(() => {
+          showProgress(false);
+        }, 1500);
+      } catch (e) {
+        showError('Failed to convert image. Please ensure the file is a valid image.');
+        showProgress(false);
+      } finally {
+        convertBtn.disabled = false;
+        convertBtn.textContent = 'Convert';
+      }
     });
   </script>
   <div class="toast" aria-live="polite"></div>

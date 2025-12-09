@@ -38,6 +38,7 @@
           <span class="spacer"></span>
           <button class="btn-primary" id="check">Check</button>
         </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <div class="result" id="result">
           <div class="grid" id="grid"></div>
         </div>
@@ -68,6 +69,13 @@
     const typeSelect = document.getElementById('rtype');
     const checkBtn = document.getElementById('check');
     const grid = document.getElementById('grid');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = 'block';
+      setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
+    }
 
     const resolvers = [
       { name: 'Google', url: 'https://dns.google/resolve' },
@@ -96,7 +104,11 @@
     async function run() {
       const domain = domainInput.value.trim();
       const type = typeSelect.value;
-      if (!domain) { alert('Enter a domain'); return; }
+      if (!domain) { 
+        showError('Please enter a domain name');
+        return; 
+      }
+      errorMessage.style.display = 'none';
       grid.innerHTML = '';
       for (const r of resolvers) {
         const el = document.createElement('div');

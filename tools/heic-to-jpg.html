@@ -52,6 +52,17 @@
           </div>
         </div>
         
+        <div class="progress-container" id="progressContainer" style="display:none; margin-top:16px;">
+          <div class="progress-info" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:rgba(255,255,255,0.9);">
+            <span class="progress-status" id="progressStatus" style="font-weight:600;color:#9333ea;">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-details" id="progressDetails" style="font-size:13px;opacity:0.7;margin-top:4px;">Converting images...</div>
+          <div class="progress-bar-container" style="width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-top:12px;">
+            <div class="progress-bar-fill" id="progressBarFill" style="height:100%;background:linear-gradient(90deg, #9333ea, #7c3aed);width:0%;transition:width 0.3s ease;border-radius:4px;"></div>
+          </div>
+        </div>
+        <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <div class="results" id="results"></div>
         <!-- Inline modal for quick preview -->
         <div id="previewModal" class="modal-overlay">
@@ -88,6 +99,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <style>
@@ -136,18 +148,53 @@
     const downloadCurrentBtn = document.getElementById('downloadCurrent');
     const converted = [];
     let currentPreview = null;
+    const progressContainer = document.getElementById('progressContainer');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressDetails = document.getElementById('progressDetails');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = 'block';
+      progressContainer.style.display = 'none';
+      setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
+    }
+
+    function showProgress(show = true) {
+      progressContainer.style.display = show ? 'block' : 'none';
+      if (!show) {
+        progressBarFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+      }
+    }
 
     qualityInput.addEventListener('input', () => qval.textContent = Number(qualityInput.value).toFixed(2));
 
     heicFiles.addEventListener('change', async () => {
+      const files = Array.from(heicFiles.files || []);
+      if (files.length === 0) return;
+
       results.innerHTML = '';
       converted.length = 0;
-      const files = Array.from(heicFiles.files || []);
-      for (const file of files) {
+      showProgress(true);
+      errorMessage.style.display = 'none';
+      downloadAllBtn.disabled = true;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const progress = ((i / files.length) * 90);
+        progressBarFill.style.width = `${progress}%`;
+        progressPercent.textContent = `${Math.round(progress)}%`;
+        progressStatus.textContent = `Converting image ${i + 1} of ${files.length}`;
+        progressDetails.textContent = `Processing: ${file.name}`;
+
         const item = document.createElement('div');
         item.className = 'result-item';
         item.innerHTML = `<div class="result-header"><strong>${file.name}</strong><span class="note">Converting…</span></div>`;
         results.appendChild(item);
+        
         try {
           const blob = await heic2any({ blob: file, toType: outFormat.value, quality: Number(qualityInput.value) });
           const url = URL.createObjectURL(blob);
@@ -163,11 +210,22 @@
             </div>
           `;
         } catch (e) {
-          item.innerHTML = `<div class="result-header"><strong>${file.name}</strong><span class="note">Failed to convert</span></div>`;
+          item.innerHTML = `<div class="result-header"><strong>${file.name}</strong><span class="note" style="color:#ef4444;">Failed to convert</span></div>`;
+          showError(`Failed to convert ${file.name}. The file may be corrupted or not a valid HEIC/HEIF image.`);
         }
       }
+
+      progressBarFill.style.width = '100%';
+      progressPercent.textContent = '100%';
+      progressStatus.textContent = 'Complete!';
+      progressDetails.textContent = `Successfully converted ${converted.length} of ${files.length} image${files.length > 1 ? 's' : ''}`;
+
       const hasFiles = converted.length > 0;
       downloadAllBtn.disabled = !hasFiles;
+
+      setTimeout(() => {
+        showProgress(false);
+      }, 2000);
     });
 
     toggleAdvanced.addEventListener('click', () => {
