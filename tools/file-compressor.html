@@ -487,33 +487,51 @@
       compressBtn.textContent = 'Compressing...';
       results.innerHTML = '';
       progressContainer.classList.add('active');
-      progressBarFill.style.width = '0%';
-      progressPercent.textContent = '0%';
+      
+      const updateProgress = (percent, status, details) => {
+        rafUpdate(() => {
+          progressBarFill.style.width = `${percent}%`;
+          progressPercent.textContent = `${Math.round(percent)}%`;
+          if (status) progressStatus.textContent = status;
+          if (details) progressDetails.textContent = details;
+        });
+      };
+      
+      updateProgress(0, 'Initializing...', 'Preparing files for compression');
       
       const compressionLevel = parseInt(compressionSlider.value);
       const format = formatSelect.value;
       const totalFiles = files.length;
       
+      // Give browser time to render initial state
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const progress = ((i / totalFiles) * 100).toFixed(0);
-        progressBarFill.style.width = `${progress}%`;
-        progressPercent.textContent = `${progress}%`;
-        progressStatus.textContent = `Processing file ${i + 1} of ${totalFiles}`;
-        progressDetails.textContent = `Compressing: ${file.name} (${formatFileSize(file.size)})`;
+        const baseProgress = (i / totalFiles) * 100;
+        const fileProgressRange = 100 / totalFiles;
         
-        await compressFile(file, compressionLevel, format, i);
+        updateProgress(baseProgress, `Processing file ${i + 1} of ${totalFiles}`, `Loading: ${file.name}`);
+        await new Promise(resolve => rafUpdate(resolve));
         
-        // Update progress after each file
-        const newProgress = (((i + 1) / totalFiles) * 100).toFixed(0);
-        progressBarFill.style.width = `${newProgress}%`;
-        progressPercent.textContent = `${newProgress}%`;
+        // Create a progress callback for this file
+        let fileProgress = 0;
+        const updateFileProgress = (percent) => {
+          const totalProgress = baseProgress + (fileProgressRange * percent / 100);
+          updateProgress(totalProgress, `Processing file ${i + 1} of ${totalFiles}`, `Compressing: ${file.name} (${percent}%)`);
+        };
+        
+        await compressFile(file, compressionLevel, format, i, updateFileProgress);
+        
+        // Update progress after each file completes
+        const completedProgress = ((i + 1) / totalFiles) * 100;
+        updateProgress(completedProgress, `Completed file ${i + 1} of ${totalFiles}`, `Compressed: ${file.name}`);
+        
+        // Small delay to ensure UI updates
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      progressStatus.textContent = 'Complete!';
-      progressDetails.textContent = `Successfully compressed ${totalFiles} file${totalFiles > 1 ? 's' : ''}`;
-      progressBarFill.style.width = '100%';
-      progressPercent.textContent = '100%';
+      updateProgress(100, 'Complete!', `Successfully compressed ${totalFiles} file${totalFiles > 1 ? 's' : ''}`);
       
       compressBtn.disabled = false;
       compressBtn.textContent = 'Compress Files';
@@ -539,23 +557,25 @@
       return { scale, quality };
     }
 
-    async function compressFile(file, compressionLevel, format) {
+    async function compressFile(file, compressionLevel, format, index, progressCallback) {
       if (file.type.startsWith('image/')) {
-        return compressImage(file, compressionLevel, format);
+        return compressImage(file, compressionLevel, format, progressCallback);
       }
       if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        return compressPdf(file, compressionLevel);
+        return compressPdf(file, compressionLevel, progressCallback);
       }
-      return compressGeneric(file);
+      return compressGeneric(file, progressCallback);
     }
 
-    function compressImage(file, compressionLevel, format) {
+    function compressImage(file, compressionLevel, format, progressCallback) {
       return new Promise((resolve) => {
+        if (progressCallback) progressCallback(10);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
         
         img.onload = () => {
+          if (progressCallback) progressCallback(30);
           // Downscale if larger than MAX_IMAGE_DIM
           let { width, height } = img;
           const maxDim = Math.max(width, height);
@@ -567,6 +587,8 @@
           canvas.width = width;
           canvas.height = height;
           ctx.drawImage(img, 0, 0);
+          
+          if (progressCallback) progressCallback(60);
           
           let outputFormat = format;
           if (format === 'auto') {
@@ -582,7 +604,9 @@
           }
           
           const imageQuality = computeImageQuality(compressionLevel);
+          if (progressCallback) progressCallback(80);
           canvas.toBlob((blob) => {
+            if (progressCallback) progressCallback(100);
             if (!blob) { showResult(file, file, 'Compression failed'); resolve(); return; }
             const compressedFile = new File([blob], `compressed_${file.name}`, { type: mimeType });
             const compressionRatio = ((1 - blob.size / file.size) * 100).toFixed(1);
@@ -597,20 +621,25 @@
       });
     }
 
-    async function compressPdf(file, compressionLevel) {
+    async function compressPdf(file, compressionLevel, progressCallback) {
       if (!window.PDFLib) {
         showResult(file, file, 'PDF compression unavailable');
         return;
       }
       try {
+        if (progressCallback) progressCallback(10);
         const arrayBuffer = await file.arrayBuffer();
+        if (progressCallback) progressCallback(30);
         const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        if (progressCallback) progressCallback(50);
         const optimizedBytes = await pdfDoc.save({ useObjectStreams: true });
+        if (progressCallback) progressCallback(60);
         let bestBlob = new Blob([optimizedBytes], { type: 'application/pdf' });
         let bestName = `compressed_${file.name}`;
         let bestSize = bestBlob.size;
 
         // Try gzip for textual PDFs
+        if (progressCallback) progressCallback(70);
         const gzCandidate = await gzipBlob(bestBlob);
         if (gzCandidate && gzCandidate.size < bestSize * 0.98) {
           bestBlob = gzCandidate;
@@ -622,6 +651,7 @@
         const percentGain = (1 - bestSize / file.size) * 100;
         const likelyImageHeavy = percentGain < 15 && file.size > 300000;
         if (likelyImageHeavy && window.pdfjsLib) {
+          if (progressCallback) progressCallback(80);
           const { scale, quality } = computePdfRasterSettings(compressionLevel);
           const rasterBlob = await rasterizePdf(file, { scale, quality, maxPages: 30 });
           if (rasterBlob && rasterBlob.size < bestSize * 0.95) {
@@ -631,6 +661,7 @@
           }
         }
 
+        if (progressCallback) progressCallback(100);
         const compressionRatio = ((1 - bestSize / file.size) * 100).toFixed(1);
         showResult(file, new File([bestBlob], bestName, { type: bestBlob.type || 'application/pdf' }), `Compressed by ${compressionRatio}%`);
       } catch (err) {
@@ -691,11 +722,15 @@
       }
     }
 
-    async function compressGeneric(file) {
+    async function compressGeneric(file, progressCallback) {
       try {
+        if (progressCallback) progressCallback(20);
         const cs = new CompressionStream('gzip');
+        if (progressCallback) progressCallback(50);
         const compressedStream = file.stream().pipeThrough(cs);
+        if (progressCallback) progressCallback(80);
         const compressedBlob = await new Response(compressedStream).blob();
+        if (progressCallback) progressCallback(100);
         const compressedFile = new File([compressedBlob], `${file.name}.gz`, { type: 'application/gzip' });
         const compressionRatio = ((1 - compressedBlob.size / file.size) * 100).toFixed(1);
         showResult(file, compressedFile, `Compressed by ${compressionRatio}% (gzip)`);
@@ -750,6 +785,7 @@
       });
     }
   </script>
+  <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
 </body>

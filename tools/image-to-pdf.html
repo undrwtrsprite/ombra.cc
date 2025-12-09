@@ -142,10 +142,17 @@
       errorMessage.style.display = 'none';
 
       try {
-        progressStatus.textContent = 'Initializing PDF...';
-        progressDetails.textContent = 'Creating document...';
-        progressBarFill.style.width = '5%';
-        progressPercent.textContent = '5%';
+        const updateProgress = (percent, status, details) => {
+          rafUpdate(() => {
+            progressBarFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${Math.round(percent)}%`;
+            if (status) progressStatus.textContent = status;
+            if (details) progressDetails.textContent = details;
+          });
+        };
+
+        updateProgress(5, 'Initializing PDF...', 'Creating document...');
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const { PDFDocument } = window.pdfLib;
         const doc = await PDFDocument.create();
@@ -154,13 +161,12 @@
 
         for (let i = 0; i < imageFiles.length; i++) {
           const file = imageFiles[i];
-          const progress = 5 + ((i / totalFiles) * 85);
-          progressBarFill.style.width = `${progress}%`;
-          progressPercent.textContent = `${Math.round(progress)}%`;
-          progressStatus.textContent = `Processing image ${i + 1} of ${totalFiles}`;
-          progressDetails.textContent = `Adding: ${file.name}`;
+          const baseProgress = 5 + ((i / totalFiles) * 80);
+          updateProgress(baseProgress, `Processing image ${i + 1} of ${totalFiles}`, `Loading: ${file.name}`);
+          await new Promise(resolve => setTimeout(resolve, 50));
 
           const bytes = await file.arrayBuffer();
+          updateProgress(baseProgress + 5, `Processing image ${i + 1} of ${totalFiles}`, `Adding: ${file.name}`);
           const isJpeg = /jpe?g$/i.test(file.name) || file.type === 'image/jpeg';
           const embedded = isJpeg ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
           const imgW = embedded.width;
@@ -197,21 +203,14 @@
           await new Promise(resolve => rafUpdate(resolve));
         }
 
-        progressStatus.textContent = 'Finalizing...';
-        progressDetails.textContent = 'Saving PDF document...';
-        progressBarFill.style.width = '95%';
-        progressPercent.textContent = '95%';
-
+        updateProgress(90, 'Finalizing...', 'Saving PDF document...');
         const out = await doc.save();
         const blob = new Blob([out], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         download.href = url; 
         download.style.display = 'inline-block';
 
-        progressBarFill.style.width = '100%';
-        progressPercent.textContent = '100%';
-        progressStatus.textContent = 'Complete!';
-        progressDetails.textContent = `Successfully created PDF with ${totalFiles} image${totalFiles > 1 ? 's' : ''}`;
+        updateProgress(100, 'Complete!', `Successfully created PDF with ${totalFiles} image${totalFiles > 1 ? 's' : ''}`);
 
         setTimeout(() => {
           showProgress(false);

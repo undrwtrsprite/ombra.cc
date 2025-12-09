@@ -247,18 +247,23 @@
       convertBtn.textContent = 'Converting...';
 
       try {
-        progressStatus.textContent = 'Loading image...';
-        progressDetails.textContent = `Reading: ${file.name}`;
-        progressBarFill.style.width = '20%';
-        progressPercent.textContent = '20%';
+        const updateProgress = (percent, status, details) => {
+          rafUpdate(() => {
+            progressBarFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${Math.round(percent)}%`;
+            if (status) progressStatus.textContent = status;
+            if (details) progressDetails.textContent = details;
+          });
+        };
+
+        updateProgress(10, 'Loading image...', `Reading: ${file.name}`);
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const img = await readImage(file);
+        updateProgress(30, 'Image loaded', 'Processing image data...');
+        await new Promise(resolve => setTimeout(resolve, 50));
         
-        progressStatus.textContent = 'Converting...';
-        progressDetails.textContent = 'Processing image data...';
-        progressBarFill.style.width = '50%';
-        progressPercent.textContent = '50%';
-
+        updateProgress(50, 'Converting...', 'Rendering to canvas...');
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth; 
         canvas.height = img.naturalHeight;
@@ -269,9 +274,8 @@
         }
         ctx.drawImage(img, 0, 0);
 
-        progressBarFill.style.width = '80%';
-        progressPercent.textContent = '80%';
-        progressDetails.textContent = 'Encoding to output format...';
+        updateProgress(70, 'Converting...', 'Encoding to output format...');
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const quality = Number(qualityInput.value);
         const blob = await new Promise(res => canvas.toBlob(res, formatSelect.value, quality));
@@ -312,10 +316,7 @@
           metaIn.innerHTML = metaIn.textContent + originalSizeInfo;
         }
         
-        progressBarFill.style.width = '100%';
-        progressPercent.textContent = '100%';
-        progressStatus.textContent = 'Complete!';
-        progressDetails.textContent = 'Image converted successfully';
+        updateProgress(100, 'Complete!', 'Image converted successfully');
         
         showToast('Converted');
         

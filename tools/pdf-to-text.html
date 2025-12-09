@@ -115,43 +115,44 @@
       output.value = '';
       
       try {
-        progressStatus.textContent = 'Loading PDF...';
-        progressDetails.textContent = `Reading: ${file.name}`;
-        progressBarFill.style.width = '10%';
-        progressPercent.textContent = '10%';
+        const updateProgress = (percent, status, details) => {
+          rafUpdate(() => {
+            progressBarFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${Math.round(percent)}%`;
+            if (status) progressStatus.textContent = status;
+            if (details) progressDetails.textContent = details;
+          });
+        };
+
+        updateProgress(5, 'Loading PDF...', `Reading: ${file.name}`);
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         const data = await readAsArrayBuffer(file);
+        updateProgress(15, 'Parsing PDF...', 'Analyzing document structure...');
         const pdf = await pdfjsLib.getDocument({ data }).promise;
         
         const totalPages = pdf.numPages;
-        progressDetails.textContent = `Found ${totalPages} page${totalPages > 1 ? 's' : ''}. Extracting text...`;
-        progressBarFill.style.width = '20%';
-        progressPercent.textContent = '20%';
+        updateProgress(20, 'PDF loaded', `Found ${totalPages} page${totalPages > 1 ? 's' : ''}. Extracting text...`);
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         let text = '';
         for (let i = 1; i <= totalPages; i++) {
-          const progress = 20 + ((i / totalPages) * 70);
-          progressBarFill.style.width = `${progress}%`;
-          progressPercent.textContent = `${Math.round(progress)}%`;
-          progressStatus.textContent = `Extracting page ${i} of ${totalPages}`;
-          progressDetails.textContent = `Processing page ${i}...`;
+          const progress = 20 + ((i / totalPages) * 75);
+          updateProgress(progress, `Extracting page ${i} of ${totalPages}`, `Processing page ${i}...`);
 
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
           const strings = content.items.map(it => it.str);
           text += strings.join(' ') + "\n\n";
 
-          // Yield to browser for better performance
-          if (i % 5 === 0) {
+          // Yield to browser for better performance and UI updates
+          if (i % 3 === 0 || i === totalPages) {
             await new Promise(resolve => rafUpdate(resolve));
           }
         }
 
-        progressBarFill.style.width = '100%';
-        progressPercent.textContent = '100%';
-        progressStatus.textContent = 'Complete!';
-        progressDetails.textContent = `Successfully extracted text from ${totalPages} page${totalPages > 1 ? 's' : ''}`;
+        updateProgress(100, 'Complete!', `Successfully extracted text from ${totalPages} page${totalPages > 1 ? 's' : ''}`);
         
         output.value = text.trim();
         

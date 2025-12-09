@@ -124,17 +124,21 @@
       resizeBtn.textContent = 'Resizing...';
 
       try {
-        progressStatus.textContent = 'Loading image...';
-        progressDetails.textContent = `Reading: ${file.name}`;
-        progressBarFill.style.width = '20%';
-        progressPercent.textContent = '20%';
+        const updateProgress = (percent, status, details) => {
+          rafUpdate(() => {
+            progressBarFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${Math.round(percent)}%`;
+            if (status) progressStatus.textContent = status;
+            if (details) progressDetails.textContent = details;
+          });
+        };
+
+        updateProgress(10, 'Loading image...', `Reading: ${file.name}`);
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const img = await readImage(file);
-        
-        progressBarFill.style.width = '40%';
-        progressPercent.textContent = '40%';
-        progressStatus.textContent = 'Calculating dimensions...';
-        progressDetails.textContent = 'Processing resize parameters...';
+        updateProgress(30, 'Image loaded', 'Processing resize parameters...');
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         let w = parseInt(wInput.value, 10); 
         let h = parseInt(hInput.value, 10);
@@ -145,20 +149,15 @@
         if (!w) w = img.naturalWidth; 
         if (!h) h = img.naturalHeight;
 
-        progressBarFill.style.width = '60%';
-        progressPercent.textContent = '60%';
-        progressStatus.textContent = 'Resizing...';
-        progressDetails.textContent = `Resizing to ${w}×${h} pixels...`;
-
+        updateProgress(50, 'Resizing...', `Resizing to ${w}×${h} pixels...`);
         const canvas = document.createElement('canvas'); 
         canvas.width = w; 
         canvas.height = h;
         const ctx = canvas.getContext('2d'); 
         ctx.drawImage(img, 0, 0, w, h);
 
-        progressBarFill.style.width = '80%';
-        progressPercent.textContent = '80%';
-        progressDetails.textContent = 'Encoding image...';
+        updateProgress(70, 'Resizing...', 'Encoding image...');
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', Number(qInput.value)));
         const outUrl = URL.createObjectURL(blob);
@@ -171,10 +170,7 @@
         downloadLink.download = 'resized.jpg'; 
         downloadLink.style.display = 'inline-block';
 
-        progressBarFill.style.width = '100%';
-        progressPercent.textContent = '100%';
-        progressStatus.textContent = 'Complete!';
-        progressDetails.textContent = `Successfully resized to ${w}×${h} pixels`;
+        updateProgress(100, 'Complete!', `Successfully resized to ${w}×${h} pixels`);
 
         setTimeout(() => {
           showProgress(false);

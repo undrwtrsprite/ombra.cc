@@ -182,13 +182,20 @@
       errorMessage.style.display = 'none';
       downloadAllBtn.disabled = true;
 
+      const updateProgress = (percent, status, details) => {
+        rafUpdate(() => {
+          progressBarFill.style.width = `${percent}%`;
+          progressPercent.textContent = `${Math.round(percent)}%`;
+          if (status) progressStatus.textContent = status;
+          if (details) progressDetails.textContent = details;
+        });
+      };
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const progress = ((i / files.length) * 90);
-        progressBarFill.style.width = `${progress}%`;
-        progressPercent.textContent = `${Math.round(progress)}%`;
-        progressStatus.textContent = `Converting image ${i + 1} of ${files.length}`;
-        progressDetails.textContent = `Processing: ${file.name}`;
+        const baseProgress = (i / files.length) * 90;
+        updateProgress(baseProgress, `Converting image ${i + 1} of ${files.length}`, `Loading: ${file.name}`);
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const item = document.createElement('div');
         item.className = 'result-item';
@@ -196,6 +203,7 @@
         results.appendChild(item);
         
         try {
+          updateProgress(baseProgress + 5, `Converting image ${i + 1} of ${files.length}`, `Processing: ${file.name}`);
           const blob = await heic2any({ blob: file, toType: outFormat.value, quality: Number(qualityInput.value) });
           const url = URL.createObjectURL(blob);
           const ext = outFormat.value === 'image/png' ? 'png' : 'jpg';
@@ -209,16 +217,16 @@
               <a class="btn-secondary" href="${url}" download="${outName}">Download</a>
             </div>
           `;
+          updateProgress(baseProgress + 10, `Converting image ${i + 1} of ${files.length}`, `Completed: ${file.name}`);
         } catch (e) {
           item.innerHTML = `<div class="result-header"><strong>${file.name}</strong><span class="note" style="color:#ef4444;">Failed to convert</span></div>`;
           showError(`Failed to convert ${file.name}. The file may be corrupted or not a valid HEIC/HEIF image.`);
         }
+        
+        await new Promise(resolve => rafUpdate(resolve));
       }
 
-      progressBarFill.style.width = '100%';
-      progressPercent.textContent = '100%';
-      progressStatus.textContent = 'Complete!';
-      progressDetails.textContent = `Successfully converted ${converted.length} of ${files.length} image${files.length > 1 ? 's' : ''}`;
+      updateProgress(100, 'Complete!', `Successfully converted ${converted.length} of ${files.length} image${files.length > 1 ? 's' : ''}`);
 
       const hasFiles = converted.length > 0;
       downloadAllBtn.disabled = !hasFiles;
