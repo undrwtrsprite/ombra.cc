@@ -371,27 +371,48 @@ a, button, input, select, textarea, .glass-card, .btn-primary, .btn-secondary, .
   display: none;
   margin-top: 8px;
   backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  padding: 6px;
 }
-.nav-results .result-item { display:flex; align-items:center; gap:10px; padding:10px 12px; color:var(--text-main); cursor:pointer; text-decoration:none; }
-.nav-results .result-item:hover { background: rgba(255,255,255,0.06); }
-.nav-results .icon {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
+.nav-results .result-item { 
+  display:flex; 
+  align-items:center; 
+  gap:12px; 
+  padding:12px; 
+  color:var(--text-main); 
+  cursor:pointer; 
+  text-decoration:none;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+}
+.nav-results .result-item:hover { background: rgba(255,255,255,0.1); }
+.nav-results .result-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1, #ec4899);
-  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.28);
-  font-size: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 20px;
   line-height: 1;
-  color: #fff;
 }
-.nav-results .title { font-weight:600; font-size:14px; }
-.nav-results .desc { font-size:12px; color:var(--text-muted); }
+.nav-results .result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.nav-results .title { font-weight:600; font-size:14px; color: var(--text-main); }
+.nav-results .desc { font-size:12px; color:var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-results .result-arrow {
+  color: var(--text-muted);
+  font-size: 18px;
+  opacity: 0.5;
+}
 
 .nav a {
   color: var(--text-main);
@@ -2057,6 +2078,62 @@ button[data-loading="true"]::after {
 
   .nav-search.expanded {
     width: 130px;
+  }
+  
+  /* Smooth transition for search activation */
+  .nav .logo,
+  .nav .refresh-btn,
+  .nav .offline-indicator,
+  .nav #settingsBtn {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform-origin: left center;
+  }
+
+  .nav.search-active .logo,
+  .nav.search-active .refresh-btn,
+  .nav.search-active .offline-indicator,
+  .nav.search-active #settingsBtn {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.95);
+  }
+
+  .nav.search-active .nav-actions {
+    position: static;
+  }
+
+  /* New approach: Keep container in flow, overlay input absolutely */
+  .nav.search-active .nav-search {
+    position: static;
+    width: auto;
+  }
+
+  .nav.search-active .nav-search input[type="search"] {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    width: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    padding-left: 40px;
+    height: 46px;
+    opacity: 1;
+  }
+
+  .nav.search-active .nav-search .nav-search-icon {
+    left: 18px;
+    z-index: 21;
+  }
+  
+  /* Prevent navbar height collapse and layout shifts */
+  .nav {
+    min-height: 62px;
+    display: flex;
+    align-items: center;
+  }
+  .nav-inner {
+    width: 100%;
   }
   
   .btn-primary {

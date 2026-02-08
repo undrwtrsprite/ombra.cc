@@ -114,12 +114,15 @@
       ].join('.');
     }
 
-    function calculateSubnet() {
+    function calculateSubnet(e) {
+      const showError = e && (e.type === 'click' || e.key === 'Enter');
       const ip = ipInput.value.trim();
       const cidr = parseInt(subnetSelect.value);
 
       if (!ip || !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) {
-        alert('Please enter a valid IP address (e.g., 192.168.1.1)');
+        if (showError) {
+          alert('Please enter a valid IP address (e.g., 192.168.1.1)');
+        }
         return;
       }
 
@@ -148,7 +151,7 @@
     calculateBtn.addEventListener('click', calculateSubnet);
     [ipInput, subnetSelect].forEach(el => {
       el.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') calculateSubnet();
+        if (e.key === 'Enter') calculateSubnet(e);
       });
     });
 

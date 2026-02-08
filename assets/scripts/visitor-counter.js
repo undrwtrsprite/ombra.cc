@@ -7,14 +7,6 @@
     // Simple client-side counter (stored in localStorage)
     let count = parseInt(localStorage.getItem('ombra-visitor-count') || '0');
     
-    // Increment if this is a new session
-    const sessionKey = 'ombra-session-' + new Date().toDateString();
-    if (!sessionStorage.getItem(sessionKey)) {
-      count++;
-      localStorage.setItem('ombra-visitor-count', count.toString());
-      sessionStorage.setItem(sessionKey, 'true');
-    }
-
     // Format number with commas
     const formattedCount = count.toLocaleString();
 
@@ -37,6 +29,45 @@
       window.requestAnimationFrame(step);
     }
 
+    // Fetch latest count from API
+    async function fetchCount(elementToUpdate) {
+      const token = window.OMBRA_CONFIG && window.OMBRA_CONFIG.API_TOKEN;
+      
+      if (!token) {
+        console.warn('Visitor counter: API token not found in window.OMBRA_CONFIG');
+        return;
+      }
+
+      try {
+        // Always increment for hit counter
+        const url = new URL(`https://app.counterapi.dev/v1/ombracc/up`);
+        url.searchParams.append('token', token);
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        if (typeof data.count === 'number') {
+          const newCount = data.count;
+          localStorage.setItem('ombra-visitor-count', newCount.toString());
+          
+          if (newCount !== count) {
+            animateValue(elementToUpdate, count, newCount, 800);
+            count = newCount;
+          }
+        }
+      } catch (error) {
+        console.debug('Visitor counter offline or blocked:', error);
+        // Fallback: If count is 0 and API is blocked, hide the counter to avoid showing "0"
+        if (count === 0) {
+          const container = elementToUpdate.closest('.visitor-counter-hero, .visitor-counter');
+          if (container) {
+            container.style.display = 'none';
+          }
+        }
+      }
+    }
+
     // Check if we are on the homepage and have a hero section
     const hero = document.querySelector('.hero');
     
@@ -48,9 +79,9 @@
       const counterElement = document.createElement('div');
       counterElement.className = 'visitor-counter-hero';
       counterElement.innerHTML = `
-        <span class="icon">👥</span>
+        <span class="icon">👁️</span>
         <span class="count">0</span>
-        <span class="label" style="opacity: 0; transition: opacity 0.5s ease;">users served</span>
+        <span class="label" style="opacity: 0; transition: opacity 0.5s ease;">page views</span>
       `;
       
       // Insert after subtitle
@@ -68,6 +99,7 @@
         if (countEl) {
           animateValue(countEl, 0, count, 800, () => {
             if (labelEl) labelEl.style.opacity = '1';
+            fetchCount(countEl);
           });
         }
       }, 1000);
@@ -78,7 +110,7 @@
         const counterElement = document.createElement('div');
         counterElement.id = 'visitor-counter';
         counterElement.className = 'visitor-counter';
-        counterElement.innerHTML = `<span class="visitor-counter-label">Visited by</span> <span class="visitor-counter-number">0</span> <span class="visitor-counter-label">users</span>`;
+        counterElement.innerHTML = `<span class="visitor-counter-label">Total views:</span> <span class="visitor-counter-number">0</span>`;
         
         const footerText = footer.querySelector('p');
         if (footerText) {
@@ -88,7 +120,9 @@
         }
 
         const countEl = counterElement.querySelector('.visitor-counter-number');
-        if (countEl) animateValue(countEl, 0, count, 800);
+        if (countEl) animateValue(countEl, 0, count, 800, () => {
+          fetchCount(countEl);
+        });
       }
     }
   }

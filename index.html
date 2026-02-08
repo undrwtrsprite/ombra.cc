@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
-  <link rel="stylesheet" href="/assets/styles/base.css?v=56" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=62" />
   <link rel="manifest" href="/manifest.json" />
   
   <!-- Favicon -->
@@ -395,14 +395,15 @@
       });
     })();
   </script>
-  <script src="/assets/scripts/help.js"></script>
-  <script src="/assets/scripts/keyboard-shortcuts.js"></script>
-  <script src="/assets/scripts/toast.js"></script>
-  <script src="/assets/scripts/modal.js?v=53"></script>
-  <script src="/assets/scripts/settings.js?v=46"></script>
-  <script src="/assets/scripts/visitor-counter.js"></script>
-  <script src="/assets/scripts/usage-tracker.js"></script>
-  <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/help.js?v=62"></script>
+  <script src="/assets/scripts/keyboard-shortcuts.js?v=62"></script>
+  <script src="/assets/scripts/toast.js?v=62"></script>
+  <script src="/assets/scripts/modal.js?v=62"></script>
+  <script src="/assets/scripts/settings.js?v=62"></script>
+  <script src="assets/scripts/config.js?v=62"></script>
+  <script src="assets/scripts/visitor-counter.js?v=62"></script>
+  <script src="assets/scripts/usage-tracker.js?v=62"></script>
+  <script src="assets/scripts/effects.js?v=62"></script>
   <script>
     // Simple client-side filtering of tool cards
     const categories = Array.from(document.querySelectorAll('.tool-category'));
@@ -431,12 +432,12 @@
     }
 
     // Build an index of tools for suggestions
-    const toolCards = Array.from(document.querySelectorAll('.glass-card'));
-    const toolIndex = toolCards.map(card => ({
-      href: card.getAttribute('href'),
-      title: card.querySelector('.card-title')?.textContent || '',
-      desc: card.querySelector('.card-description')?.textContent || '',
-      icon: card.querySelector('.card-icon')?.textContent || '•'
+    const toolItems = Array.from(document.querySelectorAll('.tool-item'));
+    const toolIndex = toolItems.map(item => ({
+      href: item.getAttribute('href'),
+      title: item.querySelector('.tool-item-title')?.textContent || '',
+      desc: item.querySelector('.tool-item-desc')?.textContent || '',
+      icon: item.querySelector('.tool-item-icon')?.textContent || '•'
     }));
     
     if (navSearch && searchInput) {
@@ -445,6 +446,7 @@
         if (e.target === navSearch || e.target === searchInput) {
           navSearch.classList.remove('collapsed');
           navSearch.classList.add('expanded');
+          document.querySelector('.nav').classList.add('search-active');
           searchInput.focus();
         }
       });
@@ -455,6 +457,7 @@
           setTimeout(() => {
             navSearch.classList.remove('expanded');
             navSearch.classList.add('collapsed');
+            document.querySelector('.nav').classList.remove('search-active');
           }, 200);
         }
       });
@@ -472,6 +475,7 @@
         if (q) {
           navSearch.classList.remove('collapsed');
           navSearch.classList.add('expanded');
+          document.querySelector('.nav').classList.add('search-active');
         }
         
         // Debounce search operations
@@ -504,11 +508,12 @@
           if (matches.length === 0) { navResults.style.display = 'none'; navResults.innerHTML=''; return; }
           navResults.innerHTML = matches.map(m => `
             <a class="result-item" href="${m.href}">
-              <span class="icon">${m.icon}</span>
-              <div style="display:flex;flex-direction:column;">
+              <div class="result-icon-wrapper">${m.icon}</div>
+              <div class="result-content">
                 <span class="title">${m.title}</span>
                 <span class="desc">${m.desc}</span>
               </div>
+              <div class="result-arrow">→</div>
             </a>
           `).join('');
           navResults.style.display = 'block';
