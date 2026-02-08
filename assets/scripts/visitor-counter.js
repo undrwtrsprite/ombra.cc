@@ -4,12 +4,6 @@
 
   // Initialize visitor counter
   function initVisitorCounter() {
-    // Inject the CounterAPI script
-    const script = document.createElement('script');
-    script.src = 'https://counterapi.com/c.js';
-    script.async = true;
-    document.head.appendChild(script);
-
     // Check if we are on the homepage and have a hero section
     const hero = document.querySelector('.hero');
     
@@ -21,11 +15,10 @@
       const container = document.createElement('div');
       container.className = 'visitor-counter-hero';
       
-      // Inner HTML structure with icon, counterapi div, and label
+      // Inner HTML structure using image badge to avoid CORS issues
       container.innerHTML = `
-        <span class="icon">👁️</span>
-        <div class="counterapi count" style="display:inline-block; min-height:0; min-width:1em;"></div>
-        <span class="label">page views</span>
+        <img src="https://counterapi.com/api/ombra.cc/view/index?icon=eye&color=ffffff&bg=00000000&size=15" alt="page views" style="vertical-align: middle; height: 24px;" />
+        <span class="label" style="margin-left: 8px;">page views</span>
       `;
 
       // Insert after subtitle
@@ -43,7 +36,7 @@
         container.className = 'visitor-counter';
         container.innerHTML = `
           <span class="visitor-counter-label">Total views:</span>
-          <div class="counterapi" style="display:inline-block; min-height:0; min-width:1em;"></div>
+          <img src="https://counterapi.com/api/ombra.cc/view/index?icon=eye&color=ffffff&bg=00000000&size=12" alt="views" style="vertical-align: middle; margin-left: 6px; height: 16px;" />
         `;
         
         const footerText = footer.querySelector('p');
