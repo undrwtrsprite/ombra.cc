@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ombra-tools-v69';
-const STATIC_CACHE = 'ombra-static-v69';
-const DYNAMIC_CACHE = 'ombra-dynamic-v69';
+const CACHE_NAME = 'ombra-tools-v70';
+const STATIC_CACHE = 'ombra-static-v70';
+const DYNAMIC_CACHE = 'ombra-dynamic-v70';
 const MAX_CACHE_SIZE = 50; // Maximum number of items in dynamic cache
 
 // Only cache critical files immediately for faster initial load
@@ -10,7 +10,6 @@ const CRITICAL_FILES = [
   '/assets/styles/base.css',
   '/assets/scripts/effects.js',
   '/assets/scripts/settings.js',
-  '/assets/scripts/visitor-counter.js',
   '/favicon.svg'
 ];
 
