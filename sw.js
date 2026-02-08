@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ombra-tools-v68';
-const STATIC_CACHE = 'ombra-static-v68';
-const DYNAMIC_CACHE = 'ombra-dynamic-v68';
+const CACHE_NAME = 'ombra-tools-v69';
+const STATIC_CACHE = 'ombra-static-v69';
+const DYNAMIC_CACHE = 'ombra-dynamic-v69';
 const MAX_CACHE_SIZE = 50; // Maximum number of items in dynamic cache
 
 // Only cache critical files immediately for faster initial load

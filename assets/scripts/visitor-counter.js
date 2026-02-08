@@ -15,10 +15,13 @@
       const container = document.createElement('div');
       container.className = 'visitor-counter-hero';
       
-      // Inner HTML structure using image badge to avoid CORS issues
+      // Inner HTML structure using hitwebcounter
       container.innerHTML = `
-        <img src="https://counterapi.com/api/ombra.cc/view/index?icon=eye&color=ffffff&bg=00000000&size=15" alt="page views" style="vertical-align: middle; height: 24px;" />
-        <span class="label" style="margin-left: 8px;">page views</span>
+        <span class="icon">👁️</span>
+        <a href="https://www.hitwebcounter.com/" target="_blank" style="display: flex; align-items: center;">
+          <img src="https://hitwebcounter.com/counter/counter.php?page=21475421&style=0008&nbdigits=9&type=page&initCount=0" title="Free Tools" Alt="Free Tools" border="0" />
+        </a>
+        <span class="label">page views</span>
       `;
 
       // Insert after subtitle
@@ -36,7 +39,9 @@
         container.className = 'visitor-counter';
         container.innerHTML = `
           <span class="visitor-counter-label">Total views:</span>
-          <img src="https://counterapi.com/api/ombra.cc/view/index?icon=eye&color=ffffff&bg=00000000&size=12" alt="views" style="vertical-align: middle; margin-left: 6px; height: 16px;" />
+          <a href="https://www.hitwebcounter.com/" target="_blank" style="display: inline-flex; align-items: center; margin-left: 6px;">
+            <img src="https://hitwebcounter.com/counter/counter.php?page=21475421&style=0008&nbdigits=9&type=page&initCount=0" title="Free Tools" Alt="Free Tools" border="0" />
+          </a>
         `;
         
         const footerText = footer.querySelector('p');
