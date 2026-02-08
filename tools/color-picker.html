@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Color Picker — ombra tools</title>
-  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=52" />
 </head>
 <body>
   <div class="bg-layer bg-gradient"></div>
@@ -78,6 +79,7 @@
     }
   </script>
   <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/toast.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
     const imageFile = document.getElementById('imageFile');
@@ -192,6 +194,37 @@
       palette.style.display = 'block';
     }
 
+    imageFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const img = new Image();
+      img.onload = () => {
+        imageCanvas.width = img.width;
+        imageCanvas.height = img.height;
+        const ctx = imageCanvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        imageCanvas.style.display = 'block';
+        colorDisplay.style.display = 'none';
+        
+        imageCanvas.addEventListener('click', (e) => {
+          const rect = imageCanvas.getBoundingClientRect();
+          const scaleX = imageCanvas.width / rect.width;
+          const scaleY = imageCanvas.height / rect.height;
+          const x = (e.clientX - rect.left) * scaleX;
+          const y = (e.clientY - rect.top) * scaleY;
+          const pixel = ctx.getImageData(x, y, 1, 1).data;
+          const color = `#${pixel[0].toString(16).padStart(2,'0')}${pixel[1].toString(16).padStart(2,'0')}${pixel[2].toString(16).padStart(2,'0')}`;
+          updateColorDisplay(color);
+          colorPicker.value = color;
+        });
+        
+        showToast('Image loaded. Click to pick color.', 'success');
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
     colorPicker.addEventListener('input', (e) => {
       updateColorDisplay(e.target.value);
     });
@@ -201,34 +234,11 @@
     });
 
     extractBtn.addEventListener('click', () => {
-      const file = imageFile.files[0];
-      if (!file) {
-        alert('Please select an image first');
+      if (!imageFile.files[0]) {
+        showToast('Please select an image first', 'warning');
         return;
       }
-      
-      const img = new Image();
-      img.onload = () => {
-        const canvas = imageCanvas;
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        canvas.style.display = 'block';
-        colorDisplay.style.display = 'none';
-        
-        canvas.addEventListener('click', (e) => {
-          const rect = canvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          const pixel = ctx.getImageData(x, y, 1, 1).data;
-          const color = `#${pixel[0].toString(16).padStart(2,'0')}${pixel[1].toString(16).padStart(2,'0')}${pixel[2].toString(16).padStart(2,'0')}`;
-          updateColorDisplay(color);
-          colorPicker.value = color;
-        });
-      };
-      img.src = URL.createObjectURL(file);
+      imageFile.click();
     });
 
     generateBtn.addEventListener('click', () => {

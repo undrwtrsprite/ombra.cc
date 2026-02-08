@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HEIC to JPG — ombra tools</title>
   <meta name="description" content="Convert HEIC/HEIF photos to JPG or PNG quickly in your browser." />
-  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=52" />
 </head>
 <body>
   <div class="bg-layer bg-gradient"></div>
@@ -64,10 +65,10 @@
         </div>
         <div id="errorMessage" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-top:16px;color:#ef4444;"></div>
         <div class="results" id="results"></div>
-        <!-- Inline modal for quick preview -->
-        <div id="previewModal" class="modal-overlay">
+        <!-- Inline modal for quick preview (drawer style) -->
+        <div id="previewModal" class="modal-overlay drawer">
           <div class="modal-card">
-            <button id="closePreview" class="modal-close" aria-label="Close">×</button>
+            <button id="closePreview" class="drawer-close modal-close" aria-label="Close">×</button>
             <div class="modal-body">
               <img id="previewImage" alt="preview" />
             </div>
@@ -102,6 +103,10 @@
   <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
+  <script src="/assets/scripts/modal.js"></script>
+  <script src="/assets/scripts/keyboard-shortcuts.js"></script>
+  <script src="/assets/scripts/toast.js"></script>
+  <script src="/assets/scripts/help.js"></script>
   <style>
     /* Compact, refined layout for HEIC tool */
     .heic-compact { padding: 16px; border-radius: 16px; }
@@ -117,8 +122,8 @@
     .heic-compact .tool-body { max-width: 980px; margin: 0 auto; gap: 12px; }
     .heic-compact #results { background: transparent; border: none; padding: 0; }
     .heic-compact .result-item {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.14);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 10px 12px;
       display: flex;
@@ -244,11 +249,21 @@
     function openPreview(url, name) {
       previewImage.src = url;
       previewCaption.textContent = name;
-      previewModal.style.display = 'flex';
+      if (window.Modal && window.Modal.open) {
+        window.Modal.open(previewModal, { position: 'right' });
+      } else {
+        previewModal.style.display = 'flex';
+        previewModal.classList.add('visible');
+      }
       currentPreview = { url, name };
     }
     function closePreviewModal() {
-      previewModal.style.display = 'none';
+      if (window.Modal && window.Modal.close) {
+        window.Modal.close();
+      } else {
+        previewModal.style.display = 'none';
+        previewModal.classList.remove('visible');
+      }
       previewImage.src = '';
       currentPreview = null;
     }
@@ -292,5 +307,3 @@
   </script>
 </body>
 </html>
-
-

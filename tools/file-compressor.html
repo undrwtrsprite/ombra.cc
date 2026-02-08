@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>File Compressor — ombra tools</title>
   <meta name="description" content="Compress images, documents, and files to reduce size while maintaining quality. Free, private, and runs entirely in your browser.">
-  <link rel="stylesheet" href="/assets/styles/base.css">
+  <meta name="theme-color" content="#09090b" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=52">
   <link rel="manifest" href="/manifest.json" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -14,32 +15,6 @@
     .compressor {
       max-width: 600px;
       margin: 0 auto;
-    }
-    
-    .upload-area {
-      border: 2px dashed rgba(255, 255, 255, 0.3);
-      border-radius: 16px;
-      padding: 40px;
-      text-align: center;
-      background: rgba(255, 255, 255, 0.05);
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-    
-    .upload-area:hover {
-      border-color: rgba(147, 51, 234, 0.5);
-      background: rgba(147, 51, 234, 0.1);
-    }
-    
-    .upload-area.dragover {
-      border-color: rgba(34, 197, 94, 0.5);
-      background: rgba(34, 197, 94, 0.1);
-    }
-    
-    .upload-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-      opacity: 0.7;
     }
     
     .file-input {
@@ -51,7 +26,7 @@
     }
     
     .file-item {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--surface-strong);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 12px;
@@ -59,7 +34,7 @@
       align-items: center;
       gap: 16px;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border);
     }
     
     .file-icon {
@@ -82,12 +57,12 @@
     }
     
     .compression-options {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--surface-strong);
       border-radius: 12px;
       padding: 20px;
       margin: 24px 0;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border);
     }
     
     .option-group {
@@ -318,10 +293,10 @@
       </div>
       <div class="tool-body">
         <div class="compressor">
-        <div class="upload-area" id="uploadArea">
-          <div class="upload-icon">📁</div>
-          <h3>Drop files here or click to browse</h3>
-          <p>Supports images (JPG, PNG, WEBP), documents, text/code, and other files</p>
+        <div class="dropzone" id="uploadArea">
+          <div class="dropzone-icon">📁</div>
+          <div class="dropzone-title">Drop files here or click to browse</div>
+          <div class="dropzone-desc">Supports images (JPG, PNG, WEBP), documents, text/code, and other files</div>
           <input type="file" id="fileInput" class="file-input" multiple accept="image/*,.pdf,.doc,.docx,.txt,.md,.json,.csv,.html,.htm,.js,.css,.svg,.xml,.yaml,.yml,.ts,.tsx,.rtf,.odt,.ppt,.pptx,.xls,.xlsx">
         </div>
 
@@ -532,6 +507,7 @@
       }
       
       updateProgress(100, 'Complete!', `Successfully compressed ${totalFiles} file${totalFiles > 1 ? 's' : ''}`);
+      showToast('All files compressed successfully', 'success');
       
       compressBtn.disabled = false;
       compressBtn.textContent = 'Compress Files';

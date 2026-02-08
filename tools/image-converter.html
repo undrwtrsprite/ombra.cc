@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Converter — ombra tools</title>
-  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=54" />
 </head>
 <body>
   <div class="bg-layer bg-gradient"></div>
@@ -24,9 +25,6 @@
         <h1>Image Converter</h1>
       </div>
       <div class="tool-body">
-        <div class="tool-topbar">
-          <div class="tool-subtitle">Convert images privately on-device</div>
-        </div>
         <div class="toolbar" role="toolbar" aria-label="Image Converter">
           <div class="control-group">
             <label>Input</label>
@@ -58,7 +56,9 @@
         </div>
 
         <div class="dropzone" id="dropzone">
-          <span>Drag & drop an image here or click “Input”</span>
+          <div class="dropzone-icon">🖼️</div>
+          <div class="dropzone-title">Drag & drop an image here</div>
+          <div class="dropzone-desc">or click to browse</div>
         </div>
 
         <div class="progress-container" id="progressContainer" style="display:none; margin-top:16px;">
@@ -104,6 +104,7 @@
   </script>
   <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/toast.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
     const fileInput = document.getElementById('file');
@@ -130,6 +131,7 @@
     let imageBitmap;
     let currentFile = null;
     let currentOutUrl = null;
+    let currentInputUrl = null;
 
     function showError(msg) {
       errorMessage.textContent = msg;
@@ -164,13 +166,6 @@
       const units = ['KB','MB','GB']; let i= -1; do{ bytes/=1024; i++; }while(bytes>=1024 && i<units.length-1); return bytes.toFixed(2)+' '+units[i];
     }
 
-    function showToast(msg){
-      let t = document.querySelector('.toast');
-      if(!t){ t = document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
-      t.textContent = msg; t.classList.add('show');
-      setTimeout(()=> t.classList.remove('show'), 1600);
-    }
-
     function setInputPreview(img, file){
       previewIn.innerHTML=''; previewIn.appendChild(img.cloneNode());
       if (file) metaIn.textContent = `${file.name} • ${humanSize(file.size)} • ${img.naturalWidth}×${img.naturalHeight}`;
@@ -180,11 +175,17 @@
       if (!file) return;
       if (!file.type.startsWith('image/')) { 
         showError('Unsupported file type. Please select an image file.');
-        showToast('Unsupported file'); 
+        showToast('Unsupported file type', 'error'); 
         return; 
       }
       currentFile = file;
-      const img = await readImage(file);
+      
+      if (currentInputUrl) URL.revokeObjectURL(currentInputUrl);
+      currentInputUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.src = currentInputUrl;
+      await img.decode();
+      
       setInputPreview(img, file);
       errorMessage.style.display = 'none';
     }
@@ -203,7 +204,7 @@
       if(!file) return;
       fileInput.files = e.dataTransfer.files;
       await handleFile(file);
-      showToast('Image loaded');
+      showToast('Image loaded', 'success');
     });
 
     dropzone.addEventListener('click', ()=> fileInput.click());
@@ -222,7 +223,7 @@
       if (!item) return;
       const file = item.getAsFile();
       await handleFile(file);
-      showToast('Image pasted');
+      showToast('Image pasted', 'success');
     });
     formatSelect.addEventListener('change', updateQualityVisibility);
     formatSeg.addEventListener('click', (e)=>{
@@ -318,7 +319,7 @@
         
         updateProgress(100, 'Complete!', 'Image converted successfully');
         
-        showToast('Converted');
+        showToast('Image converted successfully', 'success');
         
         setTimeout(() => {
           showProgress(false);
@@ -332,8 +333,5 @@
       }
     });
   </script>
-  <div class="toast" aria-live="polite"></div>
 </body>
 </html>
-
-

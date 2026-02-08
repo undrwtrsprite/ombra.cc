@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ombra-tools-v5';
-const STATIC_CACHE = 'ombra-static-v5';
-const DYNAMIC_CACHE = 'ombra-dynamic-v5';
+const CACHE_NAME = 'ombra-tools-v59';
+const STATIC_CACHE = 'ombra-static-v59';
+const DYNAMIC_CACHE = 'ombra-dynamic-v59';
 const MAX_CACHE_SIZE = 50; // Maximum number of items in dynamic cache
 
 // Only cache critical files immediately for faster initial load
@@ -9,6 +9,8 @@ const CRITICAL_FILES = [
   '/index.html',
   '/assets/styles/base.css',
   '/assets/scripts/effects.js',
+  '/assets/scripts/settings.js',
+  '/assets/scripts/usage-tracker.js',
   '/favicon.svg'
 ];
 
@@ -24,9 +26,6 @@ self.addEventListener('install', event => {
         console.log('Some files failed to cache:', error);
       })
   );
-  
-  // Force activation immediately
-  self.skipWaiting();
 });
 
 // Activate event - clean up old caches and take control immediately

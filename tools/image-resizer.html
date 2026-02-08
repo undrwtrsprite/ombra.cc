@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Resizer — ombra tools</title>
-  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=52" />
 </head>
 <body>
   <div class="bg-layer bg-gradient"></div>
@@ -72,6 +73,7 @@
   </script>
   <script src="/assets/scripts/tool-performance.js"></script>
   <script src="/assets/scripts/effects.js"></script>
+  <script src="/assets/scripts/toast.js"></script>
   <script src="/assets/scripts/back-button.js"></script>
   <script>
     const fileInput = document.getElementById('file');
@@ -89,6 +91,7 @@
     const progressDetails = document.getElementById('progressDetails');
     const progressBarFill = document.getElementById('progressBarFill');
     const errorMessage = document.getElementById('errorMessage');
+    let currentPreviewUrl = null;
 
     function showError(msg) {
       errorMessage.textContent = msg;
@@ -110,6 +113,24 @@
     async function readImage(file) {
       const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await img.decode(); URL.revokeObjectURL(url); return img;
     }
+
+    // Add preview on file selection
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        try {
+          if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
+          currentPreviewUrl = URL.createObjectURL(file);
+          const img = new Image();
+          img.src = currentPreviewUrl;
+          preview.innerHTML = '';
+          preview.appendChild(img);
+          showToast('Image loaded', 'success');
+        } catch (err) {
+          showToast('Failed to load image', 'error');
+        }
+      }
+    });
 
     resizeBtn.addEventListener('click', async () => {
       const file = fileInput.files && fileInput.files[0];
@@ -171,6 +192,7 @@
         downloadLink.style.display = 'inline-block';
 
         updateProgress(100, 'Complete!', `Successfully resized to ${w}×${h} pixels`);
+        showToast('Image resized successfully', 'success');
 
         setTimeout(() => {
           showProgress(false);
@@ -186,4 +208,3 @@
   </script>
 </body>
 </html>
-

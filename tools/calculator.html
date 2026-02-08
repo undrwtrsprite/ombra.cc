@@ -5,21 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Advanced Calculator — ombra tools</title>
   <meta name="description" content="Advanced scientific calculator with history, memory functions, and unit conversions. Free, private, and runs entirely in your browser.">
-  <link rel="stylesheet" href="/assets/styles/base.css">
+  <meta name="theme-color" content="#09090b" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=52">
   <link rel="manifest" href="/manifest.json" />
   <style>
     .calculator {
       max-width: 960px;
       margin: 0 auto;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--surface);
       border-radius: 20px;
       padding: 24px;
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border);
     }
     
     .display {
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--input-bg);
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 20px;
@@ -41,7 +42,7 @@
     .current {
       font-size: 32px;
       font-weight: 600;
-      color: white;
+      color: var(--text-main);
     }
     
     .buttons-grid {
@@ -49,13 +50,24 @@
       grid-template-columns: repeat(4, minmax(110px, 1fr));
       gap: 16px;
     }
+
+    @media (max-width: 600px) {
+      .buttons-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .btn {
+        padding: 12px 4px;
+        font-size: 16px;
+      }
+    }
     
     .btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 16px 8px;
-      color: white;
+      color: var(--text-main);
       font-size: 18px;
       font-weight: 500;
       cursor: pointer;
@@ -64,7 +76,7 @@
     }
     
     .btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--surface-hover);
       transform: translateY(-2px);
     }
     

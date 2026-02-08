@@ -60,7 +60,6 @@ The website uses a service worker to cache all tools and assets, enabling:
 - UUID Generator
 
 ### Utilities
-- Advanced Calculator
 - Currency Converter
 - Color Converter
 - Password Generator

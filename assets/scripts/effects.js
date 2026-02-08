@@ -15,10 +15,14 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Skip expensive animations on tool pages for better performance
   const isToolPage = window.location.pathname.includes('/tools/');
+  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const enableParallax = false;
+
   if (isToolPage) {
-    // Only run essential file input enhancements on tool pages
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const enableParallax = false;
+    const nav = document.querySelector('.nav');
+    if (nav) {
+      nav.style.display = 'none';
+    }
   // Utility: truncate text nicely with ellipsis
   function truncateText(text, max) {
     if (!text) return '';
@@ -49,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     inp.addEventListener('change', applyName);
     applyName();
   });
+  }
+
   // Typewriter effect for hero title - deferred to not block initial render
   const typeWriter = () => {
     const text = "Tools that just work.";
@@ -193,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // General reveal animations for other elements
-    const animatedSelectors = '.reveal, .cards-grid, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
+    const animatedSelectors = '.reveal, .cards-grid, .tool-list, .tool-item, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
     const revealEls = document.querySelectorAll(animatedSelectors);
     revealEls.forEach((el) => {
       el.classList.add('reveal');
@@ -219,28 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Smooth scroll for hash links - always enabled for navigation
-  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-    anchor.addEventListener('click', (e) => {
-      const target = document.querySelector(anchor.getAttribute('href'));
-      if (!target) return;
-      e.preventDefault();
-      const targetPosition = target.getBoundingClientRect().top + window.pageYOffset;
-      const startPosition = window.pageYOffset;
-      const distance = targetPosition - startPosition;
-      const duration = 900; let start = null;
-      function step(currentTime) {
-        if (start === null) start = currentTime;
-        const timeElapsed = currentTime - start;
-        const t = Math.min(timeElapsed / duration, 1);
-        const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        window.scrollTo(0, startPosition + (distance * ease));
-        if (timeElapsed < duration) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    });
-  });
-
   // Nav background and hide-on-scroll behavior - skip on tool pages for performance
   const nav = document.querySelector('.nav');
   if (nav && !isToolPage) {
@@ -250,8 +234,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const y = window.scrollY;
       // Background adjustment
       nav.style.background = y > 8 ? 'rgba(29, 29, 31, 0.72)' : 'rgba(29, 29, 31, 0.6)';
+      
+      // Check if search is focused to prevent hiding while typing
+      const searchInput = document.querySelector('.nav-search input');
+      const isSearchFocused = searchInput && document.activeElement === searchInput;
+
       // Hide when scrolling down, show when scrolling up
-      if (y > lastY && y > 120) {
+      if (y > lastY && y > 120 && !isSearchFocused) {
         nav.classList.add('nav--hidden');
       } else {
         nav.classList.remove('nav--hidden');
@@ -298,4 +287,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Service Worker Update Notification
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      if (reg.waiting) showUpdateToast(reg.waiting);
+      
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateToast(newWorker);
+          }
+        });
+      });
+    });
+  });
 
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+}
+
+function showUpdateToast(worker) {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  if (document.querySelector('.toast-update')) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-info toast-update';
+  toast.innerHTML = `
+    <div class="toast-icon">🔄</div>
+    <div class="toast-message">New update available</div>
+    <button class="update-btn" style="background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(255,255,255,0.3); padding:4px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; margin-left:auto; transition:background 0.2s;">Update</button>
+  `;
+  
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('visible'));
+  
+  const btn = toast.querySelector('.update-btn');
+  btn.addEventListener('click', () => {
+    btn.textContent = 'Updating...';
+    worker.postMessage({ type: 'SKIP_WAITING' });
+  });
+}

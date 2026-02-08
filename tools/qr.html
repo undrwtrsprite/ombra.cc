@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QR Code — ombra tools</title>
-  <link rel="stylesheet" href="/assets/styles/base.css" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=52" />
 </head>
 <body>
   <div class="bg-layer bg-gradient"></div>
@@ -25,7 +26,7 @@
       <div class="tool-body">
         <div class="toolbar" role="toolbar" aria-label="QR Generator">
           <label for="text">Text/URL</label>
-          <input type="text" id="text" placeholder="https://example.com" style="flex:1; min-width: 280px;" />
+          <input type="text" id="text" placeholder="https://example.com" style="flex:1;" />
           <label for="size">Size</label>
           <input type="number" id="size" value="256" min="64" max="1024" />
           <label for="ecc">EC Level</label>
@@ -89,4 +90,3 @@
   </script>
 </body>
 </html>
-

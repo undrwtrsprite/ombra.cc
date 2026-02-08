@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>ombra tools — fast, private, beautiful</title>
   <meta name="description" content="A clean collection of fast, private, ad‑free tools: image convert, resize, PDF to text, text to PDF, QR code, password generator, and more." />
+  <meta name="theme-color" content="#09090b" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
-  <link rel="stylesheet" href="/assets/styles/base.css?v=4" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=56" />
   <link rel="manifest" href="/manifest.json" />
   
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='black'/%3E%3Ctext x='50' y='55' font-family='sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3Eo%3C/text%3E%3C/svg%3E">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
+  <a href="#tools" class="skip-to-content">Skip to content</a>
   <div class="bg-layer bg-gradient"></div>
   <div class="bg-layer bg-mesh"></div>
   <div class="bg-animation" id="bgAnimation"></div>
@@ -44,16 +46,23 @@
             <path d="M4.681 3H2V2h3.5l.5.5V6H5V4a5 5 0 1 0 4.53-.761l.302-.954A6 6 0 1 1 4.681 3z" stroke="currentColor" stroke-width="1.2" fill="none"/>
           </svg>
         </button>
+        <button id="settingsBtn" class="refresh-btn" title="Settings" aria-label="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
       </div>
     </div>
   </nav>
 
   <div class="container homepage-return">
-    <section class="hero hero-desktop homepage-return">
+    <section class="hero homepage-return">
+      <div class="hero-badge">✨ Privacy-first tools</div>
       <h1 class="hero-title">
         <span class="typing-text" data-typing>Tools that just work.</span><span class="typing-cursor"></span>
       </h1>
       <p class="hero-subtitle">Fast, private, and free. No ads, no tracking, no nonsense.</p>
+
       <div class="hero-actions">
         <a class="btn-primary" href="#tools">Explore tools</a>
       </div>
@@ -64,219 +73,263 @@
       </div>
     </section>
 
-    <section class="hero hero-mobile homepage-return">
-      <h1 class="hero-title">
-        <span class="typing-text" data-typing>Tools that just work.</span><span class="typing-cursor"></span>
-      </h1>
-      <p class="hero-subtitle">Fast, private, and free. No ads, no tracking, no nonsense.</p>
-      <div class="hero-actions">
-        <a class="btn-primary" href="#tools">Explore tools</a>
-      </div>
-    </section>
-
-      <div class="content-section" id="tools">
-      <h3 class="tools-heading">Images & PDFs</h3>
-      <div class="cards-grid reveal visible">
-        <a class="glass-card tilt-card" data-tags="images convert" href="/tools/image-converter.html">
-          <div class="card-icon">🖼️</div>
-          <div class="card-title">Image Converter</div>
-          <div class="card-description">Convert between JPG, PNG, WEBP formats with quality control. No upload needed.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="images compress" href="/tools/image-resizer.html">
-          <div class="card-icon">📐</div>
-          <div class="card-title">Image Resizer</div>
-          <div class="card-description">Resize and compress images while maintaining quality and aspect ratio.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="pdf text" href="/tools/pdf-to-text.html">
-          <div class="card-icon">📄</div>
-          <div class="card-title">PDF to Text</div>
-          <div class="card-description">Extract text from PDFs locally using your device's processing power.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="pdf text" href="/tools/text-to-pdf.html">
-          <div class="card-icon">📝</div>
-          <div class="card-title">Text to PDF</div>
-          <div class="card-description">Convert your notes and text into clean, printable PDF documents.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="pdf" href="/tools/pdf-merge.html">
-          <div class="card-icon">📎</div>
-          <div class="card-title">PDF Merger</div>
-          <div class="card-description">Combine multiple PDFs into one. Fast and private, runs in your browser.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="images pdf convert" href="/tools/image-to-pdf.html">
-          <div class="card-icon">🖼️</div>
-          <div class="card-title">Image to PDF</div>
-          <div class="card-description">Turn images into a single PDF. Choose page size and fit options.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="images convert" href="/tools/heic-to-jpg.html">
-          <div class="card-icon">📱</div>
-          <div class="card-title">HEIC to JPG</div>
-          <div class="card-description">Convert iPhone HEIC photos to JPG or PNG instantly, offline.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="compress" href="/tools/file-compressor.html">
-          <div class="card-icon">🗜️</div>
-          <div class="card-title">File Compressor</div>
-          <div class="card-description">Compress images, documents, and files to reduce size while maintaining quality.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/color-converter.html">
-          <div class="card-icon">🎨</div>
-          <div class="card-title">Color Converter</div>
-          <div class="card-description">Convert between HEX, RGB, HSL, CMYK, and HSV color formats instantly.</div>
-        </a>
+    <div class="content-section" id="tools">
+      
+      <!-- Frequently Used (Hidden by default, populated by JS) -->
+      <div class="tool-category reveal" id="featured-section" style="display: none;">
+        <div class="category-header">
+          <h3 class="category-title">Frequently Used</h3>
+          <div class="category-line"></div>
+        </div>
+        <div class="tool-list"></div>
       </div>
 
-
-
-      <h3 class="tools-heading">Text & Data</h3>
-      <div class="cards-grid reveal visible">
-        <a class="glass-card tilt-card" data-tags="qr" href="/tools/qr.html">
-          <div class="card-icon">🔗</div>
-          <div class="card-title">QR Code Generator</div>
-          <div class="card-description">Create QR codes from any text or URL. Download as high-quality PNG.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="images" href="/tools/color-picker.html">
-          <div class="card-icon">🎨</div>
-          <div class="card-title">Color Picker</div>
-          <div class="card-description">Pick colors from images, generate palettes, and convert between formats.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="text" href="/tools/text-case.html">
-          <div class="card-icon">📝</div>
-          <div class="card-title">Text Case Converter</div>
-          <div class="card-description">Convert text between UPPERCASE, lowercase, Title Case, and more formats.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="data" href="/tools/json-formatter.html">
-          <div class="card-icon">⚡</div>
-          <div class="card-title">JSON Formatter</div>
-          <div class="card-description">Format, validate, and beautify JSON data with syntax highlighting.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="encode data" href="/tools/base64.html">
-          <div class="card-icon">🧬</div>
-          <div class="card-title">Base64 Encoder/Decoder</div>
-          <div class="card-description">Encode and decode text or files to/from Base64 locally.</div>
-        </a>
-
-        <a class="glass-card tilt-card" data-tags="text" href="/tools/markdown.html">
-          <div class="card-icon">📖</div>
-          <div class="card-title">Markdown Editor</div>
-          <div class="card-description">Write and preview Markdown with live rendering and export options.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="text" href="/tools/notepad.html">
-          <div class="card-icon">📝</div>
-          <div class="card-title">Smart Notepad</div>
-          <div class="card-description">Rich text editor with auto-save, formatting, and export to multiple formats.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/text-diff.html">
-          <div class="card-icon">🧩</div>
-          <div class="card-title">Text Diff</div>
-          <div class="card-description">Compare two texts and highlight insertions and deletions.</div>
-        </a>
-                                <a class="glass-card tilt-card" data-tags="data utility" href="/tools/json-to-csv.html">
-          <div class="card-icon">🔄</div>
-          <div class="card-title">Data Converter</div>
-          <div class="card-description">Convert between JSON and CSV formats with advanced options and flattening.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/text-statistics.html">
-          <div class="card-icon">📈</div>
-          <div class="card-title">Text Statistics</div>
-          <div class="card-description">Analyze text for word count, reading time, frequency analysis, and insights.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="text utility" href="/tools/lorem-ipsum.html">
-          <div class="card-icon">📝</div>
-          <div class="card-title">Lorem Ipsum Generator</div>
-          <div class="card-description">Generate placeholder text in various styles: Lorem Ipsum, Hipster, Bacon, and more.</div>
-        </a>
+      <!-- Images & PDFs -->
+      <div class="tool-category reveal">
+        <div class="category-header">
+          <h3 class="category-title">Images & PDFs</h3>
+          <div class="category-line"></div>
+        </div>
+        <div class="tool-list">
+          <a class="tool-item" data-tags="images convert" href="/tools/image-converter.html">
+            <div class="tool-item-icon">🖼️</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Image Converter</div>
+              <div class="tool-item-desc">Convert between JPG, PNG, WEBP formats with quality control.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="images compress" href="/tools/image-resizer.html">
+            <div class="tool-item-icon">📐</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Image Resizer</div>
+              <div class="tool-item-desc">Resize and compress images while maintaining quality.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="pdf text" href="/tools/pdf-to-text.html">
+            <div class="tool-item-icon">📄</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">PDF to Text</div>
+              <div class="tool-item-desc">Extract text from PDFs locally using your device.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="pdf text" href="/tools/text-to-pdf.html">
+            <div class="tool-item-icon">📝</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Text to PDF</div>
+              <div class="tool-item-desc">Convert your notes and text into clean PDF documents.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="pdf" href="/tools/pdf-merge.html">
+            <div class="tool-item-icon">📎</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">PDF Merger</div>
+              <div class="tool-item-desc">Combine multiple PDFs into one. Fast and private.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="images pdf convert" href="/tools/image-to-pdf.html">
+            <div class="tool-item-icon">🖼️</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Image to PDF</div>
+              <div class="tool-item-desc">Turn images into a single PDF with custom page sizes.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="images convert" href="/tools/heic-to-jpg.html">
+            <div class="tool-item-icon">📱</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">HEIC to JPG</div>
+              <div class="tool-item-desc">Convert iPhone HEIC photos to JPG or PNG instantly.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="compress" href="/tools/file-compressor.html">
+            <div class="tool-item-icon">🗜️</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">File Compressor</div>
+              <div class="tool-item-desc">Compress images, documents, and files to reduce size.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+        </div>
       </div>
 
-      <h3 class="tools-heading">Utilities</h3>
-      <div class="cards-grid reveal visible">
-        <a class="glass-card tilt-card" data-tags="qr utility" href="/tools/qr-scanner.html">
-          <div class="card-icon">📷</div>
-          <div class="card-title">QR Scanner</div>
-          <div class="card-description">Scan QR codes using your camera. No uploads or tracking.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="convert utility" href="/tools/unit-converter.html">
-          <div class="card-icon">📊</div>
-          <div class="card-title">Unit Converter</div>
-          <div class="card-description">Convert between length, weight, temperature, and other units instantly.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="encode utility" href="/tools/url-encoder.html">
-          <div class="card-icon">🔗</div>
-          <div class="card-title">URL Encoder/Decoder</div>
-          <div class="card-description">Encode and decode URLs, handle special characters and Unicode.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/calculator.html">
-          <div class="card-icon">🧮</div>
-          <div class="card-title">Advanced Calculator</div>
-          <div class="card-description">Scientific calculator with history, memory functions, and unit conversions.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/stopwatch.html">
-          <div class="card-icon">⏱️</div>
-          <div class="card-title">Stopwatch & Timer</div>
-          <div class="card-description">Precise stopwatch, countdown timer, and lap time tracking.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="convert utility" href="/tools/currency-converter.html">
-          <div class="card-icon">💱</div>
-          <div class="card-title">Currency Converter</div>
-          <div class="card-description">Real-time currency conversion with live exchange rates and historical data.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/emoji-picker.html">
-          <div class="card-icon">😊</div>
-          <div class="card-title">Emoji Picker</div>
-          <div class="card-description">Browse, search, and copy emojis with categories and favorites.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/hash-generator.html">
-          <div class="card-icon">🔒</div>
-          <div class="card-title">Hash Generator</div>
-          <div class="card-description">Generate MD5, SHA-1, SHA-256, SHA-512, and SHA3 hashes for text and files.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/number-converter.html">
-          <div class="card-icon">🔢</div>
-          <div class="card-title">Number Base Converter</div>
-          <div class="card-description">Convert numbers between binary, octal, decimal, and hexadecimal bases.</div>
-        </a>
+      <!-- Text & Data -->
+      <div class="tool-category reveal">
+        <div class="category-header">
+          <h3 class="category-title">Text & Data</h3>
+          <div class="category-line"></div>
+        </div>
+        <div class="tool-list">
+          <a class="tool-item" data-tags="qr" href="/tools/qr.html">
+            <div class="tool-item-icon">🔗</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">QR Code Generator</div>
+              <div class="tool-item-desc">Create QR codes from any text or URL.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="images" href="/tools/color-picker.html">
+            <div class="tool-item-icon">🎨</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Color Picker</div>
+              <div class="tool-item-desc">Pick colors from images and generate palettes.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="text" href="/tools/text-case.html">
+            <div class="tool-item-icon">📝</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Text Case Converter</div>
+              <div class="tool-item-desc">Convert text between UPPERCASE, lowercase, and more.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="data" href="/tools/json-formatter.html">
+            <div class="tool-item-icon">⚡</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">JSON Formatter</div>
+              <div class="tool-item-desc">Format, validate, and beautify JSON data.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="text" href="/tools/markdown.html">
+            <div class="tool-item-icon">📖</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Markdown Editor</div>
+              <div class="tool-item-desc">Write and preview Markdown with live rendering.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="text" href="/tools/notepad.html">
+            <div class="tool-item-icon">📝</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Smart Notepad</div>
+              <div class="tool-item-desc">Rich text editor with auto-save and export options.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="text utility" href="/tools/text-diff.html">
+            <div class="tool-item-icon">🧩</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Text Diff</div>
+              <div class="tool-item-desc">Compare two texts and highlight differences.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="data utility" href="/tools/json-to-csv.html">
+            <div class="tool-item-icon">🔄</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Data Converter</div>
+              <div class="tool-item-desc">Convert between JSON and CSV formats.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+        </div>
       </div>
 
-      <h3 class="tools-heading">IT & Network Tools</h3>
-      <div class="cards-grid reveal visible">
-        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/ip-calculator.html">
-          <div class="card-icon">🌐</div>
-          <div class="card-title">IP Calculator</div>
-          <div class="card-description">Calculate subnet masks, network addresses, and host ranges for IP addresses.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/ip-info.html">
-          <div class="card-icon">🛰️</div>
-          <div class="card-title">IP Info</div>
-          <div class="card-description">Detect your public IP, ISP, ASN, and approximate location. No data saved.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/whois-lookup.html">
-          <div class="card-icon">📇</div>
-          <div class="card-title">WHOIS Lookup</div>
-          <div class="card-description">Query domain registration details: registrar, dates, nameservers, contacts.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/dns-propagation.html">
-          <div class="card-icon">🛰</div>
-          <div class="card-title">DNS Propagation</div>
-          <div class="card-description">Check how DNS records resolve across multiple global resolvers.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="network utility" href="/tools/dns-lookup.html">
-          <div class="card-icon">🔍</div>
-          <div class="card-title">DNS Lookup</div>
-          <div class="card-description">Query DNS records including A, AAAA, MX, TXT, NS, and more for any domain.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility data" href="/tools/unix-time.html">
-          <div class="card-icon">⏰</div>
-          <div class="card-title">Unix Time Converter</div>
-          <div class="card-description">Convert between Unix epoch, ISO 8601, UTC and local time.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/uuid-generator.html">
-          <div class="card-icon">🔑</div>
-          <div class="card-title">UUID Generator</div>
-          <div class="card-description">Generate secure UUIDv4 identifiers with formatting options.</div>
-        </a>
-        <a class="glass-card tilt-card" data-tags="utility" href="/tools/password-generator.html">
-          <div class="card-icon">🔐</div>
-          <div class="card-title">Password Generator</div>
-          <div class="card-description">Generate secure passwords with customizable options and strength checking.</div>
-        </a>
+      <!-- Utilities -->
+      <div class="tool-category reveal">
+        <div class="category-header">
+          <h3 class="category-title">Utilities</h3>
+          <div class="category-line"></div>
+        </div>
+        <div class="tool-list">
+          <a class="tool-item" data-tags="qr utility" href="/tools/qr-scanner.html">
+            <div class="tool-item-icon">📷</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">QR Scanner</div>
+              <div class="tool-item-desc">Scan QR codes using your camera.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="convert utility" href="/tools/unit-converter.html">
+            <div class="tool-item-icon">📊</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Unit Converter</div>
+              <div class="tool-item-desc">Convert between length, weight, temperature, and more.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="utility" href="/tools/stopwatch.html">
+            <div class="tool-item-icon">⏱️</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Stopwatch & Timer</div>
+              <div class="tool-item-desc">Precise stopwatch and countdown timer.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="convert utility" href="/tools/currency-converter.html">
+            <div class="tool-item-icon">💱</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Currency Converter</div>
+              <div class="tool-item-desc">Real-time currency conversion with live rates.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="utility" href="/tools/password-generator.html">
+            <div class="tool-item-icon">🔐</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Password Generator</div>
+              <div class="tool-item-desc">Generate secure passwords with custom options.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- IT & Network -->
+      <div class="tool-category reveal">
+        <div class="category-header">
+          <h3 class="category-title">IT & Network</h3>
+          <div class="category-line"></div>
+        </div>
+        <div class="tool-list">
+          <a class="tool-item" data-tags="network utility" href="/tools/ip-calculator.html">
+            <div class="tool-item-icon">🌐</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">IP Calculator</div>
+              <div class="tool-item-desc">Calculate subnet masks and network addresses.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="network utility" href="/tools/ip-info.html">
+            <div class="tool-item-icon">🛰️</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">IP Info</div>
+              <div class="tool-item-desc">Detect your public IP, ISP, and location.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="network utility" href="/tools/whois-lookup.html">
+            <div class="tool-item-icon">📇</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">WHOIS Lookup</div>
+              <div class="tool-item-desc">Query domain registration details.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="network utility" href="/tools/dns-lookup.html">
+            <div class="tool-item-icon">🔍</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">DNS Lookup</div>
+              <div class="tool-item-desc">Query DNS records for any domain.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+          <a class="tool-item" data-tags="utility data" href="/tools/unix-time.html">
+            <div class="tool-item-icon">⏰</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Unix Time Converter</div>
+              <div class="tool-item-desc">Convert between Unix epoch and human time.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
+        </div>
       </div>
 
       <section class="cta-section reveal">
@@ -293,6 +346,44 @@
     <p>© 2025 ombra. Built with care and privacy in mind.</p>
   </footer>
 
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay drawer drawer-bottom">
+    <div class="modal-card">
+      <button class="drawer-close modal-close" aria-label="Close">×</button>
+      <div class="modal-header" style="margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 24px;">Settings</h2>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group">
+          <h3>Appearance</h3>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Reduce Motion</div>
+              <div class="setting-desc">Minimize animations for better performance</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="motionToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3>Data</h3>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Clear Local Data</div>
+              <div class="setting-desc">Reset all tool preferences and history</div>
+            </div>
+            <button class="btn-secondary" id="clearDataBtn" style="padding: 6px 12px; font-size: 13px;">Clear</button>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 12px;">
+          ombra tools v1.0.0
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Ensure hero text is visible immediately on low-end devices (runs before effects.js)
     (function() {
@@ -304,44 +395,41 @@
       });
     })();
   </script>
+  <script src="/assets/scripts/help.js"></script>
+  <script src="/assets/scripts/keyboard-shortcuts.js"></script>
+  <script src="/assets/scripts/toast.js"></script>
+  <script src="/assets/scripts/modal.js?v=53"></script>
+  <script src="/assets/scripts/settings.js?v=46"></script>
+  <script src="/assets/scripts/visitor-counter.js"></script>
+  <script src="/assets/scripts/usage-tracker.js"></script>
   <script src="/assets/scripts/effects.js"></script>
   <script>
-    const toolSearch = document.getElementById('toolSearch');
     // Simple client-side filtering of tool cards
-    const filterBar = null;
-    const underline = null;
-    const sections = Array.from(document.querySelectorAll('#tools .cards-grid'));
-    const headings = Array.from(document.querySelectorAll('#tools .tools-heading'));
+    const categories = Array.from(document.querySelectorAll('.tool-category'));
 
     // Filters removed
-
-    if (toolSearch) {
-      toolSearch.addEventListener('input', () => {
-        const q = toolSearch.value.trim().toLowerCase();
-        const showAll = !q;
-        sections.forEach((grid, gridIdx) => {
-          const cards = Array.from(grid.querySelectorAll('.glass-card'));
-          let visibleCount = 0;
-          cards.forEach(card => {
-            const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
-            const desc = card.querySelector('.card-description')?.textContent.toLowerCase() || '';
-            const tags = (card.getAttribute('data-tags') || '').toLowerCase();
-            const match = showAll || title.includes(q) || desc.includes(q) || tags.includes(q);
-            card.style.display = match ? '' : 'none';
-            if (match) visibleCount++;
-          });
-          const heading = headings[gridIdx];
-          if (heading) heading.style.display = visibleCount > 0 ? '' : 'none';
-          grid.style.display = visibleCount > 0 ? 'grid' : 'none';
-        });
-      });
-    }
 
     // Wire up nav search to the same filter
     const navSearch = document.getElementById('navSearch');
     const navResults = document.getElementById('navResults');
     const searchInput = navSearch.querySelector('input[type="search"]');
     
+    // Settings button handler (inline fallback)
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsBtn && settingsModal) {
+      settingsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.Modal && window.Modal.open) {
+          window.Modal.open(settingsModal, { position: 'bottom' });
+        } else {
+          settingsModal.classList.add('drawer-bottom');
+          void settingsModal.offsetWidth; // Force reflow
+          settingsModal.classList.add('visible');
+        }
+      });
+    }
+
     // Build an index of tools for suggestions
     const toolCards = Array.from(document.querySelectorAll('.glass-card'));
     const toolIndex = toolCards.map(card => ({
@@ -388,10 +476,21 @@
         
         // Debounce search operations
         debounceSearch(() => {
-          // Tool search functionality
-          toolSearch && (toolSearch.value = q);
-          const event = new Event('input');
-          toolSearch && toolSearch.dispatchEvent(event);
+          // Filter tools on page
+          const showAll = !q;
+          categories.forEach(category => {
+            const items = Array.from(category.querySelectorAll('.tool-item'));
+            let visibleCount = 0;
+            items.forEach(item => {
+              const title = item.querySelector('.tool-item-title')?.textContent.toLowerCase() || '';
+              const desc = item.querySelector('.tool-item-desc')?.textContent.toLowerCase() || '';
+              const tags = (item.getAttribute('data-tags') || '').toLowerCase();
+              const match = showAll || title.includes(q) || desc.includes(q) || tags.includes(q);
+              item.style.display = match ? '' : 'none';
+              if (match) visibleCount++;
+            });
+            category.style.display = visibleCount > 0 ? '' : 'none';
+          });
           
           // Suggestions dropdown
           const query = q.toLowerCase();
