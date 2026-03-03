@@ -1,0 +1,54 @@
+{
+    "sorting_rules": {
+        "Visuals": [
+            ".jpg",
+            ".png",
+            ".webp",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".heic"
+        ],
+        "Videos": [
+            ".mp4",
+            ".mov",
+            ".avi",
+            ".mkv"
+        ],
+        "Audio": [
+            ".mp3",
+            ".wav",
+            ".flac",
+            ".aac"
+        ],
+        "Docs": [
+            ".pdf",
+            ".docx",
+            ".xlsx",
+            ".pptx",
+            ".txt",
+            ".md"
+        ],
+        "Archives": [
+            ".zip",
+            ".rar",
+            ".7z",
+            ".tar",
+            ".gz"
+        ],
+        "Dev": [
+            ".py",
+            ".ps1",
+            ".js",
+            ".html",
+            ".css",
+            ".json",
+            ".xml",
+            ".ipynb"
+        ],
+        "Installers": [
+            ".exe",
+            ".msi"
+        ]
+    }
+}
