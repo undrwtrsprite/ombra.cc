@@ -1,54 +1,55 @@
 {
     "sorting_rules": {
         "Visuals": [
+            ".gif",
+            ".heic",
+            ".jpeg",
             ".jpg",
             ".png",
-            ".webp",
-            ".jpeg",
-            ".gif",
             ".svg",
-            ".heic"
+            ".webp"
         ],
         "Videos": [
-            ".mp4",
-            ".mov",
             ".avi",
-            ".mkv"
+            ".mkv",
+            ".mov",
+            ".mp4"
         ],
         "Audio": [
-            ".mp3",
-            ".wav",
+            ".aac",
             ".flac",
-            ".aac"
+            ".mp3",
+            ".wav"
         ],
         "Docs": [
-            ".pdf",
             ".docx",
-            ".xlsx",
+            ".md",
+            ".pdf",
             ".pptx",
             ".txt",
-            ".md"
+            ".xlsx"
         ],
         "Archives": [
-            ".zip",
-            ".rar",
             ".7z",
+            ".gz",
+            ".rar",
             ".tar",
-            ".gz"
+            ".zip"
         ],
         "Dev": [
-            ".py",
-            ".ps1",
-            ".js",
-            ".html",
             ".css",
+            ".html",
+            ".ipynb",
+            ".js",
             ".json",
-            ".xml",
-            ".ipynb"
+            ".ps1",
+            ".py",
+            ".xml"
         ],
         "Installers": [
             ".exe",
-            ".msi"
+            ".msi",
+            ".pkg"
         ]
     }
 }

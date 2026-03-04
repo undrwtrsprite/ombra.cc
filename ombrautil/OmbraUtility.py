@@ -1,6 +1,7 @@
 import os
 import shutil
 from collections import deque
+import concurrent.futures
 import threading
 import time
 import sys
@@ -21,6 +22,7 @@ import winreg
 import ctypes
 from ctypes import wintypes
 import math
+import re
 import matplotlib
 import hashlib
 import urllib.request
@@ -56,24 +58,75 @@ NAV_ICONS = {
     "Installer": "📦", "Sys Info": "💻", "Logs": "📋", "Settings": "⚙️",
 }
 
-# --- SOFTWARE INSTALLER CONFIG ---
-SOFTWARE_TO_INSTALL = {
-    "Google Chrome": "Google.Chrome",
-    "Mozilla Firefox": "Mozilla.Firefox",
-    "7-Zip": "7zip.7zip",
-    "Notepad++": "Notepad++.Notepad++",
-    "VLC Media Player": "VideoLAN.VLC",
-    "Adobe Acrobat Reader": "Adobe.Acrobat.Reader.DC",
-    "Discord": "Discord.Discord",
-    "Steam": "Valve.Steam",
-    "Zoom": "Zoom.Zoom",
-    "Spotify": "Spotify.Spotify",
-    "WhatsApp": "WhatsApp.WhatsApp",
-    "Slack": "Slack.Slack",
-    "Visual Studio Code": "Microsoft.VisualStudioCode",
-    "Python 3.12": "Python.Python.3.12",
-    "Node.js LTS": "OpenJS.NodeJS.LTS"
+# --- SOFTWARE INSTALLER CONFIG (category -> list of (display_name, winget_id)) ---
+# All IDs are from the official winget repository (winget search <name> to verify).
+INSTALLER_CATEGORIES = {
+    "Browsers": [
+        ("Google Chrome", "Google.Chrome"),
+        ("Mozilla Firefox", "Mozilla.Firefox"),
+        ("Microsoft Edge", "Microsoft.Edge"),
+        ("Brave Browser", "Brave.Brave"),
+        ("Opera", "Opera.Opera"),
+    ],
+    "Media & Documents": [
+        ("VLC Media Player", "VideoLAN.VLC"),
+        ("Adobe Acrobat Reader DC", "Adobe.Acrobat.Reader.64-bit"),
+        ("LibreOffice", "TheDocumentFoundation.LibreOffice"),
+        ("Sumatra PDF", "SumatraPDF.SumatraPDF"),
+        ("HandBrake", "HandBrake.HandBrake"),
+    ],
+    "Development": [
+        ("Visual Studio Code", "Microsoft.VisualStudioCode"),
+        ("Python 3.12", "Python.Python.3.12"),
+        ("Node.js LTS", "OpenJS.NodeJS.LTS"),
+        ("Git", "Git.Git"),
+        ("Docker Desktop", "Docker.DockerDesktop"),
+        ("Windows Terminal", "Microsoft.WindowsTerminal"),
+        ("PuTTY", "PuTTY.PuTTY"),
+        ("WinSCP", "WinSCP.WinSCP"),
+    ],
+    "Communication": [
+        ("Discord", "Discord.Discord"),
+        ("Zoom", "Zoom.Zoom"),
+        ("WhatsApp", "WhatsApp.WhatsApp"),
+        ("Slack", "Slack.Slack"),
+        ("Telegram", "Telegram.Telegram"),
+        ("Microsoft Teams", "Microsoft.Teams"),
+    ],
+    "Utilities & Tools": [
+        ("7-Zip", "7zip.7zip"),
+        ("Notepad++", "Notepad++.Notepad++"),
+        ("Microsoft PowerToys", "Microsoft.PowerToys"),
+        ("Everything (search)", "voidtools.Everything"),
+        ("ShareX", "ShareX.ShareX"),
+        ("Greenshot", "Greenshot.Greenshot"),
+        ("KeePass", "KeePass.KeePass"),
+        ("WinRAR", "RARLab.WinRAR"),
+        ("CCleaner", "Piriform.CCleaner"),
+        ("FileZilla", "FileZilla.FileZilla"),
+    ],
+    "Gaming & Entertainment": [
+        ("Steam", "Valve.Steam"),
+        ("Spotify", "Spotify.Spotify"),
+        ("OBS Studio", "OBSProject.OBSStudio"),
+        ("qBittorrent", "qBittorrent.qBittorrent"),
+    ],
+    "Photo & Design": [
+        ("GIMP", "GIMP.GIMP"),
+        ("Paint.NET", "dotPDN.PaintDotNet"),
+        ("IrfanView", "IrfanSkiljan.IrfanView"),
+    ],
+    "Remote & Security": [
+        ("TeamViewer", "TeamViewer.TeamViewer"),
+        ("AnyDesk", "AnyDesk.AnyDesk"),
+        ("Malwarebytes", "Malwarebytes.Malwarebytes"),
+    ],
+    "Audio & Video": [
+        ("Audacity", "Audacity.Audacity"),
+    ],
 }
+# Flat dict for backward compatibility (name -> id)
+SOFTWARE_TO_INSTALL = {name: app_id for _cat, apps in INSTALLER_CATEGORIES.items() for name, app_id in apps}
 # --- CONSTANTS ---
 DESKTOP_PATH = Path.home() / "Desktop"
 DOWNLOADS_PATH = Path.home() / "Downloads"
@@ -85,6 +138,26 @@ NOTIFICATION_SPACING = 10
 NOTIFICATION_MARGIN_X = 15
 NOTIFICATION_MARGIN_Y = 15
 CONFIG_FILE = Path("config.json")
+
+# Fonts to preload so first use doesn't stall (family, size, bold)
+_PRELOAD_FONTS = [
+    ("Segoe UI", 11), ("Segoe UI", 11, "bold"), ("Segoe UI", 12), ("Segoe UI", 13), ("Segoe UI", 13, "bold"),
+    ("Segoe UI", 14), ("Segoe UI", 14, "bold"), ("Segoe UI", 15), ("Segoe UI", 15, "bold"),
+    ("Segoe UI Variable Display", 14, "bold"), ("Segoe UI Variable Display", 24, "bold"),
+    ("Segoe UI Variable Display", 26, "bold"), ("Segoe UI Variable Display", 30, "bold"),
+    ("Cascadia Code", 11), ("Consolas", 12),
+]
+# Tab names to preload in background after startup (order by likelihood of use)
+_PRELOAD_TABS = ["Tools", "File Scanner", "Installer", "Sys Info", "Logs", "Settings"]
+DEFAULT_RULES = {
+    "Visuals": [".jpg", ".png", ".webp", ".jpeg", ".gif", ".svg", ".heic"],
+    "Videos": [".mp4", ".mov", ".avi", ".mkv"],
+    "Audio": [".mp3", ".wav", ".flac", ".aac"],
+    "Docs": [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"],
+    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz"],
+    "Dev": [".py", ".ps1", ".js", ".html", ".css", ".json", ".xml", ".ipynb"],
+    "Installers": [".exe", ".msi"],
+}
 
 # Windows API constants for desktop refresh
 SHCNE_ASSOCCHANGED = 0x08000000
@@ -140,6 +213,19 @@ def send_to_recycle_bin(path_str: str) -> bool:
     # Check if the operation was successful and not aborted by the user (if confirmation was on)
     return result == 0 and not file_op.fAnyOperationsAborted
 
+def raise_process_priority():
+    """Ask the OS to give this process more CPU time (Windows: Above Normal priority). Makes the app feel snappier when the system is busy."""
+    if platform.system() != "Windows":
+        return
+    try:
+        kernel32 = ctypes.windll.kernel32
+        # ABOVE_NORMAL_PRIORITY_CLASS = 0x8000 — slightly more CPU than normal, not aggressive
+        if kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), 0x8000):
+            pass  # Success
+    except Exception:
+        pass
+
+
 def is_winget_available():
     """Checks if the winget command is available on the system."""
     try:
@@ -148,20 +234,46 @@ def is_winget_available():
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
+def is_app_installed(app_id):
+    """Returns True if the given winget package ID is installed. Used for single-app check and polling."""
+    if not is_winget_available():
+        return False
+    try:
+        r = subprocess.run(
+            ["winget", "list", "--id", app_id, "-e"],
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        if r.returncode != 0:
+            return False
+        return app_id in (r.stdout or "")
+    except (FileNotFoundError, Exception):
+        return False
+
+
 def check_installed_software():
     """Uses winget to get a list of installed software and returns a set of IDs."""
     installed_ids = set()
     if not is_winget_available():
         return installed_ids
     try:
-        result = subprocess.run(["winget", "list", "--source", "winget"], capture_output=True, text=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        result = subprocess.run(
+            ["winget", "list", "--source", "winget"],
+            capture_output=True,
+            text=True,
+            check=True,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
         for line in result.stdout.splitlines():
-            parts = line.split()
-            if not parts or line.startswith("Name") or line.startswith("---"):
+            if not line.strip() or line.startswith("Name") or line.startswith("---"):
                 continue
-            installed_ids.add(parts[-1]) # The ID is the last part of the line
+            parts = line.split()
+            if not parts:
+                continue
+            installed_ids.add(parts[-1])
     except (subprocess.CalledProcessError, FileNotFoundError):
-        pass # Silently fail if winget list fails
+        pass
     return installed_ids
 
 class GlobalHandler(FileSystemEventHandler):
@@ -174,17 +286,19 @@ class GlobalHandler(FileSystemEventHandler):
 class OmbraApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        raise_process_priority()
         self.withdraw()  # Keep hidden until fully built (splash is shown instead)
 
         self.realtime_active = False
         self.observer = None
         self.icons_hidden = False
         self.is_admin = is_admin()
-        self.rules = {}
-        self.load_config()
+        self.rules = dict(DEFAULT_RULES)
         self.installed_software_ids = set()
         self.sort_timer = None
         self.ping_thread = None
+        self._resize_after_id = None  # Debounce window resize
+        self._system_info_cache = None  # Filled on first use (thread-safe: read after write on main)
 
         self.notification_counter = 0 # To give unique names to toasts for tracking
         # --- UI STATE ---
@@ -203,137 +317,215 @@ class OmbraApp(ctk.CTk):
             "tinted": {"fg_color": "#1a3a5c", "hover_color": "#2a4a6c", "text_color": COLORS["accent"], "border_width": 0},
         }
 
-        # --- DYNAMIC WINDOW SIZING ---
+        # --- WINDOW SIZING: standard size, capped to fit screen (not resizable) ---
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         win_width = 980
         win_height = 720
-        if win_height > screen_height - 50: # Ensure it fits with taskbar
-            win_height = screen_height - 50
+        # Cap so window fits on smaller screens (leave margin for taskbar)
+        max_width = max(640, int(screen_width * 0.92))
+        max_height = max(480, int(screen_height * 0.88))
+        win_width = min(win_width, max_width)
+        win_height = min(win_height, max_height)
 
         # --- WINDOW SETUP ---
         admin_title = "  ·  Admin" if self.is_admin else ""
         self.title(f"Ombra Utility Pro{admin_title}")
         self.geometry(f"{win_width}x{win_height}")
         self.configure(fg_color=COLORS["bg"])
-        self.minsize(860, 620)
+        self.resizable(False, False)
+        self.minsize(win_width, win_height)
+        self.maxsize(win_width, win_height)
+        self._set_window_icon()
 
         # --- LAYOUT ---
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # --- SPLASH OVERLAY (show first, remove after UI is built) ---
+        # --- SPLASH: real loading bar (weighted steps) + status, then land on Dashboard ---
         splash_frame = ctk.CTkFrame(self, fg_color=COLORS["bg"], corner_radius=0, border_width=0)
         splash_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
-        splash_inner = ctk.CTkFrame(splash_frame, fg_color=COLORS["card"], corner_radius=20, border_width=1, border_color=COLORS["border"], width=380, height=160)
+        splash_frame.grid_rowconfigure(0, weight=1)
+        splash_frame.grid_columnconfigure(0, weight=1)
+        splash_inner = ctk.CTkFrame(splash_frame, fg_color=COLORS["card"], corner_radius=20, border_width=1, border_color=COLORS["border"], width=420, height=220)
         splash_inner.place(relx=0.5, rely=0.5, anchor="center")
-        ctk.CTkLabel(splash_inner, text="OMBRA", font=("Segoe UI Variable Display", 24, "bold"), text_color=COLORS["text"]).pack(pady=(24, 0))
-        ctk.CTkLabel(splash_inner, text="Utility Pro", font=("Segoe UI", 11), text_color=COLORS["subtext"]).pack()
-        ctk.CTkLabel(splash_inner, text="Loading…", font=("Segoe UI", 11), text_color=COLORS["accent"]).pack(pady=(12, 10))
-        splash_progress = ctk.CTkProgressBar(splash_inner, width=280, height=6, progress_color=COLORS["accent"], fg_color=COLORS["border"], mode="indeterminate", indeterminate_speed=1.2)
-        splash_progress.pack(pady=(0, 24))
-        splash_progress.start()
+        splash_inner.pack_propagate(False)
+        ctk.CTkLabel(splash_inner, text="OMBRA", font=("Segoe UI Variable Display", 26, "bold"), text_color=COLORS["text"]).pack(pady=(28, 2))
+        ctk.CTkLabel(splash_inner, text="Utility Pro", font=("Segoe UI", 12), text_color=COLORS["subtext"]).pack(pady=(0, 16))
+        splash_status = ctk.CTkLabel(splash_inner, text="Starting…", font=("Segoe UI", 12), text_color=COLORS["accent"])
+        splash_status.pack(pady=(0, 6))
+        progress_row = ctk.CTkFrame(splash_inner, fg_color="transparent")
+        progress_row.pack(fill="x", padx=32, pady=(0, 8))
+        progress_row.grid_columnconfigure(0, weight=1)
+        splash_progress = ctk.CTkProgressBar(progress_row, height=10, corner_radius=5, progress_color=COLORS["accent"], fg_color=COLORS["border"], mode="determinate")
+        splash_progress.grid(row=0, column=0, sticky="ew")
+        splash_pct_label = ctk.CTkLabel(progress_row, text="0%", font=("Segoe UI", 11, "bold"), text_color=COLORS["subtext"], width=36)
+        splash_pct_label.grid(row=0, column=1, padx=(12, 0))
+        splash_progress.set(0)
         self.deiconify()
         self.update_idletasks()
-        self.update()  # Show window with only splash first
+        self.update()
+        _splash_start = time.time()
+        SPLASH_MIN_SEC = 2.0
 
-        # --- SIDEBAR (iOS 26 Glass Panel) ---
+        # Weights per step (must sum to 100) so progress = (done / 100)
+        SPLASH_TOTAL = 100
+        splash_done = [0]  # mutable so closure can update
+
+        def _splash_step(weight, msg):
+            splash_done[0] = min(SPLASH_TOTAL, splash_done[0] + weight)
+            pct = splash_done[0] / SPLASH_TOTAL
+            splash_progress.set(pct)
+            splash_pct_label.configure(text=f"{splash_done[0]}%")
+            splash_status.configure(text=msg)
+            self.update_idletasks()
+            self.update()
+
+        nav_items = ["Dashboard", "Tools", "File Scanner", "Installer", "Sys Info", "Logs", "Settings"]
+        self.load_config()
+        _splash_step(3, "Loading config…")
+
+        # --- SIDEBAR ---
         self.nav_frame = ctk.CTkFrame(self, width=270, corner_radius=0, fg_color=COLORS["bg"], border_width=0)
-        self.nav_frame.grid(row=0, column=0, sticky="nsew", rowspan=2)
+        self.nav_frame.grid(row=0, column=0, sticky="nsew")
         self.nav_frame.grid_propagate(False)
         splash_frame.lift()
-        self.update_idletasks()
-        self.update()
-
         self.sidebar_border = ctk.CTkFrame(self.nav_frame, width=1, fg_color=COLORS["border"])
         self.sidebar_border.pack(side="right", fill="y")
-
         self.sidebar_content = ctk.CTkFrame(self.nav_frame, fg_color="transparent")
         self.sidebar_content.pack(fill="both", expand=True, padx=20, pady=20)
-
-        # Branding
         brand_frame = ctk.CTkFrame(self.sidebar_content, fg_color="transparent")
         brand_frame.pack(pady=(10, 4), anchor="w")
         ctk.CTkLabel(brand_frame, text="OMBRA", font=("Segoe UI Variable Display", 26, "bold"), text_color=COLORS["text"]).pack(anchor="w")
         ctk.CTkLabel(brand_frame, text="Utility Pro", font=("Segoe UI", 13), text_color=COLORS["subtext"]).pack(anchor="w")
-
-        # Admin Status Badge
         admin_color = COLORS["success"] if self.is_admin else COLORS["warning"]
         admin_text = "●  Administrator" if self.is_admin else "●  Standard User"
-        ctk.CTkLabel(self.sidebar_content, text=admin_text, font=("Segoe UI", 11, "bold"),
-                     text_color=admin_color).pack(pady=(4, 20), anchor="w")
-
-        # Navigation Buttons
+        ctk.CTkLabel(self.sidebar_content, text=admin_text, font=("Segoe UI", 11, "bold"), text_color=admin_color).pack(pady=(4, 20), anchor="w")
         self.nav_buttons = {}
-        nav_items = ["Dashboard", "Tools", "File Scanner", "Installer", "Sys Info", "Logs", "Settings"]
-
         for name in nav_items:
             icon = NAV_ICONS.get(name, "")
             display = f"  {icon}   {name}"
-            # Keep border_width=1 on all so selected state doesn't shift layout (inactive border = bg color)
-            btn = ctk.CTkButton(self.sidebar_content, text=display, image=None, height=44,
-                                font=("Segoe UI", 14), corner_radius=14, anchor="w",
+            btn = ctk.CTkButton(self.sidebar_content, text=display, image=None, height=44, font=("Segoe UI", 14), corner_radius=14, anchor="w",
                                 fg_color="transparent", hover_color=COLORS["hover"], text_color=COLORS["subtext"],
                                 border_width=1, border_color=COLORS["bg"], command=lambda n=name: self.show_frame(n))
             btn.pack(pady=3, padx=8, fill="x")
             self.nav_buttons[name] = btn
-
-        # Sidebar Footer
         sidebar_footer = ctk.CTkFrame(self.sidebar_content, fg_color="transparent")
         sidebar_footer.pack(side="bottom", fill="x", pady=(0, 5))
         ctk.CTkLabel(sidebar_footer, text="v2.0", font=("Segoe UI", 11), text_color=COLORS["glass_edge"]).pack(anchor="w")
         if not self.is_admin:
-            ctk.CTkButton(sidebar_footer, text="Launch as Administrator", height=36, corner_radius=14,
-                          font=("Segoe UI", 12, "bold"), fg_color=COLORS["accent"], hover_color=COLORS["accent_hover"],
-                          text_color="white", border_width=0,
-                          command=run_as_admin).pack(fill="x", pady=(8, 0))
+            ctk.CTkButton(sidebar_footer, text="Launch as Administrator", height=36, corner_radius=14, font=("Segoe UI", 12, "bold"),
+                          fg_color=COLORS["accent"], hover_color=COLORS["accent_hover"], text_color="white", border_width=0, command=run_as_admin).pack(fill="x", pady=(8, 0))
+        _splash_step(10, "Building interface…")
 
-        # --- CONTENT FRAMES ---
+        # --- CONTENT FRAMES (empty placeholders) ---
         self.content_frames = {}
         for name in nav_items:
             frame = ctk.CTkFrame(self, fg_color="transparent", corner_radius=0)
             frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+            if name != "Dashboard":
+                ctk.CTkLabel(frame, text="Loading…", font=("Segoe UI", 13), text_color=COLORS["subtext"]).place(relx=0.5, rely=0.5, anchor="center")
             self.content_frames[name] = frame
         splash_frame.lift()
         self.update_idletasks()
         self.update()
-
-        # --- BUILD UI FOR EACH FRAME ---
+        self._frame_built = set()
+        self._builders = {
+            "Dashboard": self.build_dashboard_frame,
+            "Sys Info": self.build_sysinfo_frame,
+            "Installer": self.build_installer_frame,
+            "Tools": self.build_tools_frame,
+            "File Scanner": self.build_file_scanner_frame,
+            "Logs": self.build_logs_frame,
+            "Settings": self.build_settings_frame,
+        }
+        _splash_step(4, "Preloading fonts…")
+        splash_frame.lift()
+        self.update_idletasks()
+        self.update()
+        self._preload_fonts()
+        _splash_step(5, "Loading Dashboard…")
+        self._frame_built.add("Dashboard")
         self.build_dashboard_frame()
-        self.build_sysinfo_frame()
-        self.build_installer_frame()
+        self._deferred_setup_graph()
+        splash_frame.lift()
+        self.update_idletasks()
+        self.update()
+        _splash_step(18, "Loading Tools…")
+        self._frame_built.add("Tools")
         self.build_tools_frame()
-        self.build_file_scanner_frame() # New: Build the file scanner frame
+        _splash_step(12, "Loading File Scanner…")
+        self._frame_built.add("File Scanner")
+        self.build_file_scanner_frame()
+        _splash_step(10, "Loading Installer…")
+        self._frame_built.add("Installer")
+        self.build_installer_frame()
+        _splash_step(8, "Loading System Info…")
+        self._frame_built.add("Sys Info")
+        self.build_sysinfo_frame()
+        _splash_step(4, "Loading Logs…")
+        self._frame_built.add("Logs")
         self.build_logs_frame()
+        _splash_step(6, "Loading Settings…")
+        self._frame_built.add("Settings")
         self.build_settings_frame()
+        _splash_step(2, "Finalizing…")
+        self.update_vitals()
+        self.update_dashboard_extras()
+        self.setup_observer()
+        self.bind("<Configure>", self._on_window_resize)
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        _splash_step(SPLASH_TOTAL - splash_done[0], "Ready!")
+        splash_pct_label.configure(text="100%")
+        splash_progress.set(1.0)
+        splash_frame.lift()
+        self.update_idletasks()
+        self.update()
+        self.show_frame("Dashboard")
+        self.content_frames["Dashboard"].tkraise()
         splash_frame.lift()
         self.update_idletasks()
         self.update()
 
-        self.update_vitals()
-        self.update_dashboard_extras() # Start extra dashboard loops
-        self.setup_observer()
-        self.bind("<Configure>", self._on_window_resize) # Bind resize event for notifications
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.show_frame("Dashboard") # Show initial frame
-
-        # Keep splash on top, then hide after delay
-        splash_frame.lift()
-        self.lift()
-        self.update_idletasks()
-
         def _remove_splash():
+            elapsed = time.time() - _splash_start
+            if elapsed < SPLASH_MIN_SEC:
+                self.after(int((SPLASH_MIN_SEC - elapsed) * 1000), _remove_splash)
+                return
             try:
-                splash_progress.stop()
+                splash_frame.grid_remove()
             except Exception:
                 pass
-            try:
-                splash_frame.grid_remove()  # Hide without destroying
-            except Exception:
-                pass
+            self.content_frames["Dashboard"].tkraise()
             self.lift()
             self.focus_force()
-        self.after(1500, _remove_splash)  # Show splash ~1.5s so user sees it's loading
+
+        self.after(400, _remove_splash)
+
+    def _preload_fonts(self):
+        """Warm the font cache so first use of each font doesn't cause a stall."""
+        try:
+            warm = ctk.CTkFrame(self, fg_color="transparent", width=1, height=1)
+            warm.place(x=-1000, y=-1000)
+            for spec in _PRELOAD_FONTS:
+                font = (spec[0], spec[1]) if len(spec) == 2 else (spec[0], spec[1], spec[2])
+                ctk.CTkLabel(warm, text="0", font=font).pack()
+            self.update_idletasks()
+            warm.destroy()
+        except Exception:
+            pass
+
+    def _preload_next_tab(self):
+        """Build one lazy tab in the background so it's ready when the user clicks."""
+        for name in _PRELOAD_TABS:
+            if name not in self._frame_built:
+                self._frame_built.add(name)
+                try:
+                    self._builders[name]()
+                except Exception:
+                    self._frame_built.discard(name)
+                self.after(400, self._preload_next_tab)
+                return
 
     def debounce_sort(self):
         if self.sort_timer:
@@ -341,17 +533,18 @@ class OmbraApp(ctk.CTk):
         self.sort_timer = self.after(1500, self.perform_sort)
 
     def show_frame(self, name):
-        """Raises a content frame to the top and updates nav button state."""
+        """Raises the selected frame immediately; builds content on first visit (next tick) so nav feels instant."""
         for frame_name, frame in self.content_frames.items():
             if frame_name == name:
                 frame.tkraise()
-                # Active: same border_width so layout doesn't shift; visible border
                 self.nav_buttons[frame_name].configure(fg_color=COLORS["hover"], text_color=COLORS["text"],
                                                        border_width=1, border_color=COLORS["glass_edge"])
             else:
-                # Inactive: same border_width, border matches bg so no visual shift
                 self.nav_buttons[frame_name].configure(fg_color="transparent", text_color=COLORS["subtext"],
                                                        border_width=1, border_color=COLORS["bg"])
+        if name not in self._frame_built:
+            self._frame_built.add(name)
+            self.after(0, self._builders[name])
 
     def log_message(self, message, level="INFO"):
         """Safely logs a message to the UI log area and console."""
@@ -359,22 +552,85 @@ class OmbraApp(ctk.CTk):
         self.after(0, self._safe_log, message, level)
 
     def _safe_log(self, message, level):
+        # Logs tab is lazy-loaded; log_area may not exist yet
+        if not getattr(self, "log_area", None) or not self.log_area.winfo_exists():
+            return
         timestamp = datetime.now().strftime('%H:%M:%S')
-        
-        # Configure tags if not already done (idempotent)
-        self.log_area.tag_config("INFO", foreground=COLORS["subtext"])
-        self.log_area.tag_config("WARN", foreground=COLORS["warning"])
-        self.log_area.tag_config("ERROR", foreground=COLORS["danger"])
-        self.log_area.tag_config("SUCCESS", foreground=COLORS["success"])
-        self.log_area.tag_config("TIME", foreground="#52525b") # Zinc-600
+        try:
+            self.log_area.tag_config("INFO", foreground=COLORS["subtext"])
+            self.log_area.tag_config("WARN", foreground=COLORS["warning"])
+            self.log_area.tag_config("ERROR", foreground=COLORS["danger"])
+            self.log_area.tag_config("SUCCESS", foreground=COLORS["success"])
+            self.log_area.tag_config("TIME", foreground="#52525b")
 
-        self.log_area.insert("1.0", f" {message}\n", level)
-        self.log_area.insert("1.0", f"[{level}]", level)
-        self.log_area.insert("1.0", f"{timestamp} ", "TIME")
-        
-        # Prevent memory leak by limiting log size to ~500 lines
-        if int(self.log_area.index('end-1c').split('.')[0]) > 500:
-            self.log_area.delete("500.0", "end")
+            self.log_area.insert("1.0", f" {message}\n", level)
+            self.log_area.insert("1.0", f"[{level}]", level)
+            self.log_area.insert("1.0", f"{timestamp} ", "TIME")
+
+            if int(self.log_area.index('end-1c').split('.')[0]) > 500:
+                self.log_area.delete("500.0", "end")
+        except (tk.TclError, AttributeError):
+            pass
+
+    def _get_resource_path(self, filename):
+        """Path to a bundled file (icon etc.). Works when run as script or as PyInstaller exe."""
+        if getattr(sys, "frozen", False):
+            return os.path.join(sys._MEIPASS, filename)
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
+    def _get_hwnd(self):
+        """Return the Windows HWND for this window (for icon/API)."""
+        if platform.system() != "Windows":
+            return None
+        try:
+            h = ctypes.windll.user32.GetParent(self.winfo_id())
+            return h if h else self.winfo_id()
+        except Exception:
+            return None
+
+    def _set_window_icon(self):
+        """Set the window/taskbar icon. Uses icon.ico with multiple sizes (title bar + taskbar)."""
+        if platform.system() != "Windows":
+            return
+        icon_path = self._get_resource_path("icon.ico")
+        if not os.path.isfile(icon_path):
+            return
+        try:
+            self.iconbitmap(icon_path)
+        except Exception:
+            pass
+        # Apply small/big icons via Win32 after window is realized so correct resolutions are used
+        self.after(150, lambda: self._apply_win32_icon(icon_path))
+
+    def _apply_win32_icon(self, icon_path):
+        """Set ICON_SMALL (title bar) and ICON_BIG (taskbar/alt-tab) from icon.ico."""
+        if platform.system() != "Windows" or not os.path.isfile(icon_path):
+            return
+        try:
+            hwnd = self._get_hwnd()
+            if not hwnd:
+                return
+            IMAGE_ICON = 1
+            LR_LOADFROMFILE = 0x10
+            WM_SETICON = 0x80
+            ICON_SMALL = 0
+            ICON_BIG = 1
+            SM_CXSMICON = 49
+            SM_CYSMICON = 50
+            path_w = ctypes.wintypes.LPCWSTR(icon_path)
+            cx_sm = ctypes.windll.user32.GetSystemMetrics(SM_CXSMICON)
+            cy_sm = ctypes.windll.user32.GetSystemMetrics(SM_CYSMICON)
+            # Use 48x48 or 64x64 for taskbar so icon isn't tiny; Windows scales down if needed
+            cx_big = 64
+            cy_big = 64
+            hicon_sm = ctypes.windll.user32.LoadImageW(None, path_w, IMAGE_ICON, cx_sm, cy_sm, LR_LOADFROMFILE)
+            hicon_big = ctypes.windll.user32.LoadImageW(None, path_w, IMAGE_ICON, cx_big, cy_big, LR_LOADFROMFILE)
+            if hicon_big:
+                ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon_big)
+            if hicon_sm:
+                ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon_sm)
+        except Exception:
+            pass
 
     def build_header(self, parent_frame, title, subtitle=""):
         """Builds a consistent header for each content frame."""
@@ -413,10 +669,13 @@ class OmbraApp(ctk.CTk):
                                      fg_color=COLORS["card"], height=32, corner_radius=14, text_color=COLORS["success"])
             self.status_bar.pack(side="right", padx=10)
 
-        # --- GRAPH ---
+        # --- GRAPH (matplotlib deferred so window appears instantly) ---
         graph_card = self.create_card(frame, corner_radius=20)
         graph_card.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
-        self.setup_graph_widgets(graph_card)
+        self._dashboard_graph_card = graph_card
+        self._graph_placeholder = ctk.CTkLabel(graph_card, text="Loading chart…", font=("Segoe UI", 13), text_color=COLORS["subtext"])
+        self._graph_placeholder.pack(pady=24, padx=24)
+        # Graph is filled by _deferred_setup_graph() from splash; do not schedule here or it runs twice
 
         # --- QUICK ACTIONS ---
         actions_card = self.create_card(frame, corner_radius=20)
@@ -426,8 +685,6 @@ class OmbraApp(ctk.CTk):
         # --- SYSTEM INFO & EXTRAS ---
         info_card = self.create_card(frame, corner_radius=20)
         info_card.grid(row=2, column=1, sticky="nsew", padx=(10, 0))
-        
-        # Split info card into tabs or sections
         self.tabview = ctk.CTkTabview(info_card, fg_color="transparent", segmented_button_fg_color=COLORS["card"],
                                       segmented_button_selected_color=COLORS["accent"], segmented_button_selected_hover_color=COLORS["accent_hover"],
                                       segmented_button_unselected_hover_color=COLORS["glass_edge"],
@@ -472,82 +729,107 @@ class OmbraApp(ctk.CTk):
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill="x", padx=10, pady=(0, 5))
 
+    def _deferred_setup_graph(self):
+        """Runs one tick after dashboard build so the window paints first without waiting for matplotlib."""
+        try:
+            if getattr(self, "_graph_placeholder", None) and self._graph_placeholder.winfo_exists():
+                self._graph_placeholder.destroy()
+                self._graph_placeholder = None
+            if getattr(self, "_dashboard_graph_card", None):
+                self.setup_graph_widgets(self._dashboard_graph_card)
+        except Exception:
+            pass
+
     def setup_quick_actions(self, actions_card):
-        self._build_card_header(actions_card, "⚡  Quick Actions", "One-tap tools for common tasks")
-
-        # Real-time Sorter
-        realtime_frame = ctk.CTkFrame(actions_card, fg_color="transparent")
-        realtime_frame.pack(pady=5, padx=25, fill="x")
-        rt_text = ctk.CTkFrame(realtime_frame, fg_color="transparent")
-        rt_text.pack(side="left")
-        ctk.CTkLabel(rt_text, text="Auto-Clean Desktop", font=("Segoe UI", 13, "bold")).pack(anchor="w")
-        ctk.CTkLabel(rt_text, text="Sort new files in real-time", font=("Segoe UI", 11), text_color=COLORS["subtext"]).pack(anchor="w")
-        self.realtime_switch = ctk.CTkSwitch(realtime_frame, text="", command=self.toggle_realtime_sort,
-                                             progress_color=COLORS["accent"], button_color="#636366",
-                                             fg_color=COLORS["border"], button_hover_color=COLORS["glass_edge"])
-        self.realtime_switch.pack(side="right")
-
-        ctk.CTkFrame(actions_card, fg_color=COLORS["border"], height=1).pack(fill="x", padx=25, pady=10)
-
-        self.btn_hide = self.create_button(actions_card, "Incognito: Hide Icons", "tinted", self.toggle_icons)
-        self.btn_hide.pack(pady=(0, 8), padx=25, fill="x")
-        self.create_button(actions_card, "Purge Clipboard", "secondary", self.purge_clip).pack(pady=(0, 15), padx=25, fill="x")
+        self._build_card_header(actions_card, "⚡  Quick Actions", "One-tap from your dashboard")
+        self.create_button(actions_card, "Clean Desktop Now", "primary", self.perform_sort).pack(pady=(0, 6), padx=25, fill="x")
+        self.create_button(actions_card, "Flush DNS Cache", "secondary", self.flush_dns).pack(pady=(0, 6), padx=25, fill="x")
+        self.create_button(actions_card, "Empty Recycle Bin", "secondary", self.empty_recycle_bin).pack(pady=(0, 6), padx=25, fill="x")
+        self.create_button(actions_card, "Task Manager", "secondary", lambda: self.open_sys_tool("taskmgr")).pack(pady=(0, 6), padx=25, fill="x")
+        self.create_button(actions_card, "Check for Updates", "secondary", lambda: self.open_shell_command("start ms-settings:windowsupdate")).pack(pady=(0, 15), padx=25, fill="x")
 
     def setup_dashboard_overview(self, parent):
-        sys_info = self.get_system_info()
-        info_to_show = {
-            "OS": sys_info["os"],
-            "CPU": sys_info["cpu"],
-            "RAM": sys_info["ram"],
-            "Uptime": self.get_uptime()
-        }
-
-        for i, (key, value) in enumerate(info_to_show.items()):
-            row = ctk.CTkFrame(parent, fg_color="transparent")
+        wrap = ctk.CTkFrame(parent, fg_color="transparent")
+        wrap.pack(fill="both", expand=True)
+        wrap.configure(height=260)
+        wrap.pack_propagate(False)
+        self._overview_value_labels = {}
+        for key in ("OS", "CPU", "RAM", "Uptime"):
+            row = ctk.CTkFrame(wrap, fg_color="transparent")
             row.pack(fill="x", pady=5)
             ctk.CTkLabel(row, text=key, font=("Segoe UI", 13, "bold"), text_color=COLORS["subtext"], width=80, anchor="w").pack(side="left")
-            ctk.CTkLabel(row, text=value, font=("Segoe UI", 13), anchor="w").pack(side="left", fill="x", expand=True)
+            val_label = ctk.CTkLabel(row, text="Loading…", font=("Segoe UI", 13), anchor="w", text_color=COLORS["subtext"])
+            val_label.pack(side="left", fill="x", expand=True)
+            self._overview_value_labels[key] = val_label
+        # Fill synchronously so we don't need a thread (avoids "main thread is not in main loop" during splash)
+        try:
+            info = self._gather_system_info_impl()
+            uptime = self.get_uptime()
+            self._apply_dashboard_overview(info, uptime)
+        except Exception:
+            pass
+
+    def _apply_dashboard_overview(self, sys_info, uptime):
+        if not getattr(self, "_overview_value_labels", None):
+            return
+        labels = self._overview_value_labels
+        for key, value in [("OS", sys_info["os"]), ("CPU", sys_info["cpu"]), ("RAM", sys_info["ram"]), ("Uptime", uptime)]:
+            if key in labels and labels[key].winfo_exists():
+                labels[key].configure(text=value, text_color=COLORS["text"])
+        self._system_info_cache = sys_info
 
     def setup_dashboard_storage_net(self, parent):
+        wrap = ctk.CTkFrame(parent, fg_color="transparent")
+        wrap.pack(fill="both", expand=True)
+        wrap.configure(height=260)
+        wrap.pack_propagate(False)
         # Disk Usage
-        ctk.CTkLabel(parent, text="Disk Usage (C:)", font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(10, 5))
-        self.disk_bar = ctk.CTkProgressBar(parent, height=15, corner_radius=8, progress_color=COLORS["accent"])
+        ctk.CTkLabel(wrap, text="Disk Usage (C:)", font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(10, 5))
+        self.disk_bar = ctk.CTkProgressBar(wrap, height=15, corner_radius=8, progress_color=COLORS["accent"])
         self.disk_bar.pack(fill="x", pady=(0, 5))
-        self.disk_label = ctk.CTkLabel(parent, text="Calculating...", font=("Segoe UI", 11), text_color=COLORS["subtext"])
+        self.disk_label = ctk.CTkLabel(wrap, text="Calculating...", font=("Segoe UI", 11), text_color=COLORS["subtext"])
         self.disk_label.pack(anchor="e")
 
         # Network Latency
-        ctk.CTkLabel(parent, text="Network Latency (8.8.8.8)", font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(15, 5))
-        self.ping_label = ctk.CTkLabel(parent, text="-- ms", font=("Segoe UI Variable Display", 24, "bold"), text_color=COLORS["success"])
+        ctk.CTkLabel(wrap, text="Network Latency (8.8.8.8)", font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(15, 5))
+        self.ping_label = ctk.CTkLabel(wrap, text="-- ms", font=("Segoe UI Variable Display", 24, "bold"), text_color=COLORS["success"])
         self.ping_label.pack(anchor="center", pady=5)
 
     def update_dashboard_extras(self):
-        # 1. Update Disk
-        try:
-            usage = shutil.disk_usage("C:\\")
-            percent = (usage.used / usage.total)
-            self.disk_bar.set(percent)
-            self.disk_label.configure(text=f"{percent*100:.1f}% Used of {usage.total // (1024**3)} GB")
-        except: pass
-
-        # 2. Update Ping (Threaded)
+        """Run disk and ping in background threads so UI never blocks."""
+        def _disk():
+            try:
+                usage = shutil.disk_usage("C:\\")
+                pct = usage.used / usage.total
+                total_gb = usage.total // (1024**3)
+                self.after(0, lambda: self._apply_disk_ui(pct, total_gb))
+            except Exception:
+                pass
         def _ping():
             try:
-                # Use socket for much faster/lighter ping
                 t1 = time.time()
                 socket.create_connection(("8.8.8.8", 53), timeout=2).close()
                 latency = int((time.time() - t1) * 1000)
-                if latency < 1: latency = 1
+                if latency < 1:
+                    latency = 1
                 color = COLORS["success"] if latency < 50 else COLORS["warning"] if latency < 150 else COLORS["danger"]
                 self.after(0, lambda: self.ping_label.configure(text=f"{latency} ms", text_color=color))
-            except:
+            except Exception:
                 self.after(0, lambda: self.ping_label.configure(text="Timeout", text_color="red"))
-        
-        if self.ping_thread is None or not self.ping_thread.is_alive():
-            self.ping_thread = threading.Thread(target=_ping, daemon=True)
-            self.ping_thread.start()
-
+        if getattr(self, "disk_bar", None) and self.disk_bar.winfo_exists():
+            threading.Thread(target=_disk, daemon=True).start()
+        if getattr(self, "ping_label", None) and self.ping_label.winfo_exists():
+            if self.ping_thread is None or not self.ping_thread.is_alive():
+                self.ping_thread = threading.Thread(target=_ping, daemon=True)
+                self.ping_thread.start()
         self.after(5000, self.update_dashboard_extras)
+
+    def _apply_disk_ui(self, percent, total_gb):
+        try:
+            self.disk_bar.set(percent)
+            self.disk_label.configure(text=f"{percent*100:.1f}% Used of {total_gb} GB")
+        except Exception:
+            pass
 
     def get_uptime(self):
         try:
@@ -558,6 +840,8 @@ class OmbraApp(ctk.CTk):
 
     def build_sysinfo_frame(self):
         frame = self.content_frames["Sys Info"]
+        for w in frame.winfo_children():
+            w.destroy()
         self.build_header(frame, "System Information", "Hardware and software details for this machine")
 
         scroll_frame = ctk.CTkScrollableFrame(frame, fg_color="transparent",
@@ -565,10 +849,23 @@ class OmbraApp(ctk.CTk):
                                               scrollbar_button_color=COLORS["border"], scrollbar_button_hover_color=COLORS["glass_edge"])
         self._style_scrollable(scroll_frame)
         scroll_frame.pack(fill="both", expand=True, padx=10)
+        self._sysinfo_scroll_frame = scroll_frame
+        placeholder = self.create_card(scroll_frame, corner_radius=15)
+        placeholder.pack(fill="x", pady=8, padx=10)
+        ctk.CTkLabel(placeholder, text="Loading system info…", font=("Segoe UI", 14), text_color=COLORS["subtext"]).pack(padx=20, pady=15)
+        self._sysinfo_placeholder = placeholder
+        def _load():
+            info = self._gather_system_info_impl()
+            self.after(0, self._populate_sysinfo_cards, info)
+        threading.Thread(target=_load, daemon=True).start()
 
-        # Gather System Info
-        sys_info = self.get_system_info()
-
+    def _populate_sysinfo_cards(self, sys_info):
+        if not getattr(self, "_sysinfo_scroll_frame", None):
+            return
+        sf = self._sysinfo_scroll_frame
+        if getattr(self, "_sysinfo_placeholder", None) and self._sysinfo_placeholder.winfo_exists():
+            self._sysinfo_placeholder.destroy()
+        self._system_info_cache = sys_info
         info_list = [
             ("Hostname", sys_info["hostname"]),
             ("Operating System", sys_info["os_full"]),
@@ -576,87 +873,307 @@ class OmbraApp(ctk.CTk):
             ("Total RAM", sys_info["ram"]),
             ("Python Version", sys_info["python_version"])
         ]
-
         for label, value in info_list:
-            card = self.create_card(scroll_frame, corner_radius=15)
+            card = self.create_card(sf, corner_radius=15)
             card.pack(fill="x", pady=8, padx=10)
             ctk.CTkLabel(card, text=label, font=("Segoe UI", 14, "bold"), text_color=COLORS["subtext"]).pack(side="left", padx=20, pady=15)
             ctk.CTkLabel(card, text=value, font=("Segoe UI", 14, "bold")).pack(side="right", padx=20, pady=15)
 
     def build_installer_frame(self):
         frame = self.content_frames["Installer"]
+        for w in frame.winfo_children():
+            w.destroy()
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_rowconfigure(1, weight=1)
         self.build_header(frame, "Software Installer", "Install common apps via Windows Package Manager (winget)")
 
         if not is_winget_available():
-            ctk.CTkLabel(frame, text="⚠️ Windows Package Manager (winget) not found.\nThis feature is unavailable.",
-                         font=("Segoe UI", 16), text_color="orange").pack(expand=True)
+            msg_card = self.create_card(frame, corner_radius=20)
+            msg_card.pack(fill="both", expand=True)
+            ctk.CTkLabel(msg_card, text="⚠️ Windows Package Manager (winget) not found.",
+                         font=("Segoe UI", 18, "bold"), text_color=COLORS["warning"]).pack(pady=(24, 8))
+            ctk.CTkLabel(msg_card, text="This feature is unavailable. Install winget or use Windows 11 with App Installer.",
+                         font=("Segoe UI", 13), text_color=COLORS["subtext"], wraplength=400).pack(pady=(0, 24))
             self.log_message("Winget not found, installer disabled.", "WARN")
             return
 
-        scroll_frame = ctk.CTkScrollableFrame(frame, fg_color=COLORS["card"], border_width=1, border_color=COLORS["border"], corner_radius=22,
-                                              scrollbar_fg_color=COLORS["card"],
-                                              scrollbar_button_color=COLORS["border"], scrollbar_button_hover_color=COLORS["glass_edge"])
+        # Single main card (matches File Scanner / Tools glass panels)
+        main_card = self.create_card(frame, corner_radius=20)
+        main_card.pack(fill="both", expand=True)
+        main_card.grid_columnconfigure(0, weight=1)
+        main_card.grid_rowconfigure(1, weight=1)
+
+        # Top bar: search + refresh inside the card
+        top_row = ctk.CTkFrame(main_card, fg_color="transparent")
+        top_row.grid(row=0, column=0, sticky="ew", padx=24, pady=(20, 12))
+        top_row.grid_columnconfigure(0, weight=1)
+        self.installer_search = ctk.CTkEntry(top_row, placeholder_text="Search apps…", height=44, corner_radius=14,
+                                            fg_color=COLORS["bg"], border_color=COLORS["border"], border_width=1,
+                                            font=("Segoe UI", 13), text_color=COLORS["text"])
+        self.installer_search.grid(row=0, column=0, sticky="ew", padx=(0, 12))
+        self.installer_search.bind("<KeyRelease>", self._filter_installer_apps)
+        self.installer_refresh_btn = self.create_button(top_row, "Refresh", "secondary", self._refresh_installer)
+        self.installer_refresh_btn.grid(row=0, column=1)
+
+        # Scroll area: transparent so card shows through
+        scroll_frame = ctk.CTkScrollableFrame(main_card, fg_color="transparent",
+                                             scrollbar_fg_color=COLORS["card"],
+                                             scrollbar_button_color=COLORS["border"],
+                                             scrollbar_button_hover_color=COLORS["glass_edge"])
         self._style_scrollable(scroll_frame)
-        scroll_frame.pack(fill="both", expand=True)
+        scroll_frame.grid(row=1, column=0, sticky="nsew", padx=24, pady=(0, 24))
+        self.installer_scroll_frame = scroll_frame
+        self.installer_category_blocks = []
 
         def _populate_installer():
-            self.installed_software_ids = check_installed_software()
-            self.log_message(f"Found {len(self.installed_software_ids)} installed packages via winget.")
+            self.after(0, lambda: self._set_installer_loading(True))
+            all_ids = [app_id for _, apps in INSTALLER_CATEGORIES.items() for _, app_id in apps]
+            installed = set()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
+                for app_id, ok in zip(all_ids, ex.map(is_app_installed, all_ids)):
+                    if ok:
+                        installed.add(app_id)
+            self.installed_software_ids = installed
+            self.after(0, lambda: self._set_installer_loading(False))
+            self.after(0, self._build_installer_categories)
 
-            for name, app_id in SOFTWARE_TO_INSTALL.items():
-                app_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
-                app_frame.pack(fill="x", padx=20, pady=10)
-                
-                ctk.CTkLabel(app_frame, text=name, font=("Segoe UI", 14, "bold")).pack(side="left", padx=(0, 10))
-                
-                if app_id in self.installed_software_ids:
-                    ctk.CTkLabel(app_frame, text="Installed", font=("Segoe UI", 12, "bold"), text_color=COLORS["success"]).pack(side="right", padx=10)
-                else:
-                    # Frame to hold the dynamic widgets
-                    action_frame = ctk.CTkFrame(app_frame, fg_color="transparent")
-                    action_frame.pack(side="right", fill="x", expand=True)
-
-                    status_label = ctk.CTkLabel(action_frame, text="", font=("Segoe UI", 12), text_color=COLORS["subtext"])
-                    status_label.pack(side="right", padx=10)
-
-                    progress_bar = ctk.CTkProgressBar(action_frame, orientation="horizontal", indeterminate_speed=1.2)
-
-                    install_btn = self.create_button(action_frame, "Install", "secondary", 
-                                                     lambda id=app_id, af=action_frame, s=status_label, b=None, p=progress_bar: self.install_software(id, af, s, b, p))
-                    # A bit of a hack to pass the button to itself for disabling
-                    install_btn.configure(command=lambda id=app_id, af=action_frame, s=status_label, b=install_btn, p=progress_bar: self.install_software(id, af, s, b, p))
-                    install_btn.pack(side="right")
-
-        # Run the check in a separate thread to not freeze the UI on startup
         threading.Thread(target=_populate_installer, daemon=True).start()
 
-    def install_software(self, app_id, action_frame, status_label, button, progress_bar):
-        """Starts a thread to install software using winget."""
-        # Hide the button and show the progress bar
-        button.pack_forget()
+    def _set_installer_loading(self, loading):
+        if loading:
+            if hasattr(self, "installer_refresh_btn"):
+                self.installer_refresh_btn.configure(state="disabled", text="Checking…")
+        else:
+            if hasattr(self, "installer_refresh_btn"):
+                self.installer_refresh_btn.configure(state="normal", text="Refresh")
 
+    def _build_installer_categories(self):
+        if not hasattr(self, "installer_scroll_frame"):
+            return
+        sf = self.installer_scroll_frame
+        for w in sf.winfo_children():
+            w.destroy()
+        self.installer_category_blocks.clear()
+        self.log_message(f"Found {len(self.installed_software_ids)} installed packages via winget.")
+        self._installer_categories_list = list(INSTALLER_CATEGORIES.items())
+        self.after(0, self._build_next_installer_category, 0)
+
+    def _build_next_installer_category(self, index):
+        if not hasattr(self, "installer_scroll_frame") or index >= len(getattr(self, "_installer_categories_list", [])):
+            return
+        sf = self.installer_scroll_frame
+        category, apps = self._installer_categories_list[index]
+        cat_card = self.create_card(sf, corner_radius=16)
+        cat_card.pack(fill="x", pady=(14, 0))
+        self._build_card_header(cat_card, category, "")
+        app_frames = []
+        for name, app_id in apps:
+            row = ctk.CTkFrame(cat_card, fg_color="transparent")
+            row.pack(fill="x", padx=25, pady=(2, 8))
+            ctk.CTkLabel(row, text=name, font=("Segoe UI", 14, "bold"), anchor="w").pack(side="left", fill="x", expand=True)
+            if app_id in self.installed_software_ids:
+                ctk.CTkLabel(row, text="Installed", font=("Segoe UI", 12, "bold"), text_color=COLORS["success"]).pack(side="right", padx=8)
+            else:
+                action_frame = ctk.CTkFrame(row, fg_color="transparent")
+                action_frame.pack(side="right")
+                status_label = ctk.CTkLabel(action_frame, text="", font=("Segoe UI", 11), text_color=COLORS["subtext"])
+                status_label.pack(side="right", padx=(0, 8))
+                progress_bar = ctk.CTkProgressBar(action_frame, width=120, height=6, corner_radius=3,
+                                                 progress_color=COLORS["accent"], fg_color=COLORS["border"])
+                install_btn = self.create_button(action_frame, "Install", "primary",
+                                                 lambda id=app_id, af=action_frame, s=status_label, b=None, p=progress_bar: self.install_software(id, af, s, b, p))
+                install_btn.configure(command=lambda id=app_id, af=action_frame, s=status_label, b=install_btn, p=progress_bar: self.install_software(id, af, s, b, p))
+                install_btn.pack(side="right")
+            row._installer_name = name
+            app_frames.append(row)
+        self.installer_category_blocks.append((cat_card, app_frames))
+        # Build next category(s) in same tick if list is short to finish faster
+        next_i = index + 1
+        if next_i < len(self._installer_categories_list):
+            self.after(0, self._build_next_installer_category, next_i)
+
+    def _filter_installer_apps(self, event=None):
+        if not hasattr(self, "installer_category_blocks"):
+            return
+        q = (self.installer_search.get() or "").strip().lower()
+        for cat_card, app_frames in self.installer_category_blocks:
+            visible = 0
+            for row in app_frames:
+                name = getattr(row, "_installer_name", "")
+                match = not q or q in name.lower()
+                if match:
+                    row.pack(fill="x", padx=25, pady=(2, 8))
+                    visible += 1
+                else:
+                    row.pack_forget()
+            if visible:
+                cat_card.pack(fill="x", pady=(14, 0))
+            else:
+                cat_card.pack_forget()
+
+    def _refresh_installer(self):
+        self.installer_search.delete(0, "end")
+        self._set_installer_loading(True)
+        def _worker():
+            all_ids = [app_id for _, apps in INSTALLER_CATEGORIES.items() for _, app_id in apps]
+            installed = set()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
+                for app_id, ok in zip(all_ids, ex.map(is_app_installed, all_ids)):
+                    if ok:
+                        installed.add(app_id)
+            self.installed_software_ids = installed
+            self.after(0, self._build_installer_categories)
+            self.after(0, lambda: self._set_installer_loading(False))
+        threading.Thread(target=_worker, daemon=True).start()
+
+    def install_software(self, app_id, action_frame, status_label, button, progress_bar):
+        """Winget install with progress bar driven by parsed output (e.g. 9 MB / 83 MB -> ~11%)."""
+        button.pack_forget()
         button.configure(state="disabled")
-        status_label.configure(text="Installing...", text_color=COLORS["accent"])
+        status_label.configure(text="Preparing…", text_color=COLORS["accent"])
+        progress_bar.set(0)
         progress_bar.pack(side="right", padx=10, fill="x", expand=True)
-        progress_bar.start()
         self.log_message(f"Starting install for {app_id}")
 
+        install_done = [False]
+        progress_timer_id = [None]
+        last_parsed_pct = [None]  # when set, bar is driven by winget output instead of timer
+        PROGRESS_CAP = 0.98
+
+        # Winget prints e.g. "9.00 MB / 83.2 MB" or "33.2 MB / 83.2 MB" (sometimes with garbage chars)
+        re_mb_mb = re.compile(r"(\d+(?:\.\d+)?)\s*MB\s*/\s*(\d+(?:\.\d+)?)\s*MB", re.IGNORECASE)
+        re_kb_kb = re.compile(r"(\d+(?:\.\d+)?)\s*KB\s*/\s*(\d+(?:\.\d+)?)\s*KB", re.IGNORECASE)
+        re_pct = re.compile(r"(\d{1,3})%")
+
+        def _set_status(text):
+            if install_done[0]:
+                return
+            try:
+                self.after(0, lambda t=text: status_label.configure(text=t, text_color=COLORS["accent"]) if status_label.winfo_exists() else None)
+            except Exception:
+                pass
+
+        def _set_progress(pct):
+            if install_done[0]:
+                return
+            pct = min(1.0, max(0.0, float(pct)))
+            last_parsed_pct[0] = pct
+            if pct >= 1.0:
+                _set_status("Waiting for user…")
+            try:
+                self.after(0, lambda p=pct: progress_bar.set(p) if progress_bar.winfo_exists() else None)
+            except Exception:
+                pass
+
+        def _tick():
+            if install_done[0]:
+                try:
+                    progress_bar.set(1.0)
+                except Exception:
+                    pass
+                return
+            try:
+                if not progress_bar.winfo_exists():
+                    return
+                # If we have real progress from winget, don't advance by timer
+                if last_parsed_pct[0] is not None:
+                    progress_timer_id[0] = self.after(400, _tick)
+                    return
+                current = progress_bar.get()
+                if current is None or current < 0:
+                    current = 0
+                progress_bar.set(min(PROGRESS_CAP, current + 0.03))
+                progress_timer_id[0] = self.after(400, _tick)
+            except Exception:
+                pass
+
+        success_reported = [False]
+        app_frame = action_frame.master
+
+        def _poll_until_installed():
+            """Every few seconds check if app is installed; show Installed as soon as it appears."""
+            poll_interval = 2.0
+            while not install_done[0]:
+                time.sleep(poll_interval)
+                if install_done[0]:
+                    break
+                if is_app_installed(app_id):
+                    install_done[0] = True
+                    success_reported[0] = True
+                    self.after(0, lambda: progress_bar.set(1.0))
+                    self.after(0, self.on_install_success, app_frame, action_frame)
+                    self.after(0, lambda: self.log_message(f"Detected installed: {app_id}", "SUCCESS"))
+                    break
+
         def _worker():
-            app_frame = action_frame.master # Get parent frame
+            poll_thread = threading.Thread(target=_poll_until_installed, daemon=True)
+            poll_thread.start()
             try:
                 command = ["winget", "install", "--id", app_id, "-e", "--accept-package-agreements", "--accept-source-agreements"]
-                result = subprocess.run(command, capture_output=True, text=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                
-                self.after(0, self.on_install_success, app_frame, action_frame)
-                self.log_message(f"Successfully installed {app_id}", "SUCCESS")
-            except subprocess.CalledProcessError as e:
-                self.after(0, self.on_install_failure, status_label, button, progress_bar)
-                self.log_message(f"Failed to install {app_id}. Error: {e.stderr}", "ERROR")
+                proc = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    bufsize=1,
+                )
+                last_status = "Preparing…"
+                while True:
+                    line = proc.stdout.readline()
+                    if not line and proc.poll() is not None:
+                        break
+                    if not line:
+                        continue
+                    line_stripped = line.strip()
+                    line_lower = line_stripped.lower()
+
+                    m = re_mb_mb.search(line_stripped)
+                    if m:
+                        cur, tot = float(m.group(1)), float(m.group(2))
+                        if tot > 0:
+                            _set_progress(cur / tot)
+                    else:
+                        m = re_kb_kb.search(line_stripped)
+                        if m:
+                            cur, tot = float(m.group(1)), float(m.group(2))
+                            if tot > 0:
+                                _set_progress(cur / tot)
+                        else:
+                            m = re_pct.search(line_stripped)
+                            if m:
+                                _set_progress(int(m.group(1)) / 100.0)
+
+                    if "download" in line_lower or "downloading" in line_lower:
+                        if last_status != "Downloading…":
+                            last_status = "Downloading…"
+                            _set_status(last_status)
+                    elif "install" in line_lower or "applying" in line_lower or "progress" in line_lower:
+                        # Download finished; bar stays at 100%, user may see UAC/installer prompts
+                        _set_status("Waiting for user…")
+                        _set_progress(1.0)
+                install_done[0] = True
+                if success_reported[0]:
+                    return
+                if proc.returncode == 0:
+                    self.after(0, lambda: progress_bar.set(1.0))
+                    self.after(0, self.on_install_success, app_frame, action_frame)
+                    self.log_message(f"Successfully installed {app_id}", "SUCCESS")
+                else:
+                    self.after(0, self.on_install_failure, status_label, button, progress_bar)
+                    self.log_message(f"Failed to install {app_id}", "ERROR")
             except FileNotFoundError:
+                install_done[0] = True
                 self.after(0, self.on_install_failure, status_label, button, progress_bar)
                 self.log_message("Winget command not found during install.", "ERROR")
+            except Exception as e:
+                install_done[0] = True
+                self.after(0, self.on_install_failure, status_label, button, progress_bar)
+                self.log_message(f"Failed to install {app_id}. Error: {e}", "ERROR")
 
         threading.Thread(target=_worker, daemon=True).start()
+        progress_timer_id[0] = self.after(400, _tick)
+        self.after(1500, lambda: _set_status("Downloading…"))
 
     def on_install_success(self, app_frame, action_frame):
         """Called on UI thread after successful software installation."""
@@ -665,7 +1182,10 @@ class OmbraApp(ctk.CTk):
 
     def on_install_failure(self, status_label, button, progress_bar):
         """Called on UI thread after failed software installation."""
-        progress_bar.stop()
+        try:
+            progress_bar.set(0)
+        except Exception:
+            pass
         progress_bar.pack_forget()
         status_label.configure(text="Failed", text_color="red")
         button.pack(side="right")
@@ -673,6 +1193,8 @@ class OmbraApp(ctk.CTk):
 
     def build_tools_frame(self):
         frame = self.content_frames["Tools"]
+        for w in frame.winfo_children():
+            w.destroy()
         self.build_header(frame, "Service Desk Tools", "Common fixes and utilities for everyday IT support")
 
         tab_view = ctk.CTkTabview(frame, fg_color="transparent",
@@ -684,17 +1206,27 @@ class OmbraApp(ctk.CTk):
                                   corner_radius=18, border_width=0)
         tab_view.pack(fill="both", expand=True, padx=0, pady=10)
 
-        # Add tabs for each category
         tab_view.add("Cleanup")
         tab_view.add("Network")
         tab_view.add("System & Power")
         tab_view.add("Shortcuts")
 
-        # Populate each tab with its respective tools
-        self._build_tools_cleanup_tab(tab_view.tab("Cleanup"))
-        self._build_tools_network_tab(tab_view.tab("Network"))
-        self._build_tools_system_tab(tab_view.tab("System & Power"))
-        self._build_tools_shortcuts_tab(tab_view.tab("Shortcuts"))
+        # Defer tab content so the Tools page appears immediately; build one tab per idle tick
+        self._tools_tabview = tab_view
+        self.after(0, self._build_tools_tabs_deferred, 0)
+
+    def _build_tools_tabs_deferred(self, index):
+        """Build one Tools tab per call so the UI stays responsive on first load."""
+        builders = [
+            ("Cleanup", self._build_tools_cleanup_tab),
+            ("Network", self._build_tools_network_tab),
+            ("System & Power", self._build_tools_system_tab),
+            ("Shortcuts", self._build_tools_shortcuts_tab),
+        ]
+        if index < len(builders):
+            name, build_fn = builders[index]
+            build_fn(self._tools_tabview.tab(name))
+            self.after(0, self._build_tools_tabs_deferred, index + 1)
 
     def _create_tools_tab_scroller(self, parent_tab):
         """Helper to create a consistent scrollable frame for tool tabs. Scrollbar styled and auto-hidden when possible."""
@@ -715,14 +1247,31 @@ class OmbraApp(ctk.CTk):
         folder_card.grid(row=0, column=0, padx=(0, 10), pady=10, sticky="nsew")
         self._build_card_header(folder_card, "📁  Folder Cleanup", "Auto-sort loose files into organized category folders")
         self.create_button(folder_card, "Clean Desktop", "primary", self.perform_sort).pack(pady=(0, 5), padx=25, fill="x")
-        self.create_button(folder_card, "Clean Downloads Folder", "primary", self.perform_downloads_sort).pack(pady=(5, 15), padx=25, fill="x")
+        self.create_button(folder_card, "Clean Downloads Folder", "primary", self.perform_downloads_sort).pack(pady=(5, 5), padx=25, fill="x")
+        ctk.CTkFrame(folder_card, fg_color=COLORS["border"], height=1).pack(fill="x", padx=25, pady=10)
+        realtime_frame = ctk.CTkFrame(folder_card, fg_color="transparent")
+        realtime_frame.pack(pady=5, padx=25, fill="x")
+        rt_text = ctk.CTkFrame(realtime_frame, fg_color="transparent")
+        rt_text.pack(side="left")
+        ctk.CTkLabel(rt_text, text="Auto-Clean Desktop", font=("Segoe UI", 13, "bold")).pack(anchor="w")
+        ctk.CTkLabel(rt_text, text="Sort new files in real-time", font=("Segoe UI", 11), text_color=COLORS["subtext"]).pack(anchor="w")
+        self.realtime_switch = ctk.CTkSwitch(realtime_frame, text="", command=self.toggle_realtime_sort,
+                                             progress_color=COLORS["accent"], button_color="#636366",
+                                             fg_color=COLORS["border"], button_hover_color=COLORS["glass_edge"])
+        self.realtime_switch.pack(side="right")
+        ctk.CTkFrame(folder_card, fg_color=COLORS["border"], height=1).pack(fill="x", padx=25, pady=8)
+        self.btn_hide = self.create_button(folder_card, "Incognito: Hide Icons", "tinted", self.toggle_icons)
+        self.btn_hide.pack(pady=(0, 5), padx=25, fill="x")
+        self.create_button(folder_card, "Purge Clipboard", "secondary", self.purge_clip).pack(pady=(0, 15), padx=25, fill="x")
 
         # --- System Cleanup ---
         system_card = self.create_card(scroll_frame)
         system_card.grid(row=0, column=1, padx=(10, 0), pady=10, sticky="nsew")
         self._build_card_header(system_card, "🧹  System Cleanup", "Free space and fix common Office sign-in issues")
         self.create_button(system_card, "Clean Temporary Files", "secondary", self.clean_temp_files).pack(pady=(0, 5), padx=25, fill="x")
-        self.create_button(system_card, "Reset M365 Credentials", "danger", self.clean_m365_credentials).pack(pady=(5, 15), padx=25, fill="x")
+        self.create_button(system_card, "Reset M365 Credentials", "danger", self.clean_m365_credentials).pack(pady=(5, 5), padx=25, fill="x")
+        self.create_button(system_card, "Clear Thumbnail Cache", "secondary", self.clear_thumbnail_cache).pack(pady=(5, 5), padx=25, fill="x")
+        self.create_button(system_card, "Open Storage Sense", "secondary", lambda: self.open_shell_command("start ms-settings:storagestorage")).pack(pady=(5, 15), padx=25, fill="x")
 
         # --- Cache & Bin ---
         cache_card = self.create_card(scroll_frame)
@@ -871,15 +1420,17 @@ class OmbraApp(ctk.CTk):
 
     def build_file_scanner_frame(self):
         frame = self.content_frames["File Scanner"]
+        for w in frame.winfo_children():
+            w.destroy()
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(2, weight=1)
 
-        # --- HEADER (Apple-style: large title + soft subtitle) ---
+        # --- HEADER (matches build_header: same font/size as other tabs) ---
         header = ctk.CTkFrame(frame, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", padx=0, pady=(0, 24))
         header.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(header, text="Storage", font=("Segoe UI Variable Display", 34, "bold"), text_color=COLORS["text"]).grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(header, text="Find large files and folders taking up space on your drive.", font=("Segoe UI", 13),
+        ctk.CTkLabel(header, text="Storage", font=("Segoe UI Variable Display", 30, "bold"), text_color=COLORS["text"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(header, text="Find large files and folders taking up space on your drive.", font=("Segoe UI", 12),
                      text_color=COLORS["subtext"]).grid(row=1, column=0, sticky="w", pady=(6, 0))
 
         # --- SCAN CARD (glass panel with clear hierarchy) ---
@@ -887,12 +1438,12 @@ class OmbraApp(ctk.CTk):
         control_frame.grid(row=1, column=0, sticky="ew", padx=0, pady=(0, 16))
         control_frame.grid_columnconfigure(1, weight=1)
 
-        # Top: title + subtitle inside card
+        # Top: title + subtitle inside card (matches _build_card_header style)
         card_header = ctk.CTkFrame(control_frame, fg_color="transparent")
         card_header.grid(row=0, column=0, columnspan=3, sticky="ew", padx=24, pady=(20, 8))
         card_header.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(card_header, text="Scan for large files", font=("Segoe UI Variable Display", 18, "bold"), text_color=COLORS["text"]).grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(card_header, text="Choose a drive and run a scan to list the biggest items.", font=("Segoe UI", 12),
+        ctk.CTkLabel(card_header, text="Scan for large files", font=("Segoe UI", 15, "bold"), text_color=COLORS["text"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(card_header, text="Choose a drive and run a scan to list the biggest items.", font=("Segoe UI", 11),
                      text_color=COLORS["subtext"]).grid(row=1, column=0, sticky="w", pady=(2, 0))
 
         # Row: Drive label, dropdown, Scan button, status
@@ -922,7 +1473,7 @@ class OmbraApp(ctk.CTk):
         self.scan_status_label.grid(row=0, column=3, padx=0, pady=8, sticky="w")
 
         self.scan_progress_bar = ctk.CTkProgressBar(control_frame, height=6, corner_radius=3, progress_color=COLORS["accent"],
-                                                   fg_color=COLORS["border"], mode="indeterminate", indeterminate_speed=1.2)
+                                                   fg_color=COLORS["border"])
         self.scan_progress_bar.grid(row=2, column=0, columnspan=3, sticky="ew", padx=24, pady=(0, 20))
         self.scan_progress_bar.grid_remove()
 
@@ -935,7 +1486,7 @@ class OmbraApp(ctk.CTk):
         results_label_row = ctk.CTkFrame(results_wrapper, fg_color="transparent")
         results_label_row.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         results_label_row.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(results_label_row, text="Results", font=("Segoe UI Variable Display", 15, "bold"), text_color=COLORS["text"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(results_label_row, text="Results", font=("Segoe UI", 15, "bold"), text_color=COLORS["text"]).grid(row=0, column=0, sticky="w")
 
         tree_card = ctk.CTkFrame(results_wrapper, fg_color=COLORS["card"], corner_radius=16, border_width=1, border_color=COLORS["border"])
         tree_card.grid(row=1, column=0, sticky="nsew")
@@ -1014,8 +1565,8 @@ class OmbraApp(ctk.CTk):
 
         self.scan_button.configure(state="disabled", text="Scanning...")
         self.scan_status_label.configure(text=f"Scanning {drive_to_scan}")
+        self.scan_progress_bar.set(0)
         self.scan_progress_bar.grid(row=2, column=0, columnspan=3, sticky="ew", padx=24, pady=(0, 20))
-        self.scan_progress_bar.start()
         if hasattr(self, "scanner_empty_label"):
             self.scanner_empty_label.place_forget()
 
@@ -1026,6 +1577,8 @@ class OmbraApp(ctk.CTk):
 
     def build_logs_frame(self):
         frame = self.content_frames["Logs"]
+        for w in frame.winfo_children():
+            w.destroy()
         self.build_header(frame, "Activity Logs", "Timestamped record of all actions performed in this session")
         log_frame = ctk.CTkFrame(frame, fg_color=COLORS["card"], border_width=1, border_color=COLORS["border"], corner_radius=20)
         log_frame.pack(pady=10, padx=25, fill="both", expand=True)
@@ -1034,6 +1587,8 @@ class OmbraApp(ctk.CTk):
 
     def build_settings_frame(self):
         frame = self.content_frames["Settings"]
+        for w in frame.winfo_children():
+            w.destroy()
         self.build_header(frame, "Settings", "Customize file sorting rules and appearance")
 
         scroll_frame = ctk.CTkScrollableFrame(frame, fg_color="transparent",
@@ -1110,35 +1665,48 @@ class OmbraApp(ctk.CTk):
         self.destroy()
 
     def _on_window_resize(self, event):
-        # Only reposition if the height or width changed, and it's the root window
-        if event.widget == self and (event.width != self.winfo_width() or event.height != self.winfo_height()):
+        # Resize feels laggy because Windows does *live* resize: every small drag sends many Configure
+        # events and tkinter re-layouts the whole window each time. No animation = we’d only redraw
+        # once on release (snappy but content would jump). We debounce our work so we do less per event.
+        if event.widget != self:
+            return
+        if self._resize_after_id:
+            self.after_cancel(self._resize_after_id)
+        self._resize_after_id = self.after(100, self._on_resize_debounced)
+
+    def _on_resize_debounced(self):
+        self._resize_after_id = None
+        if self.active_toasts:
             self._reposition_notifications()
-    def get_system_info(self):
-        """Gathers and returns a dictionary of key system information."""
+    def _gather_system_info_impl(self):
+        """Actual system info gathering (can run in thread). Returns dict."""
         try:
             uname = platform.uname()
             os_info = f"{uname.system} {uname.release}"
             os_info_full = f"{uname.system} {uname.release} ({uname.version})"
             node_name = uname.node
-        except:
-            os_info = "Unknown"
-            os_info_full = "Unknown"
+        except Exception:
+            os_info = os_info_full = "Unknown"
             node_name = "Unknown"
-
         try:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
             cpu_name, _ = winreg.QueryValueEx(key, "ProcessorNameString")
             winreg.CloseKey(key)
             cpu_name = cpu_name.strip()
-        except:
-            cpu_name = platform.processor()
-
+        except Exception:
+            cpu_name = platform.processor() or "Unknown"
         ram_gb = f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB"
-        
         return {
             "hostname": node_name, "os": os_info, "os_full": os_info_full,
             "cpu": cpu_name, "ram": ram_gb, "python_version": sys.version.split()[0]
         }
+
+    def get_system_info(self):
+        """Returns cached system info, or gathers and caches it (main thread). For background load use _gather_system_info_impl in a thread then set _system_info_cache."""
+        if self._system_info_cache is not None:
+            return self._system_info_cache
+        self._system_info_cache = self._gather_system_info_impl()
+        return self._system_info_cache
 
     def _style_scrollable(self, scroll_frame):
         """Best-effort: restyle CTkScrollableFrame scrollbar and auto-hide when content fits."""
@@ -1160,12 +1728,20 @@ class OmbraApp(ctk.CTk):
                 else:
                     sb.grid()
             except Exception:
-                # If internal attributes change in CustomTkinter, fail silently
                 pass
 
+        def _update_throttled(_event=None):
+            aid = getattr(scroll_frame, "_scroll_update_after_id", None)
+            if aid:
+                try:
+                    self.after_cancel(aid)
+                except Exception:
+                    pass
+            scroll_frame._scroll_update_after_id = self.after(120, _update)
+
         try:
-            scroll_frame._scrollable_frame.bind("<Configure>", _update)
-            scroll_frame.bind("<Configure>", _update)
+            scroll_frame._scrollable_frame.bind("<Configure>", _update_throttled)
+            scroll_frame.bind("<Configure>", _update_throttled)
             self.after(100, _update)
         except Exception:
             pass
@@ -1258,25 +1834,32 @@ class OmbraApp(ctk.CTk):
         return True # User chose No, proceed without admin
 
     def update_vitals(self):
-        # Get data
-        cpu_percent = psutil.cpu_percent()
-        ram_percent = psutil.virtual_memory().percent
+        """Sample CPU/RAM/battery in a background thread so the UI thread never blocks on psutil."""
+        def _sample():
+            try:
+                # interval=0.1 so first call returns a real value (otherwise cpu_percent() returns 0.0 on first call)
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                ram_percent = psutil.virtual_memory().percent
+                bat = psutil.sensors_battery()
+                bat_pct = bat.percent if bat else None
+                self.after(0, lambda: self._apply_vitals(cpu_percent, ram_percent, bat_pct))
+            except Exception:
+                pass
+        threading.Thread(target=_sample, daemon=True).start()
+        self.after(2000, self.update_vitals)
 
-        # Update data deques
+    def _apply_vitals(self, cpu_percent, ram_percent, bat_pct):
+        """Runs on main thread: update labels and graph from sampled values."""
         self.cpu_data.append(cpu_percent)
         self.ram_data.append(ram_percent)
-
-        self.cpu_label.configure(text=f"CPU  {cpu_percent:.1f}%")
-        self.ram_label.configure(text=f"RAM  {ram_percent:.1f}%")
-
-        bat = psutil.sensors_battery()
-        if bat: self.bat_label.configure(text=f"BAT {bat.percent}%")
-
-        # Update graph
-        if self.content_frames["Dashboard"].winfo_viewable():
+        if getattr(self, "cpu_label", None) and self.cpu_label.winfo_exists():
+            self.cpu_label.configure(text=f"CPU  {cpu_percent:.1f}%")
+        if getattr(self, "ram_label", None) and self.ram_label.winfo_exists():
+            self.ram_label.configure(text=f"RAM  {ram_percent:.1f}%")
+        if bat_pct is not None and getattr(self, "bat_label", None) and self.bat_label.winfo_exists():
+            self.bat_label.configure(text=f"BAT {bat_pct}%")
+        if getattr(self, "cpu_line", None):
             self.update_graph()
-
-        self.after(2000, self.update_vitals)
 
     def update_graph(self):
         self.cpu_line.set_ydata(self.cpu_data)
@@ -1595,6 +2178,38 @@ class OmbraApp(ctk.CTk):
             self.show_notification(msg, COLORS["success"])
         else:
             self.show_notification("Temp Folder Already Clean", COLORS["subtext"])
+
+    def clear_thumbnail_cache(self):
+        """Clear Windows Explorer thumbnail cache (thumbcache_*.db). Frees space; thumbnails will rebuild when you browse."""
+        explorer_cache = Path(os.path.expandvars(r"%LocalAppData%\Microsoft\Windows\Explorer"))
+        if not explorer_cache.exists():
+            self.show_notification("Thumbnail cache path not found", COLORS["subtext"])
+            return
+        self.log_message("Clearing thumbnail cache...")
+        self.show_notification("Clearing Thumbnail Cache...", COLORS["accent"])
+        deleted = 0
+        try:
+            for f in explorer_cache.glob("thumbcache_*.db"):
+                try:
+                    f.unlink()
+                    deleted += 1
+                except (PermissionError, OSError):
+                    pass
+            for f in explorer_cache.glob("thumbcache_*.db.volatile"):
+                try:
+                    f.unlink()
+                    deleted += 1
+                except (PermissionError, OSError):
+                    pass
+        except Exception as e:
+            self.log_message(f"Thumbnail cache clear error: {e}", "ERROR")
+            self.show_notification("Error clearing thumbnail cache", "red")
+            return
+        if deleted > 0:
+            self.log_message(f"Cleared {deleted} thumbnail cache file(s).", "SUCCESS")
+            self.show_notification(f"Thumbnail cache cleared ({deleted} file(s))", COLORS["success"])
+        else:
+            self.show_notification("Thumbnail cache already empty or in use", COLORS["subtext"])
 
     def run_command(self, command, success_msg):
         """Runs a shell command, requires admin, and shows notification."""
@@ -1924,8 +2539,18 @@ class OmbraApp(ctk.CTk):
         for parent_path, node in batch:
             self._insert_scan_node(parent_path, node)
 
+    def _set_scan_progress(self, fraction, status_text=None):
+        """Update the scan progress bar (0.0–1.0) and optionally the status label."""
+        try:
+            self.scan_progress_bar.set(min(1.0, max(0.0, fraction)))
+            if status_text is not None:
+                self.scan_status_label.configure(text=status_text)
+        except Exception:
+            pass
+
     def _scan_finish(self, root_size=None):
         """Called when worker has finished; apply size-based colors then hide progress."""
+        self._set_scan_progress(1.0)
         if root_size and getattr(self, "_scan_item_sizes", None):
             for item_id, size in self._scan_item_sizes.items():
                 tag = self._get_scan_size_tag(size, root_size)
@@ -1937,46 +2562,69 @@ class OmbraApp(ctk.CTk):
         self.on_scan_complete("Scan complete.")
 
     def _scan_directory_worker(self, root_path):
-        """Single-threaded scan; stream results to tree in batches so UI updates as we go."""
-        update_counter = [0]
+        """Count dirs first for accurate progress, then single scan with throttled UI updates."""
         batch = []
-        BATCH_SIZE = 50
+        BATCH_SIZE = 200
+        PROGRESS_EVERY = 50  # Update bar every N dirs so it's smooth but not overwhelming
 
         def flush_batch():
             if batch:
                 self.after(0, self._insert_scan_batch, batch[:])
                 batch.clear()
 
-        def _build_tree(path):
-            total_size = 0
-            children = []
+        def count_dirs(path):
+            """Minimal walk: only count directories (no stat, no lists)."""
+            n = 0
             try:
-                for entry in os.scandir(path):
-                    update_counter[0] += 1
-                    if update_counter[0] % 200 == 0:
-                        self.after(0, lambda p=entry.path: self.scan_status_label.configure(text=f"Scanning: {p[:70]}..."))
-
-                    if entry.is_dir(follow_symlinks=False):
-                        child_node = _build_tree(entry.path)
-                        if child_node["size"] > 0:
-                            children.append(child_node)
-                            total_size += child_node["size"]
-                            batch.append((path, child_node))
-                            if len(batch) >= BATCH_SIZE:
-                                flush_batch()
-                    elif entry.is_file(follow_symlinks=False):
-                        try:
-                            file_size = entry.stat().st_size
-                            total_size += file_size
-                            if file_size > 1024 * 1024:
-                                children.append({"name": entry.name, "path": entry.path, "size": file_size, "type": "file"})
-                        except FileNotFoundError:
-                            pass
+                with os.scandir(path) as it:
+                    for entry in it:
+                        if entry.is_dir(follow_symlinks=False):
+                            n += 1 + count_dirs(entry.path)
             except (PermissionError, FileNotFoundError):
                 pass
-            return {"name": os.path.basename(path) or path, "path": path, "size": total_size, "type": "folder", "children": children}
+            return n
 
         try:
+            self.after(0, lambda: self._set_scan_progress(0, f"Counting folders on {root_path}…"))
+            total_dirs = count_dirs(root_path)
+            if total_dirs == 0:
+                total_dirs = 1
+            self.after(0, lambda: self._set_scan_progress(0, f"Scanning {root_path}"))
+            dirs_done = [0]
+
+            def _build_tree(path):
+                total_size = 0
+                children = []
+                try:
+                    with os.scandir(path) as it:
+                        for entry in it:
+                            if entry.is_dir(follow_symlinks=False):
+                                child_node = _build_tree(entry.path)
+                                if child_node["size"] > 0:
+                                    children.append(child_node)
+                                    total_size += child_node["size"]
+                            elif entry.is_file(follow_symlinks=False):
+                                try:
+                                    st = entry.stat(follow_symlinks=False)
+                                    file_size = st.st_size
+                                    total_size += file_size
+                                    if file_size > 1024 * 1024:
+                                        children.append({"name": entry.name, "path": entry.path, "size": file_size, "type": "file"})
+                                except (FileNotFoundError, PermissionError):
+                                    pass
+                except (PermissionError, FileNotFoundError):
+                    pass
+                dirs_done[0] += 1
+                if dirs_done[0] % PROGRESS_EVERY == 0 or dirs_done[0] == total_dirs:
+                    pct = dirs_done[0] / total_dirs
+                    self.after(0, lambda p=pct: self._set_scan_progress(p))
+                children.sort(key=lambda x: x["size"], reverse=True)
+                for child in children:
+                    batch.append((path, child))
+                    if len(batch) >= BATCH_SIZE:
+                        flush_batch()
+                return {"name": os.path.basename(path) or path, "path": path, "size": total_size, "type": "folder", "children": children}
+
             tree_data = _build_tree(root_path)
             flush_batch()
             self.after(0, self._scan_finish, tree_data["size"])
@@ -1984,54 +2632,66 @@ class OmbraApp(ctk.CTk):
             self.log_message(f"Disk scan failed: {e}", "ERROR")
             self.after(0, self.on_scan_complete, "Scan Failed!")
 
+    _TREEVIEW_CHUNK = 85  # Insert this many nodes per idle tick (fewer redraws, faster done)
+
     def _populate_treeview(self, root_node):
         self.log_message("Scan complete. Populating view...")
         self.scan_status_label.configure(text="Populating view...")
-
-        # Clear tree just in case
         for i in self.tree.get_children():
             self.tree.delete(i)
+        root_size = root_node["size"]
+        root_children = sorted(root_node.get("children", []), key=lambda x: x["size"], reverse=True)
+        pending = [("", root_children, root_size)]
+        self._treeview_pending = pending
+        self.after(0, self._insert_treeview_chunk, root_size)
 
-        def _format_size(size_bytes):
-            if size_bytes == 0:
-                return "0 B"
-            size_name = ("B", "KB", "MB", "GB", "TB")
-            i = int(math.floor(math.log(size_bytes, 1024))) if size_bytes > 0 else 0
-            p = math.pow(1024, i)
-            s = round(size_bytes / p, 2)
-            return f"{s} {size_name[i]}"
+    def _insert_treeview_chunk(self, root_size):
+        pending = getattr(self, "_treeview_pending", None)
+        if not pending or not getattr(self, "tree", None) or not self.tree.winfo_exists():
+            self.on_scan_complete("Scan Complete.")
+            return
+        chunk = self._TREEVIEW_CHUNK
+        processed = 0
+        while pending and processed < chunk:
+            parent_id, sorted_children, rs = pending.pop(0)
+            for i, child in enumerate(sorted_children):
+                if processed >= chunk:
+                    pending.insert(0, (parent_id, sorted_children[i:], rs))
+                    break
+                tag = ""
+                if rs > 0:
+                    pct = child["size"] / rs
+                    if pct > 0.15: tag = "critical"
+                    elif pct > 0.05: tag = "high"
+                    elif pct > 0.01: tag = "medium"
+                icon = "📁" if child["type"] == "folder" else "📄"
+                size_str = self._format_scan_size(child["size"])
+                node_id = self.tree.insert(parent_id, "end", text=f" {icon} {child['name']}",
+                                          values=(size_str, child["path"]),
+                                          open=(child["size"] > rs * 0.1),
+                                          tags=(tag,) if tag else ())
+                processed += 1
+                if child["type"] == "folder":
+                    kids = sorted(child.get("children", []), key=lambda x: x["size"], reverse=True)
+                    pending.append((node_id, kids, rs))
+        if pending:
+            self.after(0, self._insert_treeview_chunk, root_size)
+        else:
+            self.on_scan_complete("Scan Complete.")
+            self._treeview_pending = None
 
-        def _get_size_tag(item_size, root_size):
-            if root_size == 0: return ''
-            percentage = item_size / root_size
-            if percentage > 0.15: return 'critical' # > 15%
-            if percentage > 0.05: return 'high'     # > 5%
-            if percentage > 0.01: return 'medium'   # > 1%
-            return ''
-
-        def _insert_node(parent_id, node, root_size):
-            # Sort children by size, descending
-            sorted_children = sorted(node.get('children', []), key=lambda x: x['size'], reverse=True)
-            
-            for child in sorted_children:
-                tag = _get_size_tag(child['size'], root_size)
-                icon = "📁" if child['type'] == 'folder' else "📄"
-
-                node_id = self.tree.insert(parent_id, 'end', text=f" {icon} {child['name']}", 
-                                           values=(_format_size(child['size']), child['path']),
-                                           open=(child['size'] > root_size * 0.1), # Auto-open large folders
-                                           tags=(tag,) if tag else ())
-                if child['type'] == 'folder':
-                    _insert_node(node_id, child, root_size)
-
-        # Insert the root node's children
-        _insert_node('', root_node, root_node['size'])
-        
-        self.on_scan_complete("Scan Complete.")
+    def _format_scan_size(self, size_bytes):
+        if size_bytes == 0:
+            return "0 B"
+        size_name = ("B", "KB", "MB", "GB", "TB")
+        i = int(math.floor(math.log(size_bytes, 1024))) if size_bytes > 0 else 0
+        p = math.pow(1024, i)
+        s = round(size_bytes / p, 2)
+        return f"{s} {size_name[i]}"
 
     def on_scan_complete(self, status_text):
         try:
-            self.scan_progress_bar.stop()
+            self.scan_progress_bar.set(1.0)
         except Exception:
             pass
         self.scan_progress_bar.grid_remove()
@@ -2163,27 +2823,35 @@ class OmbraApp(ctk.CTk):
         """Wrapper to clean the Downloads folder."""
         self._perform_folder_sort(DOWNLOADS_PATH, "Downloads_Cleanup", "Downloads Folder")
 
+    def _load_config_async(self):
+        """Load config from disk in background; apply on main thread. Does not write config."""
+        try:
+            if CONFIG_FILE.exists():
+                with open(CONFIG_FILE, "r") as f:
+                    config = json.load(f)
+                    rules = dict(config.get("sorting_rules", DEFAULT_RULES))
+            else:
+                self.after(0, lambda: self._apply_config(dict(DEFAULT_RULES)))
+                return
+        except (json.JSONDecodeError, IOError):
+            self.after(0, lambda: self._apply_config(dict(DEFAULT_RULES)))
+            return
+        self.after(0, self._apply_config, rules)
+
+    def _apply_config(self, rules):
+        self.rules = rules
+
     def load_config(self):
-        default_rules = {
-            "Visuals": [".jpg", ".png", ".webp", ".jpeg", ".gif", ".svg", ".heic"],
-            "Videos": [".mp4", ".mov", ".avi", ".mkv"],
-            "Audio": [".mp3", ".wav", ".flac", ".aac"],
-            "Docs": [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"],
-            "Archives": [".zip", ".rar", ".7z", ".tar", ".gz"],
-            "Dev": [".py", ".ps1", ".js", ".html", ".css", ".json", ".xml", ".ipynb"],
-            "Installers": [".exe", ".msi"]
-        }
+        """Load config from disk; use defaults if missing or invalid. Does not write config on startup."""
         if CONFIG_FILE.exists():
             try:
-                with open(CONFIG_FILE, 'r') as f:
+                with open(CONFIG_FILE, "r") as f:
                     config = json.load(f)
-                    self.rules = config.get("sorting_rules", default_rules)
+                    self.rules = config.get("sorting_rules", DEFAULT_RULES)
             except (json.JSONDecodeError, IOError):
-                self.rules = default_rules
-                self.save_config()
+                self.rules = dict(DEFAULT_RULES)
         else:
-            self.rules = default_rules
-            self.save_config()
+            self.rules = dict(DEFAULT_RULES)
 
     def save_config(self):
         try:

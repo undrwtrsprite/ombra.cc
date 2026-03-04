@@ -1,11 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 from PyInstaller.utils.hooks import collect_all
 
-datas = []
+# Resolve icon path relative to this spec file (PyInstaller injects SPEC)
+SPEC_DIR = os.path.dirname(os.path.abspath(SPEC))
+ICON_PATH = os.path.normpath(os.path.join(SPEC_DIR, 'icon.ico'))
+if not os.path.isfile(ICON_PATH):
+    raise SystemExit('Icon not found: %s' % ICON_PATH)
+
+# Bundle icon so the window can use it at runtime (taskbar/title bar)
+datas = [(ICON_PATH, ".")]
 binaries = []
 hiddenimports = []
 tmp_ret = collect_all('customtkinter')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+datas += tmp_ret[0]
+binaries += tmp_ret[1]
+hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
@@ -23,17 +33,14 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
-    [],
-    name='OmbraUtility',
+VERSION_FILE = os.path.join(SPEC_DIR, 'version_info.txt')
+EXE_KW = dict(
+    name='Ombra Utility Pro',
+    icon=ICON_PATH,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
@@ -42,4 +49,16 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+)
+if os.path.isfile(VERSION_FILE):
+    EXE_KW['version'] = VERSION_FILE
+
+# One-file exe: scripts + binaries + datas all go into EXE (no COLLECT)
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    **EXE_KW,
 )
