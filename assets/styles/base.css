@@ -54,6 +54,27 @@ a, button, input, select, textarea, .glass-card, .btn-primary, .btn-secondary, .
     opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* User-toggled reduce motion (Settings): disable animations and shorten transitions */
+html.reduce-effects {
+  scroll-behavior: auto !important;
+}
+body.reduce-effects *,
+body.reduce-effects *::before,
+body.reduce-effects *::after {
+  animation: none !important;
+  transition-duration: 0.08s !important;
+}
+body.reduce-effects .floating-particle {
+  display: none !important;
+}
+body.reduce-effects .typing-cursor {
+  animation: none !important;
+  opacity: 0;
+}
+body.reduce-effects .utility-announce-card {
+  animation: none !important;
+}
+
 .reduce-effects a,
 .reduce-effects button,
 .reduce-effects input,
@@ -889,6 +910,221 @@ a, button, input, select, textarea, .glass-card, .btn-primary, .btn-secondary, .
   position: relative;
   padding: 120px 0;
   contain: layout style;
+}
+
+/* Nav download button — right side */
+.nav-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  margin-right: 8px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff !important;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.nav-download:hover {
+  color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.45);
+}
+
+/* Featured Ombra Utility Pro — front and center */
+/* Announcement splash (notification) for Ombra Utility Pro */
+.utility-announce-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.utility-announce-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.utility-announce-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+}
+.utility-announce-card {
+  position: relative;
+  max-width: 440px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+  text-align: center;
+  animation: utilityAnnounceIn 0.35s ease-out;
+}
+@keyframes utilityAnnounceIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.utility-announce-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 22px;
+  line-height: 1;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.utility-announce-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-main);
+}
+.utility-announce-new {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+.utility-announce-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+.utility-announce-desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.utility-announce-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.utility-announce-actions .btn-primary,
+.utility-announce-actions .btn-secondary {
+  margin: 0;
+}
+.utility-announce-dismiss {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.utility-announce-dismiss input {
+  width: 16px;
+  height: 16px;
+}
+
+/* Featured block badges row — centered above title */
+.utility-featured-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.utility-featured-inner .utility-featured-new {
+  display: inline-block;
+  padding: 5px 12px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  border-radius: 6px;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+.utility-featured {
+  padding: 32px 24px 64px;
+}
+.utility-featured-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, var(--surface) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 28px;
+  padding: 56px 40px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,0.03) inset, 0 24px 48px -12px rgba(0,0,0,0.4);
+}
+.utility-featured-inner .utility-featured-badge {
+  display: inline-block;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(199, 210, 254, 0.95);
+}
+.utility-featured-title {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+  margin-bottom: 14px;
+  line-height: 1.15;
+}
+.utility-featured-desc {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin-bottom: 32px;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.utility-featured-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+.utility-featured-actions .btn-primary,
+.utility-featured-actions .btn-secondary {
+  margin: 0;
 }
 
 .cards-grid {

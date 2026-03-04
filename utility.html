@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ombra Utility Pro — ombra</title>
+  <meta name="description" content="Free Windows desktop tool for service desk and power users: cleanup, system info, installers, file scanner. Privacy-first, no telemetry." />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+  <link rel="stylesheet" href="/assets/styles/base.css?v=72" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='black'/%3E%3Ctext x='50' y='55' font-family='sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3Eo%3C/text%3E%3C/svg%3E">
+  <style>
+    .utility-hero {
+      padding: 140px 24px 80px;
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .utility-hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-main);
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .utility-hero .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    .utility-hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .utility-content {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+    .utility-content section {
+      margin-bottom: 48px;
+    }
+    .utility-content h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+    .utility-content p, .utility-content ul {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    .utility-content ul {
+      padding-left: 1.4rem;
+      margin-top: 8px;
+    }
+    .utility-content li {
+      margin-bottom: 6px;
+    }
+    .utility-download {
+      text-align: center;
+      padding: 48px 24px 64px;
+    }
+    .utility-download .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 32px;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    .utility-download .btn-primary:hover {
+      transform: translateY(-3px);
+    }
+    .utility-download .note {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Skip to content</a>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <div class="bg-animation" id="bgAnimation"></div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="logo">ombra</a>
+      <div class="nav-links">
+        <a href="/#tools">Tools</a>
+      </div>
+      <div class="nav-actions">
+        <button id="settingsBtn" class="refresh-btn" title="Settings" aria-label="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+        <a href="https://github.com/undrwtrsprite/ombra.cc/releases/latest/download/OmbraUtilityPro.exe" class="nav-download" download="OmbraUtilityPro.exe">↓ Download Utility</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="utility-hero reveal">
+      <span class="badge">Windows desktop app</span>
+      <h1>Ombra Utility Pro</h1>
+      <p>A privacy-first desktop tool for quick cleanup, system info, and everyday IT tasks. Built for service desk, power users, and anyone who wants control without bloat.</p>
+    </div>
+
+    <div class="utility-content">
+      <section class="reveal">
+        <h2>What it does</h2>
+        <p>Ombra Utility Pro is a single, lightweight Windows app that puts useful actions in one place: clean up temp files and thumbnails, flush DNS, empty the recycle bin, sort Desktop and Downloads by file type, and reset M365 credentials. It includes a file scanner for large files, a winget-style app installer, system and hardware info, and an activity log—all with a simple, consistent interface.</p>
+      </section>
+
+      <section class="reveal">
+        <h2>Privacy benefits</h2>
+        <p>Everything runs on your machine. No accounts, no telemetry, no cloud.</p>
+        <ul>
+          <li><strong>No tracking</strong> — The app does not phone home. No analytics, no usage data sent anywhere.</li>
+          <li><strong>Your data stays local</strong> — Cleanup, scans, and settings stay on your PC. Config is optional and stored only where you run the app.</li>
+          <li><strong>Transparent</strong> — You can inspect what it does from the built-in logs and by running it without admin until a task needs it.</li>
+          <li><strong>Offline-first</strong> — Core features work without internet. Only the optional installer tab needs network access to download apps.</li>
+        </ul>
+      </section>
+
+      <section class="reveal">
+        <h2>Why it’s useful for service desk</h2>
+        <p>For IT support and service desk roles, Ombra Utility Pro can speed up common tasks and keep workflows consistent.</p>
+        <ul>
+          <li><strong>Quick fixes</strong> — Flush DNS, clear temp and thumbnail caches, reset M365 credentials, or free space without hunting through Windows settings.</li>
+          <li><strong>Consistent steps</strong> — Same tool on every machine means the same steps for every user; easier to document and train.</li>
+          <li><strong>Visibility</strong> — System info and storage scanner help you see what’s on a machine before or after a fix.</li>
+          <li><strong>Cleanup and organization</strong> — Desktop and Downloads sorting by category (images, docs, etc.) keeps endpoints tidy and makes it easier to find files.</li>
+          <li><strong>Optional installs</strong> — The installer tab can deploy common apps without sending users to multiple download pages.</li>
+        </ul>
+      </section>
+
+      <section class="utility-download reveal">
+        <a href="https://github.com/undrwtrsprite/ombra.cc/releases/latest/download/OmbraUtilityPro.exe" class="btn-primary" download="OmbraUtilityPro.exe">
+          <span>↓</span> Download for Windows
+        </a>
+        <p class="note">Runs on Windows 10/11. No install required—run the exe directly, or keep it in a folder of your choice.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 ombra. Built with care and privacy in mind.</p>
+  </footer>
+
+  <div id="settingsModal" class="modal-overlay drawer drawer-bottom">
+    <div class="modal-card">
+      <button class="drawer-close modal-close" aria-label="Close">×</button>
+      <div class="modal-header" style="margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 24px;">Settings</h2>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group">
+          <h3>Appearance</h3>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Reduce Motion</div>
+              <div class="setting-desc">Minimize animations</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="motionToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 12px;">
+          ombra tools
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/scripts/modal.js?v=72"></script>
+  <script src="/assets/scripts/settings.js?v=72"></script>
+  <script>
+    (function() {
+      var settingsBtn = document.getElementById('settingsBtn');
+      var settingsModal = document.getElementById('settingsModal');
+      if (settingsBtn && settingsModal) {
+        settingsBtn.addEventListener('click', function() {
+          if (window.Modal && window.Modal.open) {
+            window.Modal.open(settingsModal, { position: 'bottom' });
+          } else {
+            settingsModal.classList.add('visible');
+          }
+        });
+      }
+      document.querySelectorAll('.reveal').forEach(function(el) {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+    })();
+  </script>
+</body>
+</html>

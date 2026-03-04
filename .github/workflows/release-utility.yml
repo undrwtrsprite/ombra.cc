@@ -1,0 +1,44 @@
+# Build Ombra Utility Pro and publish to GitHub Releases when a version tag is pushed.
+# Usage: git tag v1.0.0 && git push origin v1.0.0
+name: Release Ombra Utility Pro
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ombrautil/requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable
+        run: |
+          cd ombrautil
+          pyinstaller OmbraUtility.spec
+          if (-not (Test-Path "dist\Ombra Utility Pro.exe")) {
+            Write-Error "Build failed: exe not found"
+            exit 1
+          }
+          Copy-Item "dist\Ombra Utility Pro.exe" "dist\OmbraUtilityPro.exe"
+
+      - name: Create Release and upload
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ombrautil/dist/OmbraUtilityPro.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

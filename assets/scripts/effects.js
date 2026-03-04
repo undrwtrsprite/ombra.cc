@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Typewriter effect for hero title - deferred to not block initial render
   const typeWriter = () => {
+    if (document.body.classList.contains('reduce-effects')) return; // Respect reduce motion
     const text = "Tools that just work.";
     const typingNodes = Array.from(document.querySelectorAll('.typing-text'));
     if (!typingNodes.length) return;
@@ -115,8 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
   
-  // Start typewriter effect (deferred) - skip on tool pages
-  if (!isToolPage) {
+  // Start typewriter effect (deferred) - skip on tool pages or when reduce motion is on
+  if (!isToolPage && !document.body.classList.contains('reduce-effects')) {
     startTypewriter();
   }
   
@@ -162,8 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Optimized reveal animations - single observer with higher threshold
-  // Skip expensive animations on tool pages
-  if (!isToolPage && 'IntersectionObserver' in window) {
+  // Skip expensive animations on tool pages or when reduce motion is on
+  const reduceMotion = document.body.classList.contains('reduce-effects');
+  if (!isToolPage && 'IntersectionObserver' in window && !reduceMotion) {
     // Combined observer for better performance - higher threshold, larger rootMargin
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -214,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
       revealObserver.observe(el);
     });
   } else {
-    // Fallback for browsers without IntersectionObserver
+    // Fallback: no observer (tool page, or no IntersectionObserver, or reduce motion) - show all immediately
     const cards = document.querySelectorAll('.glass-card');
     cards.forEach((card) => card.classList.add('visible'));
     const animatedSelectors = '.reveal, .cards-grid, .tool-card, .toolbar, .advanced-controls, .preview, .result, .results, .panel, .editor-container';
@@ -223,6 +225,12 @@ document.addEventListener('DOMContentLoaded', () => {
       el.classList.add('reveal');
       el.classList.add('visible');
     });
+    if (document.querySelector('.cards-grid')) {
+      document.querySelectorAll('.cards-grid').forEach((el) => {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+    }
   }
 
   // Nav background and hide-on-scroll behavior - skip on tool pages for performance

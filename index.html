@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
-  <link rel="stylesheet" href="/assets/styles/base.css?v=70" />
+  <link rel="stylesheet" href="/assets/styles/base.css?v=72" />
   <link rel="manifest" href="/manifest.json" />
   
   <!-- Favicon -->
@@ -22,6 +22,25 @@
   <div class="bg-layer bg-gradient"></div>
   <div class="bg-layer bg-mesh"></div>
   <div class="bg-animation" id="bgAnimation"></div>
+
+  <!-- New: Ombra Utility Pro announcement splash (notification) -->
+  <div class="utility-announce-overlay hidden" id="utilityAnnounceOverlay" role="dialog" aria-labelledby="utilityAnnounceTitle" aria-modal="true">
+    <div class="utility-announce-backdrop" id="utilityAnnounceBackdrop"></div>
+    <div class="utility-announce-card">
+      <button type="button" class="utility-announce-close" id="utilityAnnounceClose" aria-label="Close">×</button>
+      <span class="utility-announce-new">NEW</span>
+      <h2 class="utility-announce-title" id="utilityAnnounceTitle">Ombra Utility Pro is here</h2>
+      <p class="utility-announce-desc">A free Windows desktop app for cleanup, system info, installers, and file scanning. Privacy-first, no telemetry—built for service desk and power users. Download and run, no install required.</p>
+      <div class="utility-announce-actions">
+        <a href="https://github.com/undrwtrsprite/ombra.cc/releases/latest/download/OmbraUtilityPro.exe" class="btn-primary" download="OmbraUtilityPro.exe">Download for Windows</a>
+        <a href="/utility.html" class="btn-secondary">Learn more</a>
+      </div>
+      <label class="utility-announce-dismiss">
+        <input type="checkbox" id="utilityAnnounceDismissCheckbox" />
+        <span>Don't show again</span>
+      </label>
+    </div>
+  </div>
 
   <nav class="nav">
     <div class="nav-inner">
@@ -51,6 +70,7 @@
             <circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
         </button>
+        <a href="https://github.com/undrwtrsprite/ombra.cc/releases/latest/download/OmbraUtilityPro.exe" class="nav-download" download="OmbraUtilityPro.exe">↓ Download Utility</a>
       </div>
     </div>
   </nav>
@@ -70,6 +90,22 @@
         <div class="scroll-dot"></div>
         <span>Discover tools below</span>
         <div class="scroll-arrow">↓</div>
+      </div>
+    </section>
+
+    <!-- Ombra Utility Pro — front and center -->
+    <section class="content-section utility-featured" id="utility-pro">
+      <div class="utility-featured-inner reveal">
+        <div class="utility-featured-badges">
+          <span class="utility-featured-new">NEW</span>
+          <span class="utility-featured-badge">Pro · Free for Windows</span>
+        </div>
+        <h2 class="utility-featured-title">Ombra Utility Pro</h2>
+        <p class="utility-featured-desc">Cleanup, system info, installers, file scanner. Privacy-first, no telemetry. Built for service desk and power users.</p>
+        <div class="utility-featured-actions">
+          <a class="btn-primary" href="https://github.com/undrwtrsprite/ombra.cc/releases/latest/download/OmbraUtilityPro.exe" download="OmbraUtilityPro.exe">Download for Windows</a>
+          <a class="btn-secondary" href="/utility.html">Learn more</a>
+        </div>
       </div>
     </section>
 
@@ -239,6 +275,14 @@
           <div class="category-line"></div>
         </div>
         <div class="tool-list">
+          <a class="tool-item" data-tags="desktop windows service desk cleanup" href="/utility.html">
+            <div class="tool-item-icon">🖥️</div>
+            <div class="tool-item-content">
+              <div class="tool-item-title">Ombra Utility Pro</div>
+              <div class="tool-item-desc">Windows desktop tool: cleanup, system info, installers, file scanner. Privacy-first, no telemetry.</div>
+            </div>
+            <div class="tool-item-arrow">→</div>
+          </a>
           <a class="tool-item" data-tags="qr utility" href="/tools/qr-scanner.html">
             <div class="tool-item-icon">📷</div>
             <div class="tool-item-content">
@@ -395,12 +439,45 @@
       });
     })();
   </script>
-  <script src="/assets/scripts/help.js?v=69"></script>
-  <script src="/assets/scripts/keyboard-shortcuts.js?v=69"></script>
-  <script src="/assets/scripts/toast.js?v=69"></script>
-  <script src="/assets/scripts/modal.js?v=69"></script>
-  <script src="/assets/scripts/settings.js?v=69"></script>
-  <script src="/assets/scripts/effects.js?v=69"></script>
+  <script>
+    // Ombra Utility Pro announcement splash: show once unless "Don't show again" was checked
+    (function() {
+      var KEY = 'ombra-utility-announce-dismissed';
+      function hideOverlay(saveDismiss) {
+        var el = document.getElementById('utilityAnnounceOverlay');
+        if (el) el.classList.add('hidden');
+        if (saveDismiss) try { localStorage.setItem(KEY, '1'); } catch (e) {}
+      }
+      function showOverlay() {
+        var el = document.getElementById('utilityAnnounceOverlay');
+        if (el) el.classList.remove('hidden');
+      }
+      function init() {
+        if (localStorage.getItem(KEY)) return;
+        setTimeout(showOverlay, 450);
+        var overlay = document.getElementById('utilityAnnounceOverlay');
+        var closeBtn = document.getElementById('utilityAnnounceClose');
+        var backdrop = document.getElementById('utilityAnnounceBackdrop');
+        var checkbox = document.getElementById('utilityAnnounceDismissCheckbox');
+        function close(save) {
+          hideOverlay(save !== false && checkbox && checkbox.checked);
+        }
+        if (closeBtn) closeBtn.addEventListener('click', function() { close(true); });
+        if (backdrop) backdrop.addEventListener('click', function() { close(true); });
+        if (overlay) overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) close(true);
+        });
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+      else init();
+    })();
+  </script>
+  <script src="/assets/scripts/help.js?v=72"></script>
+  <script src="/assets/scripts/keyboard-shortcuts.js?v=72"></script>
+  <script src="/assets/scripts/toast.js?v=72"></script>
+  <script src="/assets/scripts/modal.js?v=72"></script>
+  <script src="/assets/scripts/settings.js?v=72"></script>
+  <script src="/assets/scripts/effects.js?v=72"></script>
   <script>
     // Simple client-side filtering of tool cards
     const categories = Array.from(document.querySelectorAll('.tool-category'));
@@ -540,6 +617,7 @@
           if (battery.level < 0.2 || battery.charging === false) {
             lowBattery = true;
             if (lowBattery) {
+              document.documentElement.classList.add('reduce-effects');
               document.body.classList.add('reduce-effects');
             }
           }
@@ -556,6 +634,7 @@
     })();
     
     if (lowPowerMode) {
+      document.documentElement.classList.add('reduce-effects');
       document.body.classList.add('reduce-effects');
       // Disable expensive effects
       const bgMesh = document.querySelector('.bg-mesh');
