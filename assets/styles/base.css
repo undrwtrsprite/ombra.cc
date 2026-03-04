@@ -292,6 +292,8 @@ body.reduce-effects .utility-announce-card {
   padding: 12px 24px;
   gap: 24px;
   position: relative;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Hidden state from JS */
@@ -301,7 +303,7 @@ body.reduce-effects .utility-announce-card {
 
 .nav ul { display: none; }
 .nav-links { display: flex; gap: 16px; align-items: center; }
-.nav-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.nav-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 0; }
 .nav-search { 
   position: relative;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -913,6 +915,13 @@ body.reduce-effects .utility-announce-card {
 }
 
 /* Nav download button — right side */
+.nav-download-text-short { display: none; }
+
+@media (max-width: 600px) {
+  .nav-download-text-long { display: none; }
+  .nav-download-text-short { display: inline; }
+}
+
 .nav-download {
   display: inline-flex;
   align-items: center;
@@ -928,6 +937,7 @@ body.reduce-effects .utility-announce-card {
   white-space: nowrap;
   box-shadow: 0 2px 12px rgba(99, 102, 241, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
 }
 .nav-download:hover {
   color: #fff !important;
@@ -2312,6 +2322,17 @@ button[data-loading="true"]::after {
     gap: 12px;
   }
 
+  .nav-actions {
+    gap: 6px;
+  }
+
+  .nav-download {
+    padding: 6px 10px;
+    font-size: 11px;
+    margin-right: 4px;
+    border-radius: 8px;
+  }
+
   .nav-search.expanded {
     width: 130px;
   }
@@ -2320,6 +2341,7 @@ button[data-loading="true"]::after {
   .nav .logo,
   .nav .refresh-btn,
   .nav .offline-indicator,
+  .nav .nav-download,
   .nav #settingsBtn {
     transition: opacity 0.2s ease, transform 0.2s ease;
     transform-origin: left center;
@@ -2328,6 +2350,7 @@ button[data-loading="true"]::after {
   .nav.search-active .logo,
   .nav.search-active .refresh-btn,
   .nav.search-active .offline-indicator,
+  .nav.search-active .nav-download,
   .nav.search-active #settingsBtn {
     opacity: 0;
     pointer-events: none;
