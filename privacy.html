@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Privacy Policy — ombra</title>
+  <meta name="description" content="Privacy policy for ombra tools and Ombra Utility Pro." />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+  <link rel="stylesheet" href="/assets/styles/base.css?v=73" />
+</head>
+<body>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="logo">ombra</a>
+      <div class="nav-links"></div>
+      <div class="nav-actions">
+        <a href="/index.html#tools" class="btn-secondary" style="text-decoration:none;">Tools</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="tool-container">
+    <div class="tool-card reveal visible" style="max-width: 920px; margin: 0 auto;">
+      <div class="tool-header">
+        <div class="tool-icon">🔒</div>
+        <h1>Privacy Policy</h1>
+      </div>
+      <div class="tool-body privacy-body">
+        <p class="note"><strong>Last updated:</strong> 2026-03-11</p>
+        <p>ombra is built to be privacy-first. Most tools run locally in your browser, and we do not use analytics, advertising trackers, or profiling on the main site.</p>
+
+        <section>
+          <h2>1. What we collect</h2>
+          <p>For the main ombra website, we do <strong>not</strong> intentionally collect personal data such as:</p>
+          <ul>
+            <li>names</li>
+            <li>email addresses</li>
+            <li>account data</li>
+            <li>uploaded files on our servers</li>
+            <li>analytics or advertising tracking identifiers</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>2. Local processing</h2>
+          <p>Many ombra tools process files and text <strong>locally in your browser</strong>. In those tools, your content is not uploaded to our servers as part of normal use.</p>
+        </section>
+
+        <section>
+          <h2>3. Local browser storage</h2>
+          <p>Some parts of the site store information <strong>locally on your device</strong> using browser storage such as <code>localStorage</code>, <code>sessionStorage</code>, and browser cache.</p>
+          <p>This may include:</p>
+          <ul>
+            <li>appearance preferences</li>
+            <li>whether help prompts or notices were dismissed</li>
+            <li>temporary navigation state</li>
+            <li>tool-specific local data such as notes, calendar data, favorites, or cached settings</li>
+            <li>offline cache data provided through the service worker</li>
+          </ul>
+          <p>This data stays in your browser unless you clear it.</p>
+        </section>
+
+        <section>
+          <h2>4. Offline support and caching</h2>
+          <p>ombra uses a <strong>service worker</strong> and browser caching so the site and tools can work faster and, in some cases, offline.</p>
+          <p>Cached files may include:</p>
+          <ul>
+            <li>site pages</li>
+            <li>scripts</li>
+            <li>styles</li>
+            <li>tool pages</li>
+            <li>other static assets</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>5. Third-party services and external requests</h2>
+          <p>While the core site does not run analytics, some parts of ombra load resources or send requests to third-party services.</p>
+          <p>These may include:</p>
+          <ul>
+            <li><strong>Google Fonts</strong> for typography</li>
+            <li><strong>GitHub</strong> for Ombra Utility Pro download links</li>
+            <li><strong>CDN providers</strong> such as jsDelivr and cdnjs for certain JavaScript libraries</li>
+            <li><strong>Tool-specific APIs</strong> used only when a tool requires outside data, such as currency rates, IP lookup, WHOIS/RDAP, or DNS queries</li>
+          </ul>
+          <p>When you use those tools or resources, the relevant third party may receive technical request data such as:</p>
+          <ul>
+            <li>IP address</li>
+            <li>browser or user-agent information</li>
+            <li>request time</li>
+            <li>requested URL or query</li>
+          </ul>
+          <p>Those requests are made only to provide the feature you selected.</p>
+        </section>
+
+        <section>
+          <h2>6. Files and content you use in tools</h2>
+          <p>If a tool is designed for local processing, your files stay on your device unless the specific tool clearly depends on an external API.</p>
+          <p>If a tool requires an external service, that should be considered part of that tool’s function.</p>
+        </section>
+
+        <section>
+          <h2>7. No advertising tracking</h2>
+          <p>We do not use:</p>
+          <ul>
+            <li>ad trackers</li>
+            <li>behavioral profiling</li>
+            <li>marketing pixels</li>
+            <li>third-party analytics platforms on the main site</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>8. Your control</h2>
+          <p>You can reduce or remove stored local data by:</p>
+          <ul>
+            <li>clearing browser storage</li>
+            <li>clearing site data or cache in your browser</li>
+            <li>using the site’s built-in data reset options where available</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>9. Changes</h2>
+          <p>If this privacy policy changes, the updated version will be posted on this page with a revised date.</p>
+        </section>
+
+        <section>
+          <h2>10. Contact</h2>
+          <p>If you have privacy questions, contact <a href="mailto:ombrasupport@proton.me">ombrasupport@proton.me</a>.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
+  <script src="/assets/scripts/effects.js?v=73"></script>
+  <script src="/assets/scripts/back-button.js?v=73"></script>
+  <style>
+    .privacy-body section { margin-top: 24px; }
+    .privacy-body h2 { margin: 0 0 10px; font-size: 1.15rem; }
+    .privacy-body p { margin: 0 0 12px; line-height: 1.7; }
+    .privacy-body ul { margin: 0 0 12px 20px; line-height: 1.7; }
+    .privacy-body code {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 0.92em;
+    }
+  </style>
+</body>
+</html>
