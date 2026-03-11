@@ -19,14 +19,17 @@ Because of that, you should always **review matches before deleting**.
 2. Choose a batch of photos.
 3. Swipe through them.
 4. Tap **Done**.
-5. Tap **Copy JSON** or **Download JSON**.
+5. Tap **Copy JSON**.
 6. Run a Shortcut that:
-   - reads the JSON
+   - reads the clipboard
+   - parses the JSON
    - loops over rejected items
    - finds likely Photos matches
    - shows a review list
    - asks for confirmation
    - deletes only the confirmed matches
+
+If you want the absolute simplest handoff, use **Copy JSON** first. That's now the primary path.
 
 ## Shortcut outline
 

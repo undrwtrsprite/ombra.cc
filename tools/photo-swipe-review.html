@@ -70,9 +70,11 @@
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button id="copyJsonBtn" class="btn-secondary" type="button">Copy JSON</button>
+              <button id="copyNamesBtn" class="btn-secondary" type="button">Copy names only</button>
               <button id="downloadJsonBtn" class="btn-secondary" type="button">Download JSON</button>
             </div>
           </div>
+          <div class="swipe-next-step" id="nextStepBox"></div>
           <pre id="jsonBox" class="swipe-json-box"></pre>
           <div style="margin-top:16px;">
             <strong>Rejected preview</strong>
@@ -110,6 +112,7 @@
     const resultPanelEl = document.getElementById('resultPanel');
     const jsonBoxEl = document.getElementById('jsonBox');
     const rejectedGalleryEl = document.getElementById('rejectedGallery');
+    const nextStepBoxEl = document.getElementById('nextStepBox');
 
     let originalPhotos = [];
     let deckData = [];
@@ -139,23 +142,38 @@
     }
 
     function getExportPayload() {
+      const rejectedItems = rejected.map(photo => ({
+        name: photo.name,
+        size: photo.size,
+        sizeKB: Math.round(photo.size / 1024),
+        type: photo.type,
+        lastModified: photo.lastModified,
+        lastModifiedISO: new Date(photo.lastModified).toISOString(),
+        rejectedAt: photo.rejectedAt
+      }));
+
       return {
+        app: 'ombra-photo-swipe-review',
+        version: 1,
         createdAt: new Date().toISOString(),
-        note: 'Web-exported rejected photos for Shortcut matching. Match carefully before delete.',
-        rejected: rejected.map(photo => ({
-          name: photo.name,
-          size: photo.size,
-          type: photo.type,
-          lastModified: photo.lastModified,
-          lastModifiedISO: new Date(photo.lastModified).toISOString(),
-          rejectedAt: photo.rejectedAt
-        }))
+        count: rejectedItems.length,
+        names: rejectedItems.map(item => item.name),
+        rejected: rejectedItems,
+        note: 'Web-exported rejected photos for Shortcut matching. Match carefully before delete.'
       };
     }
 
     function showResults() {
       const payload = getExportPayload();
       jsonBoxEl.textContent = JSON.stringify(payload, null, 2);
+      nextStepBoxEl.innerHTML = `
+        <strong>Fastest flow</strong>
+        <ol style="margin:8px 0 0 18px; padding:0;">
+          <li>Tap <strong>Copy JSON</strong></li>
+          <li>Open your iPhone Shortcut</li>
+          <li>Have it read the clipboard, review matches, then delete only after confirmation</li>
+        </ol>
+      `;
       rejectedGalleryEl.innerHTML = '';
       rejected.forEach(photo => {
         const item = document.createElement('div');
@@ -328,6 +346,16 @@
       }
     });
 
+    document.getElementById('copyNamesBtn').addEventListener('click', async () => {
+      try {
+        const payload = getExportPayload();
+        await navigator.clipboard.writeText(payload.names.join('\n'));
+        showToast('Rejected names copied', 'success');
+      } catch {
+        showToast('Could not copy names', 'error');
+      }
+    });
+
     document.getElementById('downloadJsonBtn').addEventListener('click', () => {
       const blob = new Blob([jsonBoxEl.textContent], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -435,6 +463,14 @@
     .swipe-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
     .swipe-action.keep { min-width: 120px; }
     .swipe-action.reject { min-width: 120px; }
+    .swipe-next-step {
+      background: rgba(34,197,94,.08);
+      border: 1px solid rgba(34,197,94,.22);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: .92rem;
+    }
     .swipe-json-box {
       background: rgba(2,6,23,.8);
       border: 1px solid var(--border);
