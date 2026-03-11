@@ -64,6 +64,14 @@
       padding: 0 24px 80px;
     }
 
+    .policy-hero,
+    .policy-shell {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+
     .policy-card {
       background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, var(--surface) 100%);
       border: 1px solid var(--border);
@@ -234,6 +242,12 @@
       color: var(--text-main);
     }
 
+    .policy-content a,
+    .policy-top a {
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
     @media (max-width: 900px) {
       .policy-grid {
         grid-template-columns: 1fr;
@@ -311,7 +325,7 @@
   </nav>
 
   <main id="content">
-    <section class="policy-hero reveal visible">
+    <section class="policy-hero">
       <span class="policy-badge">Privacy-first by design</span>
       <h1>Privacy Policy</h1>
       <p>ombra is built to stay simple: fast tools, no nonsense, and as little data collection as possible. Most tools run locally in your browser, and the main site does not use analytics or advertising trackers.</p>
@@ -321,7 +335,7 @@
       </div>
     </section>
 
-    <section class="policy-shell reveal visible">
+    <section class="policy-shell">
       <div class="policy-card">
         <div class="policy-top">
           <div class="policy-top-meta">
@@ -521,10 +535,6 @@
           }
         });
       }
-
-      document.querySelectorAll('.reveal').forEach(function(el) {
-        el.classList.add('visible');
-      });
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
