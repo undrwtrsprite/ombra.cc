@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Privacy Policy — ombra</title>
-  <meta name="description" content="Privacy policy for ombra tools and Ombra Utility Pro." />
+  <meta name="description" content="Privacy policy for ombra tools and Ombra Utility Pro. Clear, simple, and direct." />
   <meta name="theme-color" content="#09090b" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
@@ -242,10 +242,23 @@
       color: var(--text-main);
     }
 
+    .policy-content p,
+    .policy-content ul,
+    .policy-updated {
+      color: #cbd5e1;
+    }
+
     .policy-content a,
-    .policy-top a {
-      text-rendering: optimizeLegibility;
-      -webkit-font-smoothing: antialiased;
+    .policy-top a,
+    .footer a {
+      color: #ffffff;
+      font-weight: 600;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 0.18em;
+    }
+
+    .footer {
+      backdrop-filter: none;
     }
 
     @media (max-width: 900px) {
@@ -328,7 +341,7 @@
     <section class="policy-hero">
       <span class="policy-badge">Privacy-first by design</span>
       <h1>Privacy Policy</h1>
-      <p>ombra is built to stay simple: fast tools, no nonsense, and as little data collection as possible. Most tools run locally in your browser, and the main site does not use analytics or advertising trackers.</p>
+      <p>ombra is built to be simple and private. Most tools run in your browser, and the main site does not use analytics or ad trackers.</p>
       <div class="policy-actions">
         <a class="btn-primary" href="/#tools">Explore tools</a>
         <a class="btn-secondary" href="mailto:ombrasupport@proton.me">Contact support</a>
@@ -340,7 +353,7 @@
         <div class="policy-top">
           <div class="policy-top-meta">
             <span class="policy-kicker">Transparency</span>
-            <span class="policy-summary">Short version: your files stay on your device unless a tool clearly needs an external service.</span>
+            <span class="policy-summary">Short version: your files stay on your device unless a tool clearly needs an outside service.</span>
           </div>
           <div class="policy-updated"><strong>Last updated:</strong> 2026-03-11</div>
         </div>
@@ -372,35 +385,39 @@
                 </div>
                 <div class="policy-pill">
                   <strong>No analytics on the main site</strong>
-                  <span>No advertising trackers, profiling, or analytics platforms on the core website.</span>
+                  <span>No ad trackers, profiling, or analytics on the main site.</span>
                 </div>
                 <div class="policy-pill">
                   <strong>Outside requests only when needed</strong>
-                  <span>Some features rely on third-party APIs or downloads, and those requests happen only when you use them.</span>
+                  <span>Some features rely on outside APIs or downloads, and those requests happen only when you use them.</span>
                 </div>
               </div>
             </section>
 
             <section class="policy-section" id="collect">
               <h2>1. What we collect</h2>
-              <p>For the main ombra website, we do <strong>not</strong> intentionally collect personal data such as:</p>
+              <p>On the main ombra website, we do <strong>not</strong> intentionally collect personal data such as:</p>
               <ul>
                 <li>names</li>
                 <li>email addresses</li>
                 <li>account data</li>
                 <li>uploaded files on our servers</li>
                 <li>analytics or advertising tracking identifiers</li>
+                <li>profiles built from your activity</li>
               </ul>
+              <p>We also do not intentionally collect or store your <strong>IP address</strong> ourselves in a user database, analytics platform, or tracking system for the main site.</p>
+              <p>That said, like almost any website, some technical request data may still be handled by the infrastructure that delivers the site when your browser requests pages and assets. We do not use that for tracking, profiling, or marketing.</p>
             </section>
 
             <section class="policy-section" id="local-processing">
               <h2>2. Local processing</h2>
-              <p>Many ombra tools process files and text <strong>locally in your browser</strong>. In those tools, your content is not uploaded to our servers as part of normal use.</p>
+              <p>Many ombra tools process files and text <strong>locally in your browser</strong>. In those cases, your content is not uploaded to our servers during normal use.</p>
             </section>
 
             <section class="policy-section" id="storage">
               <h2>3. Local browser storage</h2>
               <p>Some parts of the site store information <strong>locally on your device</strong> using browser storage such as <code>localStorage</code>, <code>sessionStorage</code>, and browser cache.</p>
+              <p>We do <strong>not</strong> use ad cookies, cross-site tracking cookies, or third-party marketing pixels on the main site.</p>
               <p>This may include:</p>
               <ul>
                 <li>appearance preferences</li>
@@ -414,7 +431,7 @@
 
             <section class="policy-section" id="caching">
               <h2>4. Offline support and caching</h2>
-              <p>ombra uses a <strong>service worker</strong> and browser caching so the site and tools can work faster and, in some cases, offline.</p>
+              <p>ombra uses a <strong>service worker</strong> and browser caching so the site loads faster and some tools can work offline.</p>
               <p>Cached files may include:</p>
               <ul>
                 <li>site pages</li>
@@ -427,7 +444,8 @@
 
             <section class="policy-section" id="third-parties">
               <h2>5. Third-party services and external requests</h2>
-              <p>While the core site does not run analytics, some parts of ombra load resources or send requests to third-party services.</p>
+              <p>The main site does not run analytics, but some parts of ombra load resources or send requests to third-party services.</p>
+              <p>When your browser loads fonts, downloads, CDN assets, or tool-specific API results, those providers may see technical request data as part of normal web delivery. That can include your IP address, user-agent, timestamps, and requested resources. That happens at the network level, not because ombra is running its own analytics or selling user data.</p>
               <p>These may include:</p>
               <ul>
                 <li><strong>Google Fonts</strong> for typography</li>
@@ -447,8 +465,8 @@
 
             <section class="policy-section" id="files">
               <h2>6. Files and content you use in tools</h2>
-              <p>If a tool is designed for local processing, your files stay on your device unless the specific tool clearly depends on an external API.</p>
-              <p>If a tool requires an external service, that should be considered part of that tool’s function.</p>
+              <p>If a tool is designed for local processing, your files stay on your device unless the tool clearly depends on an external API.</p>
+              <p>If a tool needs an outside service, that is part of how the feature works.</p>
             </section>
 
             <section class="policy-section" id="tracking">
@@ -459,6 +477,8 @@
                 <li>behavioral profiling</li>
                 <li>marketing pixels</li>
                 <li>third-party analytics platforms on the main site</li>
+                <li>session replay tools</li>
+                <li>fingerprinting scripts intended to identify you across sites</li>
               </ul>
             </section>
 
@@ -480,6 +500,7 @@
             <section class="policy-section" id="contact">
               <h2>10. Contact</h2>
               <p>If you have privacy questions, contact <a href="mailto:ombrasupport@proton.me">ombrasupport@proton.me</a>.</p>
+              <p>If needed later, this policy can be expanded with hosting-specific details like access logs, retention, and infrastructure handling.</p>
             </section>
           </div>
         </div>

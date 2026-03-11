@@ -72,9 +72,7 @@ A privacy-first collection of in-browser tools. No data leaves your device.
 
 ### 🛠️ Tools (browser)
 
-**Images & PDFs** — Image Converter, Resizer, PDF to Text, Text to PDF, PDF Merger, Image to PDF, HEIC to JPG, Photo Swipe Review, File Compressor  
-
-**Photo Swipe Review** — Swipe through a batch of photos, mark rejects, and copy a Shortcut-friendly JSON handoff for iPhone cleanup workflows. See: `tools/photo-swipe-shortcut-guide.md` and `tools/photo-swipe-shortcut-build.md`  
+**Images & PDFs** — Image Converter, Resizer, PDF to Text, Text to PDF, PDF Merger, Image to PDF, HEIC to JPG, File Compressor  
 
 **Text & Data** — QR Code, Color Picker, Text Case, JSON Formatter, Markdown Editor, Notepad, Text Diff, JSON/CSV Converter  
 
