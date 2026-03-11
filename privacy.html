@@ -10,156 +10,528 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
   <link rel="stylesheet" href="/assets/styles/base.css?v=73" />
-</head>
-<body>
-  <div class="bg-layer bg-gradient"></div>
-  <div class="bg-layer bg-mesh"></div>
-
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="/" class="logo">ombra</a>
-      <div class="nav-links"></div>
-      <div class="nav-actions">
-        <a href="/index.html#tools" class="btn-secondary" style="text-decoration:none;">Tools</a>
-      </div>
-    </div>
-  </nav>
-
-  <main class="tool-container">
-    <div class="tool-card reveal visible" style="max-width: 920px; margin: 0 auto;">
-      <div class="tool-header">
-        <div class="tool-icon">🔒</div>
-        <h1>Privacy Policy</h1>
-      </div>
-      <div class="tool-body privacy-body">
-        <p class="note"><strong>Last updated:</strong> 2026-03-11</p>
-        <p>ombra is built to be privacy-first. Most tools run locally in your browser, and we do not use analytics, advertising trackers, or profiling on the main site.</p>
-
-        <section>
-          <h2>1. What we collect</h2>
-          <p>For the main ombra website, we do <strong>not</strong> intentionally collect personal data such as:</p>
-          <ul>
-            <li>names</li>
-            <li>email addresses</li>
-            <li>account data</li>
-            <li>uploaded files on our servers</li>
-            <li>analytics or advertising tracking identifiers</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2>2. Local processing</h2>
-          <p>Many ombra tools process files and text <strong>locally in your browser</strong>. In those tools, your content is not uploaded to our servers as part of normal use.</p>
-        </section>
-
-        <section>
-          <h2>3. Local browser storage</h2>
-          <p>Some parts of the site store information <strong>locally on your device</strong> using browser storage such as <code>localStorage</code>, <code>sessionStorage</code>, and browser cache.</p>
-          <p>This may include:</p>
-          <ul>
-            <li>appearance preferences</li>
-            <li>whether help prompts or notices were dismissed</li>
-            <li>temporary navigation state</li>
-            <li>tool-specific local data such as notes, calendar data, favorites, or cached settings</li>
-            <li>offline cache data provided through the service worker</li>
-          </ul>
-          <p>This data stays in your browser unless you clear it.</p>
-        </section>
-
-        <section>
-          <h2>4. Offline support and caching</h2>
-          <p>ombra uses a <strong>service worker</strong> and browser caching so the site and tools can work faster and, in some cases, offline.</p>
-          <p>Cached files may include:</p>
-          <ul>
-            <li>site pages</li>
-            <li>scripts</li>
-            <li>styles</li>
-            <li>tool pages</li>
-            <li>other static assets</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2>5. Third-party services and external requests</h2>
-          <p>While the core site does not run analytics, some parts of ombra load resources or send requests to third-party services.</p>
-          <p>These may include:</p>
-          <ul>
-            <li><strong>Google Fonts</strong> for typography</li>
-            <li><strong>GitHub</strong> for Ombra Utility Pro download links</li>
-            <li><strong>CDN providers</strong> such as jsDelivr and cdnjs for certain JavaScript libraries</li>
-            <li><strong>Tool-specific APIs</strong> used only when a tool requires outside data, such as currency rates, IP lookup, WHOIS/RDAP, or DNS queries</li>
-          </ul>
-          <p>When you use those tools or resources, the relevant third party may receive technical request data such as:</p>
-          <ul>
-            <li>IP address</li>
-            <li>browser or user-agent information</li>
-            <li>request time</li>
-            <li>requested URL or query</li>
-          </ul>
-          <p>Those requests are made only to provide the feature you selected.</p>
-        </section>
-
-        <section>
-          <h2>6. Files and content you use in tools</h2>
-          <p>If a tool is designed for local processing, your files stay on your device unless the specific tool clearly depends on an external API.</p>
-          <p>If a tool requires an external service, that should be considered part of that tool’s function.</p>
-        </section>
-
-        <section>
-          <h2>7. No advertising tracking</h2>
-          <p>We do not use:</p>
-          <ul>
-            <li>ad trackers</li>
-            <li>behavioral profiling</li>
-            <li>marketing pixels</li>
-            <li>third-party analytics platforms on the main site</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2>8. Your control</h2>
-          <p>You can reduce or remove stored local data by:</p>
-          <ul>
-            <li>clearing browser storage</li>
-            <li>clearing site data or cache in your browser</li>
-            <li>using the site’s built-in data reset options where available</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2>9. Changes</h2>
-          <p>If this privacy policy changes, the updated version will be posted on this page with a revised date.</p>
-        </section>
-
-        <section>
-          <h2>10. Contact</h2>
-          <p>If you have privacy questions, contact <a href="mailto:ombrasupport@proton.me">ombrasupport@proton.me</a>.</p>
-        </section>
-      </div>
-    </div>
-  </main>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      });
-    }
-  </script>
-  <script src="/assets/scripts/effects.js?v=73"></script>
-  <script src="/assets/scripts/back-button.js?v=73"></script>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='black'/%3E%3Ctext x='50' y='55' font-family='sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3Eo%3C/text%3E%3C/svg%3E">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <style>
-    .privacy-body section { margin-top: 24px; }
-    .privacy-body h2 { margin: 0 0 10px; font-size: 1.15rem; }
-    .privacy-body p { margin: 0 0 12px; line-height: 1.7; }
-    .privacy-body ul { margin: 0 0 12px 20px; line-height: 1.7; }
-    .privacy-body code {
+    .policy-hero {
+      padding: 148px 24px 48px;
+      text-align: center;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .policy-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .policy-hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.06;
+      color: var(--text-main);
+      margin-bottom: 16px;
+    }
+
+    .policy-hero p {
+      max-width: 720px;
+      margin: 0 auto;
+      color: var(--text-muted);
+      font-size: clamp(1rem, 2.4vw, 1.2rem);
+      line-height: 1.7;
+    }
+
+    .policy-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 28px;
+    }
+
+    .policy-shell {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .policy-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, var(--surface) 100%);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+    }
+
+    .policy-top {
+      padding: 28px 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .policy-top-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .policy-kicker {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #c7d2fe;
+    }
+
+    .policy-updated {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .policy-summary {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .policy-grid {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .policy-nav {
+      padding: 28px 20px 32px 28px;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+      align-self: stretch;
+      position: sticky;
+      top: 110px;
+      height: fit-content;
+    }
+
+    .policy-nav-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .policy-nav ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0;
+      margin: 0;
+    }
+
+    .policy-nav a {
+      display: block;
+      text-decoration: none;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+
+    .policy-nav a:hover,
+    .policy-nav a:focus-visible {
+      color: var(--text-main);
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.08);
+      outline: none;
+    }
+
+    .policy-content {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .policy-section {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 24px;
+    }
+
+    .policy-section h2 {
+      font-size: 1.15rem;
+      margin: 0 0 12px;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .policy-section p,
+    .policy-section ul {
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin: 0 0 12px;
+    }
+
+    .policy-section ul {
+      padding-left: 20px;
+    }
+
+    .policy-section li + li {
+      margin-top: 6px;
+    }
+
+    .policy-highlight {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .policy-pill {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.18);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .policy-pill strong {
+      display: block;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .policy-pill span {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .policy-section code {
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.12);
       padding: 2px 6px;
       border-radius: 8px;
       font-size: 0.92em;
     }
+
+    .footer a {
+      color: var(--text-main);
+    }
+
+    @media (max-width: 900px) {
+      .policy-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .policy-nav {
+        position: static;
+        top: auto;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding-right: 28px;
+      }
+
+      .policy-nav ul {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .policy-highlight {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .policy-hero {
+        padding: 128px 20px 32px;
+      }
+
+      .policy-shell {
+        padding: 0 12px 48px;
+      }
+
+      .policy-top,
+      .policy-content {
+        padding: 20px;
+      }
+
+      .policy-section {
+        padding: 18px;
+        border-radius: 20px;
+      }
+
+      .policy-nav {
+        padding: 20px;
+      }
+
+      .policy-nav ul {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
+</head>
+<body>
+  <a href="#content" class="skip-to-content">Skip to content</a>
+  <div class="bg-layer bg-gradient"></div>
+  <div class="bg-layer bg-mesh"></div>
+  <div class="bg-animation" id="bgAnimation"></div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="logo">ombra</a>
+      <div class="nav-links">
+        <a href="/#tools">Tools</a>
+      </div>
+      <div class="nav-actions">
+        <button id="settingsBtn" class="refresh-btn" title="Settings" aria-label="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+        <a href="https://github.com/undrwtrsprite/ombra.cc/releases/latest/download/Ombra.Utility.Pro.exe" class="nav-download" download="Ombra.Utility.Pro.exe" title="Download Ombra Utility"><span class="nav-download-text-long">↓ Download Utility</span><span class="nav-download-text-short">↓ Download</span></a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="content">
+    <section class="policy-hero reveal visible">
+      <span class="policy-badge">Privacy-first by design</span>
+      <h1>Privacy Policy</h1>
+      <p>ombra is built to stay simple: fast tools, no nonsense, and as little data collection as possible. Most tools run locally in your browser, and the main site does not use analytics or advertising trackers.</p>
+      <div class="policy-actions">
+        <a class="btn-primary" href="/#tools">Explore tools</a>
+        <a class="btn-secondary" href="mailto:ombrasupport@proton.me">Contact support</a>
+      </div>
+    </section>
+
+    <section class="policy-shell reveal visible">
+      <div class="policy-card">
+        <div class="policy-top">
+          <div class="policy-top-meta">
+            <span class="policy-kicker">Transparency</span>
+            <span class="policy-summary">Short version: your files stay on your device unless a tool clearly needs an external service.</span>
+          </div>
+          <div class="policy-updated"><strong>Last updated:</strong> 2026-03-11</div>
+        </div>
+
+        <div class="policy-grid">
+          <aside class="policy-nav" aria-label="Privacy policy sections">
+            <div class="policy-nav-title">On this page</div>
+            <ul>
+              <li><a href="#collect">What we collect</a></li>
+              <li><a href="#local-processing">Local processing</a></li>
+              <li><a href="#storage">Local browser storage</a></li>
+              <li><a href="#caching">Offline support</a></li>
+              <li><a href="#third-parties">Third-party services</a></li>
+              <li><a href="#files">Files and content</a></li>
+              <li><a href="#tracking">No ad tracking</a></li>
+              <li><a href="#control">Your control</a></li>
+              <li><a href="#changes">Changes</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </aside>
+
+          <div class="policy-content">
+            <section class="policy-section" aria-label="Privacy summary">
+              <h2>At a glance</h2>
+              <div class="policy-highlight">
+                <div class="policy-pill">
+                  <strong>Most tools run locally</strong>
+                  <span>Your content usually stays in your browser and on your device.</span>
+                </div>
+                <div class="policy-pill">
+                  <strong>No analytics on the main site</strong>
+                  <span>No advertising trackers, profiling, or analytics platforms on the core website.</span>
+                </div>
+                <div class="policy-pill">
+                  <strong>Outside requests only when needed</strong>
+                  <span>Some features rely on third-party APIs or downloads, and those requests happen only when you use them.</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="policy-section" id="collect">
+              <h2>1. What we collect</h2>
+              <p>For the main ombra website, we do <strong>not</strong> intentionally collect personal data such as:</p>
+              <ul>
+                <li>names</li>
+                <li>email addresses</li>
+                <li>account data</li>
+                <li>uploaded files on our servers</li>
+                <li>analytics or advertising tracking identifiers</li>
+              </ul>
+            </section>
+
+            <section class="policy-section" id="local-processing">
+              <h2>2. Local processing</h2>
+              <p>Many ombra tools process files and text <strong>locally in your browser</strong>. In those tools, your content is not uploaded to our servers as part of normal use.</p>
+            </section>
+
+            <section class="policy-section" id="storage">
+              <h2>3. Local browser storage</h2>
+              <p>Some parts of the site store information <strong>locally on your device</strong> using browser storage such as <code>localStorage</code>, <code>sessionStorage</code>, and browser cache.</p>
+              <p>This may include:</p>
+              <ul>
+                <li>appearance preferences</li>
+                <li>whether help prompts or notices were dismissed</li>
+                <li>temporary navigation state</li>
+                <li>tool-specific local data such as notes, calendar data, favorites, or cached settings</li>
+                <li>offline cache data provided through the service worker</li>
+              </ul>
+              <p>This data stays in your browser unless you clear it.</p>
+            </section>
+
+            <section class="policy-section" id="caching">
+              <h2>4. Offline support and caching</h2>
+              <p>ombra uses a <strong>service worker</strong> and browser caching so the site and tools can work faster and, in some cases, offline.</p>
+              <p>Cached files may include:</p>
+              <ul>
+                <li>site pages</li>
+                <li>scripts</li>
+                <li>styles</li>
+                <li>tool pages</li>
+                <li>other static assets</li>
+              </ul>
+            </section>
+
+            <section class="policy-section" id="third-parties">
+              <h2>5. Third-party services and external requests</h2>
+              <p>While the core site does not run analytics, some parts of ombra load resources or send requests to third-party services.</p>
+              <p>These may include:</p>
+              <ul>
+                <li><strong>Google Fonts</strong> for typography</li>
+                <li><strong>GitHub</strong> for Ombra Utility Pro download links</li>
+                <li><strong>CDN providers</strong> such as jsDelivr and cdnjs for certain JavaScript libraries</li>
+                <li><strong>Tool-specific APIs</strong> used only when a tool requires outside data, such as currency rates, IP lookup, WHOIS/RDAP, or DNS queries</li>
+              </ul>
+              <p>When you use those tools or resources, the relevant third party may receive technical request data such as:</p>
+              <ul>
+                <li>IP address</li>
+                <li>browser or user-agent information</li>
+                <li>request time</li>
+                <li>requested URL or query</li>
+              </ul>
+              <p>Those requests are made only to provide the feature you selected.</p>
+            </section>
+
+            <section class="policy-section" id="files">
+              <h2>6. Files and content you use in tools</h2>
+              <p>If a tool is designed for local processing, your files stay on your device unless the specific tool clearly depends on an external API.</p>
+              <p>If a tool requires an external service, that should be considered part of that tool’s function.</p>
+            </section>
+
+            <section class="policy-section" id="tracking">
+              <h2>7. No advertising tracking</h2>
+              <p>We do not use:</p>
+              <ul>
+                <li>ad trackers</li>
+                <li>behavioral profiling</li>
+                <li>marketing pixels</li>
+                <li>third-party analytics platforms on the main site</li>
+              </ul>
+            </section>
+
+            <section class="policy-section" id="control">
+              <h2>8. Your control</h2>
+              <p>You can reduce or remove stored local data by:</p>
+              <ul>
+                <li>clearing browser storage</li>
+                <li>clearing site data or cache in your browser</li>
+                <li>using the site’s built-in data reset options where available</li>
+              </ul>
+            </section>
+
+            <section class="policy-section" id="changes">
+              <h2>9. Changes</h2>
+              <p>If this privacy policy changes, the updated version will be posted on this page with a revised date.</p>
+            </section>
+
+            <section class="policy-section" id="contact">
+              <h2>10. Contact</h2>
+              <p>If you have privacy questions, contact <a href="mailto:ombrasupport@proton.me">ombrasupport@proton.me</a>.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 ombra. Built with care and privacy in mind.</p>
+    <p><a href="/privacy.html">Privacy Policy</a></p>
+  </footer>
+
+  <div id="settingsModal" class="modal-overlay drawer drawer-bottom">
+    <div class="modal-card">
+      <button class="drawer-close modal-close" aria-label="Close">×</button>
+      <div class="modal-header" style="margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 24px;">Settings</h2>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group">
+          <h3>Appearance</h3>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Reduce Motion</div>
+              <div class="setting-desc">Minimize animations</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="motionToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 12px;">
+          ombra tools
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/scripts/modal.js?v=73"></script>
+  <script src="/assets/scripts/settings.js?v=73"></script>
+  <script src="/assets/scripts/effects.js?v=73"></script>
+  <script>
+    (function() {
+      var settingsBtn = document.getElementById('settingsBtn');
+      var settingsModal = document.getElementById('settingsModal');
+      if (settingsBtn && settingsModal) {
+        settingsBtn.addEventListener('click', function() {
+          if (window.Modal && window.Modal.open) {
+            window.Modal.open(settingsModal, { position: 'bottom' });
+          } else {
+            settingsModal.classList.add('visible');
+          }
+        });
+      }
+
+      document.querySelectorAll('.reveal').forEach(function(el) {
+        el.classList.add('visible');
+      });
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js').catch(function() {});
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
