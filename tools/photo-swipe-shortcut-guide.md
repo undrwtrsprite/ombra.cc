@@ -81,6 +81,12 @@ Practical advice:
 - Edited copies and Live Photos can be weird
 - Always review the final match list before delete
 
+## Buildable Shortcut recipe
+A step-by-step build recipe now lives here:
+- `tools/photo-swipe-shortcut-build.md`
+
+Use that if you want to recreate the Shortcut directly on iPhone.
+
 ## If you want the clean version
 A native SwiftUI app with PhotoKit is the proper route.
 That gives real asset references and the normal iPhone delete confirmation flow.
